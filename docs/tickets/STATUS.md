@@ -9,10 +9,10 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-003 | E2E + accessibility harness | 1 | done | @reviewer (rev-1, rev-2) | 4159506 | 2026-10-17 |
 | T-004 | Documentation alignment & verified brand values | 1 | done | @reviewer (rev-1, architecture checkpoints) | 670dfc8 | 2026-10-17 |
 | T-005 | CI quality gates | 1 | done | @reviewer (rev-1) | c3d751e | 2026-10-17 |
-| T-006 | Brand tokens & Quasar mapping | 2 | todo | — | — | — |
+| T-006 | Brand tokens & Quasar mapping | 2 | done | @reviewer (rev-1) + @architector (arc-1) | a7a8c5c | 2026-10-18 |
 | T-007 | Typography: self-hosted Inter + scale | 2 | todo | — | — | — |
 | T-008 | BrandLogo component | 2 | todo | — | — | — |
-| T-009 | Locale routing, detection, persistence | 2 | todo | — | — | — |
+| T-009 | Locale routing, detection, persistence | 2 | done | @reviewer (rev-2) | fd5cb85 | 2026-10-18 |
 | T-010 | Theme preference system | 2 | todo | — | — | — |
 | T-011 | Public shell: header, nav, footer, a11y | 2 | todo | — | — | — |
 | T-012 | Content schema migrations | 3 | todo | — | — | — |
