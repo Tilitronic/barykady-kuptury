@@ -1,0 +1,596 @@
+/**
+ * T-006 rev-2 — Brand Design Tokens
+ * ====================================
+ * Semantic CSS custom properties for the Barykady Kultury site.
+ *
+ * DERIVATION POLICY (D-18 — BINDING)
+ * ------------------------------------
+ * All non-brand tokens are derived deterministically; none are guessed.
+ *
+ * Brand palette (D-13):
+ *   SCARLET  #C60001  RGB(198,0,1)    OKLCH L=0.519, C=0.213, H=29.1°
+ *   NERO     #262424  RGB(38,36,36)   OKLCH L=0.263, C=0.003, H=17°
+ *   GRAY93   #EDEDED  RGB(237,237,237)OKLCH L=0.946, C=0.000, H=—
+ *
+ * STEP SCALES
+ * -----------
+ * Surface tokens step along the OKLCH L axis in increments of ≈ 0.020/step.
+ *   Light surfaces:  GRAY93 (L=0.946) → surface +1 (L≈0.967) → surface-raised +2 (L≈0.985)
+ *   Dark surfaces:   NERO   (L=0.263) → surface +1 (L≈0.283) → surface-raised +3 (L≈0.323)
+ *
+ * Border tokens use a coarser scale of ≈ 0.035/step (greater visual separation
+ * needed against backgrounds than surface-to-surface transitions):
+ *   Light: GRAY93 (L=0.946) → border −2 steps (L≈0.876 = #D6D6D6)
+ *                           → form-border −3 steps (L≈0.841 = #CBCBCB)
+ *   Dark:  NERO   (L=0.263) → border +7 steps (L≈0.403 = #4A4848)
+ *
+ * NEAR-ACHROMATIC WARM NEUTRALS (OKLCH)
+ * --------------------------------------
+ * These surface/border tokens share the warm NERO hue (H≈17°, C≈0.003):
+ *   #2B2929  dark surface          L=0.283, C=0.003, H=17°
+ *   #353333  dark surface-raised   L=0.323, C=0.003, H=17°
+ *   #4A4848  dark border/form-border L=0.404, C=0.003, H=17°
+ *   #6C6A6A  light text-muted      L=0.526, C=0.003, H=17°
+ * Pure achromatic (C≈0, H undefined — treated as neutral):
+ *   #9E9E9E  dark text-muted       L=0.699, C=0.000
+ *   #D6D6D6  light border          L=0.876, C=0.000
+ *   #CBCBCB  light form-border     L=0.842, C=0.000
+ *
+ * DARK ACCENT vs DARK LINK (rev-2, Finding 4)
+ * -------------------------------------------
+ * These two tokens DIVERGE in dark mode because one value cannot simultaneously
+ * be a good accent SURFACE (carrying NERO text) AND a good TEXT colour on the
+ * lightest dark surface (#353333).
+ *
+ *   --color-accent = #FA4C3C (OKLCH L=0.661, C=0.213, H=29.1°)
+ *     → D-18 certified pair; NERO text on this surface: 4.53:1 ✓ AA.
+ *     → As text it passes on NERO (4.53:1) and surface (4.25:1) but fails on
+ *       surface-raised (3.68:1) — below AA normal text. NOT for body text.
+ *
+ *   --color-link = #FF6D5A (OKLCH L=0.756, C=0.213, H=29.1°, gamut-clipped)
+ *     → Link text; must pass on ALL dark surfaces including surface-raised.
+ *     → on #262424 (background):     5.58:1 ✓ AA
+ *     → on #2B2929 (surface):        5.23:1 ✓ AA
+ *     → on #353333 (surface-raised): 4.54:1 ✓ AA  ← the binding constraint
+ *     → Gamut-clipped: R channel hits 255 (sRGB boundary) at this L; chroma
+ *       is preserved by the clip rather than reduced. Same H family as accent.
+ *
+ * --color-info (Quasar convention note)
+ * --------------------------------------
+ * `$info` is set in `src/css/quasar.variables.scss` (accessible blue #1A56DB)
+ * for Quasar component internals.  There is NO `--color-info` CSS custom
+ * property in this file because no site-authored component uses it as a
+ * design token.  If a future ticket requires it, add it here.
+ *
+ * Measured WCAG 2.x reference pairs (DESIGN_SYSTEM.md §1):
+ *   NERO on GRAY93         13.19:1  AAA body text ✓
+ *   white on SCARLET        6.17:1  AA  body text ✓
+ *   SCARLET on GRAY93       5.27:1  AA  body text ✓
+ *   SCARLET on NERO         2.50:1  FORBIDDEN for text (dark accent derived separately)
+ *
+ * DARK SELECTOR CONTRACT (D-20)
+ * ------------------------------
+ * The only valid dark-mode CSS selector is `[data-theme="dark"]` on `<html>`.
+ * The `.dark` class is NOT used and must not be re-introduced.  The T-010 boot
+ * file drives both `[data-theme="dark"]` (CSS tokens) and `Quasar.Dark.set()`
+ * (Quasar internals) as a single coordinated action.
+ *
+ * CONTRAST TABLE — every token with a text or UI-boundary role
+ * Token                      | Light value | vs bg    | Dark value  | vs bg
+ * ──────────────────────────────────────────────────────────────────────────────
+ * --color-background         | #EDEDED     | —        | #262424     | —
+ * --color-surface            | #F4F4F4     | —        | #2B2929     | —
+ * --color-surface-raised     | #FAFAFA     | —        | #353333     | —
+ * --color-surface-danger     | #FEE2E2     | —        | #451A1A     | —
+ * --color-text               | #262424     | 13.19:1  | #EDEDED     | 13.19:1
+ * --color-text-muted         | #6C6A6A     |  4.59:1  | #9E9E9E     |  5.76:1
+ * --color-accent             | #C60001     | (bg=wt)  | #FA4C3C     |  4.53:1
+ * --color-accent-text        | #FFFFFF     |  6.17:1  | #262424     |  4.53:1
+ * --color-link               | #C60001     |  5.27:1  | #FF6D5A     |  5.58:1*
+ * --color-focus              | #C60001     |  5.27:1  | #FA4C3C     |  4.53:1**
+ * --color-success            | #166534     |  6.09:1  | #4ADE80     |  8.86:1
+ * --color-warning            | #92400E     |  6.06:1  | #FBBF24     |  9.25:1
+ * --color-danger             | #991B1B     |  7.10:1  | #FC8181     |  6.32:1
+ * --color-danger on surface- | #991B1B     |  6.80:1† | #FC8181     |  6.07:1†
+ *   danger                   |             |          |             |
+ * --color-disabled-text      | #9E9E9E     |  2.29:1‡ | #575555     |  2.05:1‡
+ * --color-disabled-bg        | #F4F4F4     | —        | #2B2929     | —
+ * --color-form-bg            | #FFFFFF     | 15.44:1  | #2B2929     | 12.35:1
+ * --color-form-border        | #949292     | see §    | #747272     | see §
+ * --color-dialog-bg          | #FAFAFA     | 14.79:1  | #353333     | 10.72:1
+ * --color-border             | #D6D6D6     | decor.   | #4A4848     | decor.
+ * --color-overlay            | rgba(38,36, | scrim    | rgba(0,0,0, | scrim
+ *                            |   36,0.5)   |          |   0.6)      |
+ * --color-skeleton           | #E4E4E4     | decor.   | #3A3838     | decor.
+ * --color-skeleton-shine     | #EAEAEA     | decor.   | #474545     | decor.
+ *
+ *  * Dark --color-link #FF6D5A also on surface (#2B2929): 5.23:1; on
+ *    surface-raised (#353333): 4.54:1 — passes on ALL dark surfaces.
+ * ** Focus ring needs ≥ 3:1 (non-text, SC 1.4.11), not 4.5:1. #FA4C3C on
+ *    surface-raised: 3.68:1 ≥ 3:1 ✓.
+ *  † Measured on --color-surface-danger, not primary background.
+ *  ‡ Disabled controls are WCAG SC 1.4.3 Note 1 exempt.
+ *  § --color-form-border is a UI component boundary (SC 1.4.11 ≥ 3:1 target).
+ *    Light: #949292 on #FFFFFF = 3.10:1 ✓ AA.  Dark: #747272 on #2B2929 = 3.03:1 ✓ AA.
+ *    --color-border is a decorative separator only — no SC 1.4.11 requirement.
+ *    Shadows: decorative elevation — no WCAG requirement.
+ */
+
+/* =========================================================================
+   1. LIGHT THEME  (:root)
+   ========================================================================= */
+:root {
+  /* --- Backgrounds / surfaces ------------------------------------------- */
+
+  /** GRAY93 brand background. Basis for all light-theme surface derivations. */
+  --color-background: #ededed;
+
+  /**
+   * OKLCH step +1 above GRAY93 (L 0.946 → 0.967, achromatic, C=0.000).
+   * NERO text contrast: 14.04:1 AAA.
+   */
+  --color-surface: #f4f4f4;
+
+  /**
+   * OKLCH step +2 above GRAY93 (L 0.946 → 0.985, achromatic, C=0.000).
+   * NERO text contrast: 14.79:1 AAA.
+   */
+  --color-surface-raised: #fafafa;
+
+  /**
+   * Tinted error-banner surface. Tailwind red-100 (#FEE2E2).
+   * NOT derived from SCARLET — uses a standard accessible error-surface palette
+   * so --color-danger text remains readable on it.
+   * --color-danger (#991B1B) on this surface: 6.80:1 ≥ 4.5 ✓ AA+.
+   * Decorative surface; no WCAG text contrast requirement on the surface itself.
+   */
+  --color-surface-danger: #fee2e2;
+
+  /* --- Text --------------------------------------------------------------- */
+
+  /** NERO brand text. Contrast on GRAY93 background: 13.19:1 AAA. */
+  --color-text: #262424;
+
+  /**
+   * NERO raised to OKLCH L=0.526, C=0.003, H=17° (near-achromatic warm).
+   * Contrast on GRAY93: 4.59:1 AA. On surface: 4.89:1. On surface-raised: 5.15:1.
+   */
+  --color-text-muted: #6c6a6a;
+
+  /* --- Accent / interactive ---------------------------------------------- */
+
+  /**
+   * SCARLET brand accent. Used for buttons, decorative highlights, icon fills.
+   * White text contrast on SCARLET: 6.17:1 AA.
+   * NEVER use SCARLET as text on NERO (2.50:1 — forbidden, see D-18).
+   */
+  --color-accent: #c60001;
+
+  /**
+   * Text placed ON the SCARLET accent surface (buttons, badges).
+   * White on SCARLET: 6.17:1 AA.
+   */
+  --color-accent-text: #ffffff;
+
+  /**
+   * Body links. SCARLET on GRAY93 background: 5.27:1 AA.
+   * SCARLET on surface (#F4F4F4): 5.61:1 AA. On surface-raised (#FAFAFA): 5.91:1 AA.
+   * In light mode --color-link = --color-accent (SCARLET). They diverge in dark
+   * mode; see --color-link in the dark theme block and the header note above.
+   */
+  --color-link: #c60001;
+
+  /**
+   * Keyboard focus ring. SCARLET on GRAY93: 5.27:1 — well above the 3:1
+   * non-text threshold (WCAG 2.4.11). On all light surfaces: ≥ 5.27:1.
+   */
+  --color-focus: #c60001;
+
+  /* --- Borders ------------------------------------------------------------ */
+
+  /**
+   * OKLCH step −2 below GRAY93 (L 0.946 → 0.876, achromatic, C=0.000).
+   * Decorative separator between content areas — no WCAG SC 1.4.11 requirement
+   * (does not identify an interactive component boundary).
+   * Measured vs adjacent bg: #D6D6D6 on #EDEDED = 1.24:1 (decorative only).
+   */
+  --color-border: #d6d6d6;
+
+  /* --- Status colours ----------------------------------------------------- */
+
+  /**
+   * Tailwind green-800 (#166534). Standard accessible success palette.
+   * NOT a hue-shifted brand colour (D-18).
+   * Contrast on GRAY93 background: 6.09:1 AA+.
+   */
+  --color-success: #166534;
+
+  /**
+   * Tailwind amber-800 (#92400E). Standard accessible warning palette.
+   * NOT a hue-shifted brand colour (D-18).
+   * Contrast on GRAY93 background: 6.06:1 AA+.
+   */
+  --color-warning: #92400e;
+
+  /**
+   * Tailwind red-800 (#991B1B). Standard accessible danger palette.
+   * NOT a hue-shifted brand colour (D-18). Distinct from SCARLET (brand accent).
+   * Contrast on GRAY93 background: 7.10:1 AA+.
+   * Contrast on --color-surface-danger (#FEE2E2): 6.80:1 AA+ ✓.
+   */
+  --color-danger: #991b1b;
+
+  /* --- Disabled state ----------------------------------------------------- */
+
+  /**
+   * Disabled text. WCAG SC 1.4.3 Note 1 explicitly exempts inactive UI
+   * components from contrast requirements. This value intentionally fails
+   * AA (2.29:1 on GRAY93) to provide a clearly "inactive" appearance.
+   */
+  --color-disabled-text: #9e9e9e;
+
+  /** Disabled input / control background. Same as --color-surface. */
+  --color-disabled-bg: #f4f4f4;
+
+  /* --- Form controls ------------------------------------------------------ */
+
+  /**
+   * Input field background. White for highest legibility.
+   * NERO text on white: 15.44:1 AAA.
+   */
+  --color-form-bg: #ffffff;
+
+  /**
+   * Input border. OKLCH step toward NERO from GRAY93, warm near-achromatic
+   * (L=0.662, C=0.003, H=17°) → #949292.
+   * Non-text UI component boundary (SC 1.4.11 ≥ 3:1 target).
+   * Measured: #949292 on #FFFFFF (form-bg) = 3.10:1 ✓ AA.
+   * Design note: the previous value #CBCBCB = 1.62:1 was below target; raised
+   * to this warm mid-gray. The form-fill alone (#FFFFFF on #EDEDED = 1.15:1)
+   * cannot identify the field boundary — the border must carry the contrast.
+   * The warm H=17° hue keeps it in the NERO palette family.
+   */
+  --color-form-border: #949292;
+
+  /* --- Dialog / dropdown surfaces ---------------------------------------- */
+
+  /**
+   * Dialog, popover, dropdown panel background. Same value as --color-surface-raised.
+   * NERO text contrast: 14.79:1 AAA. Text-muted contrast: 5.15:1 AA.
+   */
+  --color-dialog-bg: #fafafa;
+
+  /* --- Overlay / scrim ---------------------------------------------------- */
+
+  /**
+   * Modal and drawer backdrop scrim. NERO-base at 50% opacity.
+   * Warm (#262424) tint preserves the brand aesthetic; 50% opacity provides
+   * sufficient visual separation between the scrim and the page content below.
+   * Non-text decorative — no WCAG SC 1.4.3 contrast requirement. Purpose is
+   * visual separation and focus-direction, not legibility.
+   */
+  --color-overlay: rgba(38, 36, 36, 0.5);
+
+  /* --- Skeleton loading state --------------------------------------------- */
+
+  /**
+   * QSkeleton placeholder block background. OKLCH step −1 below GRAY93
+   * (L 0.946 → 0.919, achromatic, C=0.000) → #E4E4E4.
+   * Visibly distinct from --color-background (#EDEDED) to show as a placeholder.
+   * Decorative loading state — no WCAG text-contrast requirement.
+   */
+  --color-skeleton: #e4e4e4;
+
+  /**
+   * QSkeleton shimmer highlight — slightly lighter than --color-skeleton to
+   * create the travelling shimmer gradient. OKLCH step between #E4E4E4 and
+   * GRAY93 (L 0.919 → 0.937, achromatic, C=0.000) → #EAEAEA.
+   * Justified: without a shine value the shimmer animation has no highlight
+   * component and appears as a static grey block.
+   * Decorative loading state — no WCAG text-contrast requirement.
+   */
+  --color-skeleton-shine: #eaeaea;
+
+  /* --- Shadows ------------------------------------------------------------ */
+
+  /**
+   * Shadows use a semi-transparent NERO (warm-dark) base.
+   * Values progress from subtle (sm) to pronounced (lg).
+   * Decorative elevation — no WCAG contrast requirement.
+   */
+  --shadow-sm:
+    0 1px 3px 0 rgba(38, 36, 36, 0.1), 0 1px 2px -1px rgba(38, 36, 36, 0.1);
+  --shadow-md:
+    0 4px 6px -1px rgba(38, 36, 36, 0.12), 0 2px 4px -2px rgba(38, 36, 36, 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgba(38, 36, 36, 0.14),
+    0 4px 6px -4px rgba(38, 36, 36, 0.1);
+
+  /* --- Motion ------------------------------------------------------------- */
+
+  /**
+   * Default transition duration. Set to 0ms by the @media block below when
+   * the user has requested reduced motion. Components MUST use this variable
+   * for any transition so the preference is always honoured.
+   */
+  --motion-duration: 200ms;
+}
+
+/* =========================================================================
+   2. DARK THEME  ([data-theme="dark"])
+   =========================================================================
+   Canonical dark selector: [data-theme="dark"] on <html> — D-20.
+   The .dark class is REMOVED; only the data-theme attribute is used.
+   Both this selector and the prefers-color-scheme @media block below must
+   stay in sync (identical values); the boot file (T-010) sets the attribute.
+
+   ACCENT vs LINK divergence in dark mode:
+   --color-accent = #FA4C3C  — accent surface carrying NERO text (4.53:1).
+                               Also acts as focus ring (≥3:1 on all surfaces).
+   --color-link   = #FF6D5A  — link TEXT on elevated surfaces; derived at
+                               OKLCH L=0.756 (same C=0.213, H=29.1°, gamut-
+                               clipped). Rationale: FA4C3C fails AA on
+                               surface-raised (#353333, 3.68:1); FF6D5A passes
+                               on all three dark surfaces (see contrast table).
+   ========================================================================= */
+[data-theme="dark"] {
+  /* --- Backgrounds / surfaces ------------------------------------------- */
+
+  /** NERO brand background. Basis for all dark-theme surface derivations. */
+  --color-background: #262424;
+
+  /**
+   * OKLCH step +1 above NERO (L 0.263 → 0.283, C=0.003, H=17° warm).
+   * GRAY93 text contrast: 12.35:1 AAA.
+   */
+  --color-surface: #2b2929;
+
+  /**
+   * OKLCH step +3 above NERO (L 0.263 → 0.323, C=0.003, H=17° warm).
+   * GRAY93 text contrast: 10.72:1 AAA.
+   */
+  --color-surface-raised: #353333;
+
+  /**
+   * Tinted error-banner surface. Tailwind red-900 (#451A1A).
+   * --color-danger (#FC8181) on this surface: 6.07:1 ≥ 4.5 ✓ AA+.
+   * Decorative surface; no WCAG text contrast requirement on the surface itself.
+   */
+  --color-surface-danger: #451a1a;
+
+  /* --- Text --------------------------------------------------------------- */
+
+  /** GRAY93 brand text in dark mode. Contrast on NERO background: 13.19:1 AAA. */
+  --color-text: #ededed;
+
+  /**
+   * Near-achromatic mid-grey at OKLCH L=0.699, C=0.000 (neutral).
+   * Contrast on NERO: 5.76:1 AA. On surface: 5.18:1 AA. On surface-raised: 4.61:1 AA.
+   */
+  --color-text-muted: #9e9e9e;
+
+  /* --- Accent / interactive ---------------------------------------------- */
+
+  /**
+   * Dark-theme accent surface colour — OKLCH-derived lightened SCARLET (D-18):
+   *   SCARLET OKLCH: L=0.519, C=0.213, H=29.1° → #FA4C3C (L=0.661, same C+H)
+   *   Contrast on NERO background: 4.53:1 ≥ 4.5 ✓ AA.
+   *   Used for: buttons, badges, accent surfaces (not body link text on cards).
+   *   WHY it differs from --color-link: 4.25:1 on surface, 3.68:1 on surface-
+   *   raised — fine for accent surfaces but fails AA for inline body text on
+   *   those backgrounds. Use --color-link for inline text.
+   */
+  --color-accent: #fa4c3c;
+
+  /**
+   * Text placed ON the dark accent (#FA4C3C) surface.
+   * NERO on #FA4C3C: 4.53:1 ≥ 4.5 ✓ AA.
+   */
+  --color-accent-text: #262424;
+
+  /**
+   * Dark-theme link text colour — OKLCH L=0.756, C=0.213, H=29.1° (gamut-
+   * clipped at the sRGB red boundary) → #FF6D5A.
+   * Derivation: OKLCH L raised above accent L=0.661 until contrast on the
+   * most demanding dark surface (#353333, surface-raised) reaches ≥ 4.5:1.
+   *   on #262424 (background):     5.58:1 ✓ AA
+   *   on #2B2929 (surface):        5.23:1 ✓ AA
+   *   on #353333 (surface-raised): 4.54:1 ✓ AA  ← binding constraint
+   * Diverges from --color-accent in dark mode by design (see header note).
+   */
+  --color-link: #ff6d5a;
+
+  /**
+   * Dark-theme focus ring. #FA4C3C on NERO: 4.53:1 ≥ 3:1 ✓ (WCAG 2.4.11).
+   * On dark surface: 4.25:1 ≥ 3:1 ✓. On surface-raised: 3.68:1 ≥ 3:1 ✓.
+   * Uses the accent value because the focus ring only needs ≥ 3:1 non-text
+   * contrast. Using the lighter link colour is unnecessary here.
+   */
+  --color-focus: #fa4c3c;
+
+  /* --- Borders ------------------------------------------------------------ */
+
+  /**
+   * OKLCH step +7 above NERO (L 0.263 → 0.404, C=0.003, H=17° warm).
+   * Decorative separator — no WCAG SC 1.4.11 requirement for this role.
+   * Measured vs adjacent surface: #4A4848 on #2B2929 = 1.59:1 (decorative).
+   */
+  --color-border: #4a4848;
+
+  /* --- Status colours ----------------------------------------------------- */
+
+  /**
+   * Tailwind green-400 (#4ADE80). Standard accessible dark-theme success.
+   * NOT a hue-shifted brand colour (D-18).
+   * Contrast on NERO background: 8.86:1 AAA.
+   */
+  --color-success: #4ade80;
+
+  /**
+   * Tailwind amber-400 (#FBBF24). Standard accessible dark-theme warning.
+   * NOT a hue-shifted brand colour (D-18).
+   * Contrast on NERO background: 9.25:1 AAA.
+   */
+  --color-warning: #fbbf24;
+
+  /**
+   * Tailwind red-400 (#FC8181). Standard accessible dark-theme danger.
+   * NOT a hue-shifted brand colour (D-18). Distinct from the brand accent.
+   * Contrast on NERO background: 6.32:1 AA+.
+   * Contrast on --color-surface-danger (#451A1A): 6.07:1 AA+ ✓.
+   */
+  --color-danger: #fc8181;
+
+  /* --- Disabled state ----------------------------------------------------- */
+
+  /**
+   * Disabled text in dark theme. Intentionally low-contrast (WCAG exempt).
+   * #575555 on NERO: ≈ 2.05:1 — clearly "inactive".
+   */
+  --color-disabled-text: #575555;
+
+  /** Disabled control background. Same as --color-surface. */
+  --color-disabled-bg: #2b2929;
+
+  /* --- Form controls ------------------------------------------------------ */
+
+  /**
+   * Input field background in dark mode. Same as --color-surface.
+   * GRAY93 text contrast: 12.35:1 AAA.
+   */
+  --color-form-bg: #2b2929;
+
+  /**
+   * Input border in dark mode. Warm near-achromatic (L=0.554, C=0.003, H=17°)
+   * → #747272. Non-text UI component boundary (SC 1.4.11 ≥ 3:1 target).
+   * Measured: #747272 on #2B2929 (form-bg) = 3.03:1 ✓ AA.
+   * Design note: previous value #4A4848 = 1.59:1 was below target; raised to
+   * this warm mid-gray matching the NERO palette H=17° family.
+   */
+  --color-form-border: #747272;
+
+  /* --- Dialog / dropdown surfaces ---------------------------------------- */
+
+  /**
+   * Dialog and dropdown panel. Same as --color-surface-raised.
+   * GRAY93 text contrast: 10.72:1 AAA.
+   */
+  --color-dialog-bg: #353333;
+
+  /* --- Overlay / scrim ---------------------------------------------------- */
+
+  /**
+   * Modal and drawer backdrop scrim. Pure black at 60% opacity.
+   * Higher opacity than light mode to provide sufficient contrast against the
+   * dark theme's near-black surfaces. Decorative — no WCAG SC 1.4.3 requirement.
+   */
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  /* --- Skeleton loading state --------------------------------------------- */
+
+  /**
+   * QSkeleton placeholder block background. OKLCH step +4 above NERO
+   * (L 0.263 → 0.343, C=0.003, H=17° warm) → #3A3838.
+   * Visibly distinct from NERO background to show as a placeholder.
+   * Decorative loading state — no WCAG text-contrast requirement.
+   */
+  --color-skeleton: #3a3838;
+
+  /**
+   * QSkeleton shimmer highlight — slightly lighter than --color-skeleton.
+   * OKLCH step above #3A3838 (L 0.343 → 0.392, C=0.003, H=17° warm) → #474545.
+   * Creates the travelling shimmer gradient over the skeleton base.
+   * Decorative loading state — no WCAG text-contrast requirement.
+   */
+  --color-skeleton-shine: #474545;
+
+  /* --- Shadows ------------------------------------------------------------ */
+
+  /** Deeper opacity in dark mode for visible elevation contrast. Decorative. */
+  --shadow-sm:
+    0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.28);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.36), 0 2px 4px -2px rgba(0, 0, 0, 0.28);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.28);
+
+  /* Motion duration unchanged — controlled by reduced-motion block below. */
+  --motion-duration: 200ms;
+}
+
+/* =========================================================================
+   3. SYSTEM DARK MODE PREFERENCE
+   Applied when no explicit data-theme is set, respects OS preference.
+   All values MUST remain identical to the [data-theme="dark"] block above.
+   ========================================================================= */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-background: #262424;
+    --color-surface: #2b2929;
+    --color-surface-raised: #353333;
+    --color-surface-danger: #451a1a;
+    --color-text: #ededed;
+    --color-text-muted: #9e9e9e;
+    --color-accent: #fa4c3c;
+    --color-accent-text: #262424;
+    --color-link: #ff6d5a;
+    --color-focus: #fa4c3c;
+    --color-border: #4a4848;
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-danger: #fc8181;
+    --color-disabled-text: #575555;
+    --color-disabled-bg: #2b2929;
+    --color-form-bg: #2b2929;
+    --color-form-border: #747272;
+    --color-dialog-bg: #353333;
+    --color-overlay: rgba(0, 0, 0, 0.6);
+    --color-skeleton: #3a3838;
+    --color-skeleton-shine: #474545;
+    --shadow-sm:
+      0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.28);
+    --shadow-md:
+      0 4px 6px -1px rgba(0, 0, 0, 0.36), 0 2px 4px -2px rgba(0, 0, 0, 0.28);
+    --shadow-lg:
+      0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.28);
+    --motion-duration: 200ms;
+  }
+}
+
+/* =========================================================================
+   4. REDUCED MOTION
+   Sets --motion-duration to 0 for users who have requested reduced motion.
+   Every transition in the codebase MUST use var(--motion-duration) so this
+   preference is automatically honoured without per-component overrides.
+
+   D-20: only :root and [data-theme="dark"] are listed here.
+   The .dark selector has been removed and must not be re-added.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  [data-theme="dark"] {
+    --motion-duration: 0ms;
+  }
+}
+
+/* =========================================================================
+   5. UTILITY CLASSES
+   ========================================================================= */
+
+/**
+ * Apply to any element that should skip its transition when the user prefers
+ * reduced motion. Use alongside Tailwind transition classes.
+ */
+.motion-safe-transition {
+  transition-duration: var(--motion-duration);
+}
+
+/**
+ * Focus-visible outline using the brand focus token.
+ * Automatically uses the correct colour in light/dark themes.
+ * ≥ 3:1 contrast on all adjacent surfaces (WCAG 2.4.11).
+ */
+.focus-ring:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

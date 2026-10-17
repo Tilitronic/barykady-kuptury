@@ -72,16 +72,43 @@ Design priorities:
 Define semantic CSS variables (or an equivalent design-token mechanism), for example:
 
 - `--color-background`
-- `--color-surface`
-- `--color-text`
-- `--color-text-muted`
-- `--color-accent`
-- `--color-border`
-- `--color-link`
-- `--color-focus`
+- `--color-surface`, `--color-surface-raised`, `--color-surface-danger`
+- `--color-text`, `--color-text-muted`
+- `--color-accent`, `--color-accent-text`
+- `--color-border`, `--color-form-border`, `--color-form-bg`, `--color-dialog-bg`
+- `--color-link`, `--color-focus`
 - `--color-success`, `--color-warning`, `--color-danger`
+- `--color-overlay` — modal/drawer scrim
+- `--color-skeleton`, `--color-skeleton-shine` — QSkeleton placeholder
+- `--shadow-sm/md/lg`, `--motion-duration`
 
 Provide light and dark values for all tokens, including form controls, dialogs, dropdowns, borders, charts if any, and disabled states. Avoid a partial dark mode in which only the page background changes.
+
+### Dark-mode selector contract (D-20)
+
+The CSS token dark mode is triggered exclusively by `[data-theme="dark"]` on `<html>`. The `.dark` class must not be used. The T-010 boot file coordinates both `[data-theme="dark"]` (CSS custom properties) and `Quasar.Dark.set()` (Quasar component internals) as a single action. System preference falls back to `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { … } }`.
+
+### Step scales for derived tokens
+
+Surface tokens use OKLCH lightness increments of **ΔL ≈ 0.020/step**:
+- Light: GRAY93 (L=0.946) → surface +1 (L≈0.967) → surface-raised +2 (L≈0.985)
+- Dark: NERO (L=0.263) → surface +1 (L≈0.283) → surface-raised +3 (L≈0.323)
+
+Border tokens use a coarser **ΔL ≈ 0.035/step** for greater visual separation:
+- Light: GRAY93 → border −2 steps (L≈0.876 = `#D6D6D6`) → form-border −3 steps (L≈0.842 = `#CBCBCB`)
+- Dark: NERO → border +7 steps (L≈0.404 = `#4A4848`)
+
+### Dark-mode accent vs link divergence
+
+In dark mode `--color-accent` (`#FA4C3C`) and `--color-link` (`#FF6D5A`) are intentionally different values. A single colour cannot serve both as an accent *surface* carrying NERO text (needs low enough lightness to keep NERO ≥ 4.5:1 on it) and as inline *link text* on the lightest dark surfaces (needs high enough lightness to exceed 4.5:1 on `--color-surface-raised`). The link value is raised to OKLCH L=0.756 so it passes on all three dark surfaces; the accent value stays at L=0.661 to remain viable for surface use.
+
+### `$info` Quasar variable (no CSS token)
+
+`$info` is set in `src/css/quasar.variables.scss` (accessible blue `#1A56DB`) for Quasar component internals only. There is no `--color-info` CSS custom property in `tokens.css`. No site-authored component should reference a raw Quasar `$info` variable; if a semantic info token is needed a future ticket should add `--color-info` to `tokens.css` with a documented contrast pair.
+
+### Token completeness requirement
+
+A partial dark mode is explicitly forbidden (DESIGN_SYSTEM.md §5, `tokens.test.ts`). Every token in `src/shared/color/tokenNames.ts → REQUIRED_TOKENS` must appear in both `:root` and `[data-theme="dark"]`. The test enforces this mechanically.
 
 Initial theme follows `prefers-color-scheme`. A user's explicit toggle overrides system preference and persists. If no override is saved, continue to respond to changes in the operating system preference. Use accessible visible labels or a clear pressed state for the theme control.
 

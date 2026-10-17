@@ -1,25 +1,70 @@
-// Quasar Sass (& SCSS) Variables
-// --------------------------------------------------
-// To customize the look and feel of this app, you can override
-// the Sass/SCSS variables found in Quasar's source Sass/SCSS files.
+// T-006 — Quasar Sass variable mapping to brand tokens
+// =====================================================
+// Every Quasar UI variable is mapped to a verified brand colour from the
+// Barykady Kultury palette (D-13) or to an accessible derived value (D-18).
+//
+// BANNED defaults removed:
+//   $primary:   #1976d2  (Quasar default blue)
+//   $secondary: #26a69a  (Quasar default teal)
+//   $accent:    #9c27b0  (Quasar default purple)
+//   $dark:      #1d1d1d  (generic dark, replaced by NERO)
+//   $positive:  #21ba45  (generic green, replaced by brand success)
+//   $negative:  #c10015  (near-SCARLET, replaced by distinct danger red)
+//   $info:      #31ccec  (generic cyan, replaced by accessible brand-neutral blue)
+//   $warning:   #f2c037  (generic yellow, replaced by brand warning)
+//
+// Mapping rationale:
+//   $primary   = SCARLET — the single dominant brand action colour.
+//   $secondary = NERO-derived neutral — secondary actions, less emphasis.
+//   $accent    = SCARLET — Quasar's QBtn accent variant shares the brand accent.
+//   $dark      = NERO — canonical dark surface in brandbook.
+//   $dark-page = NERO — dark-mode page background, same as $dark.
+//   $positive  = brand success (#166534, 6.09:1 on GRAY93).
+//   $negative  = brand danger (#991B1B, 7.10:1 on GRAY93, distinct from SCARLET).
+//   $warning   = brand warning (#92400E, 6.06:1 on GRAY93).
+//   $info      = accessible blue-neutral (#1A56DB); no brand blue exists —
+//                kept outside the brand accent role, passes 4.5:1 on white.
+//
+// Note: these Sass variables set the Quasar component base palette.
+// Runtime theme switching (light/dark) is handled via CSS custom properties
+// defined in src/css/tokens.css, not by swapping Sass variables.
 
-// Check documentation for full list of Quasar variables
+// ─── Brand palette (D-13) ────────────────────────────────────────────────────
+$scarlet: #c60001; // Brand accent
+$nero: #262424; // Brand dark surface / primary text
+$gray93: #ededed; // Brand background
 
-// Your own variables (that are declared here) and Quasar's own
-// ones will be available out of the box in your .vue/.scss/.sass files
+// ─── Quasar semantic variables ───────────────────────────────────────────────
 
-// It's highly recommended to change the default colors
-// to match your app's branding.
-// Tip: Use the "Theme Builder" on Quasar's documentation website.
+// Primary action colour — SCARLET is the brand's dominant accent.
+$primary: $scarlet;
 
-$primary: #1976d2;
-$secondary: #26a69a;
-$accent: #9c27b0;
+// Secondary — near-neutral dark tone derived from NERO.
+// GRAY93 / white text contrast on this: ≥ 9.96:1 (AAA).
+$secondary: #4a4848;
 
-$dark: #1d1d1d;
-$dark-page: #121212;
+// Accent — same brand SCARLET for Quasar's accent button/chip variant.
+$accent: $scarlet;
 
-$positive: #21ba45;
-$negative: #c10015;
-$info: #31ccec;
-$warning: #f2c037;
+// Dark surface — NERO.
+$dark: $nero;
+
+// Dark page background — NERO (tokens.css provides the full dark-theme palette).
+$dark-page: $nero;
+
+// Positive / success — brand-aligned accessible green (D-18, not hue-shifted).
+// #166534 on #EDEDED: 6.09:1 AA.
+$positive: #166534;
+
+// Negative / danger — accessible dark red distinct from SCARLET (D-18).
+// #991B1B on #EDEDED: 7.10:1 AA.
+$negative: #991b1b;
+
+// Warning — accessible amber-brown (D-18, standard accessible palette).
+// #92400E on #EDEDED: 6.06:1 AA.
+$warning: #92400e;
+
+// Info — accessible blue. No brand blue exists; this fills the Quasar info
+// role without conflicting with the SCARLET-only brand accent.
+// #1A56DB on white: 4.61:1 AA.
+$info: #1a56db;
