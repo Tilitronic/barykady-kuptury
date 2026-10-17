@@ -1,5 +1,9 @@
 import en from "./en";
+import pl from "./pl";
+import uk from "./uk";
 
 export default {
-  en
+  en,
+  pl,
+  uk
 };

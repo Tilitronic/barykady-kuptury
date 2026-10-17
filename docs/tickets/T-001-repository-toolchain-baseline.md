@@ -35,6 +35,7 @@ Infra ticket — verification-first.
 - [ ] `docs/`, `AGENTS.md`, `NGOinfoSources/` are tracked.
 - [ ] No demo page/component/store/asset remains; `rg -i "quasar-logo|EssentialLink|second.vue"` returns nothing.
 - [ ] Router uses `history`; a deep link (`/en/`) resolves after `pnpm build && pnpm preview`.
+      *Clarified during review:* T-001 proves the SPA fallback contract — `history` mode plus a server that returns `index.html` for unknown paths (verified locally against `dist/spa`; `netlify.toml` provides it in production). Locale-prefixed routes do not exist yet and are implemented in **T-009**; the route map contains `/` only until then. This is a deliberate scope boundary, not a passing claim about T-009.
 - [ ] `pnpm lint:check`, `pnpm typecheck`, `pnpm build` pass.
 - [ ] `DECISIONS.md` D-01/D-02 are `decided` with rationale.
 
@@ -52,4 +53,11 @@ pnpm --dir apps/web/barykadyKultury build
 - @architector: layout matches (or documents a deliberate divergence from) `docs/architecture.md` §2.
 
 ## Log
-- (author) start:
+- (author) start: decisions D-01/D-02 recorded (`decided`).
+- RED baseline: `git rev-parse --show-toplevel` resolved to `apps/web/barykadyKultury` while `docs/`, `AGENTS.md` and `NGOinfoSources/` were untracked; router mode was `hash`; demo pages/components/store present.
+- GREEN: moved `.git` to the project root, added root `.gitignore`/`README.md`/`package.json`/`netlify.toml`, removed demo `pages/*`, `EssentialLink.vue`, `quasar-logo-vertical.svg`, `example-store.ts`; replaced i18n `en-US` with `en`; set `vueRouterMode: "history"`.
+- Verification: `pnpm lint:check` — all files formatted, oxlint clean (22 files). `pnpm typecheck` — exit 0 (only a `vue-router` rootDir advisory). `pnpm build` — Build succeeded, SPA output at `apps/web/barykadyKultury/dist/spa`.
+- Deep-link check: served `dist/spa` with SPA fallback on :4173 — `/` → 200, `/en/` → 200, `<title>Barykady Kultury</title>`.
+- `rg -i "quasar-logo|EssentialLink|second.vue" src` → no matches.
+- Commit: `bec10ba`.
+- Note: `quasar serve` is unavailable in `@quasar/app-vite` v3 (no `serve` command); no `preview` script was added. T-003 owns the preview server for Playwright.

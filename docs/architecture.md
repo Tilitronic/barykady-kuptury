@@ -4,9 +4,9 @@
 
 | Area | Decision | Reason |
 |---|---|---|
-| Repository | Monorepo with pnpm workspaces + Turborepo | Reproducible commands now; room for genuinely shared packages later |
+| Repository | Single Quasar app in a git repository rooted at the project root (`apps/web/barykadyKultury`); pnpm workspaces + Turborepo deferred | D-01: one app today, no second consumer; avoids work that buys nothing. The layout keeps `apps/` so a monorepo can be adopted without moving files. |
 | Web app | Quasar CLI with Vite, Vue 3, TypeScript | Required UI framework and a mature component/router/build setup |
-| Lint/format | ESLint + Prettier | Strong Vue-template linting and established ecosystem |
+| Lint/format | oxlint + oxfmt (Quasar scaffold default) | D-02: already wired and green, single fast toolchain. Deliberate divergence from the original ESLint + Prettier choice, recorded here rather than silently changed. |
 | E2E | Playwright | Required cross-browser end-to-end coverage |
 | Content DB | Supabase PostgreSQL | Relational content model, migrations, RLS and typed data access |
 | Authentication | Supabase Auth | Managed administrator authentication; no custom password system |
@@ -60,6 +60,22 @@ ngo-platform/
 ```
 
 Create only the directories and files needed by implemented features. Do not add `packages/*` until at least two actual consumers require shared code. Keep Quasar-specific UI inside `apps/web`; keep Supabase migrations at repository root in `supabase/`.
+
+### Current layout note (D-01)
+
+The tree above is the target shape for a multi-app repository. Today only one app exists, so the implemented layout is:
+
+```text
+barykadyKultury/                  # git repository root
+├── apps/web/barykadyKultury/     # the single Quasar app (pnpm workspace + lockfile live here)
+├── docs/                         # product, architecture, design, testing, tickets
+├── NGOinfoSources/               # brandbook, regulations, logo, legal identifiers
+├── netlify.toml                  # base = apps/web/barykadyKultury, publish = dist/spa
+├── package.json                  # root scripts delegating into the app
+└── AGENTS.md
+```
+
+There is no root `pnpm-workspace.yaml`, `pnpm-lock.yaml`, or `turbo.json`. Install and run app tooling with `pnpm --dir apps/web/barykadyKultury <command>`; the root scripts already do this. Adding a root workspace is deferred until a second consumer exists (D-15).
 
 ## 3. Application boundaries
 

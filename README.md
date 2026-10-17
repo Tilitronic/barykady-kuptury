@@ -24,6 +24,9 @@ Turborepo is deliberately not used while a single app exists
 
 Run from the repository root:
 
+- `pnpm install` **is not** the install command for this repo: dependencies live
+  inside the app workspace. Use `pnpm --dir apps/web/barykadyKultury install`
+  (or run `pnpm install` from that directory).
 - `pnpm dev` — start the app in development mode
 - `pnpm build` — production build (`apps/web/barykadyKultury/dist/spa`)
 - `pnpm lint` / `pnpm lint:check` — oxlint + oxfmt (fix / verify)
@@ -31,6 +34,14 @@ Run from the repository root:
 - `pnpm typecheck` — Vue/TypeScript type checking
 
 Test commands are added by tickets T-002 and T-003.
+
+## Content sources
+
+`NGOinfoSources/` is deliberately versioned: it holds the brandbook, the
+three-language regulations, the logo package and the only confirmed legal
+identifiers (NIP/REGON). The 21 MB brandbook PDF is the single source of truth
+for brand values; Git LFS is intentionally not used at this size. Do not delete
+these files and do not copy them into the app bundle unless a ticket says so.
 
 ## Documentation
 

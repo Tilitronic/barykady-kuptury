@@ -4,7 +4,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 
 | Ticket | Title | Session | Status | Reviewer | Commit | Date |
 |---|---|---|---|---|---|---|
-| T-001 | Repository & toolchain baseline | 1 | in-progress | — | — | — |
+| T-001 | Repository & toolchain baseline | 1 | review | — | bec10ba | — |
 | T-002 | Unit/component test harness | 1 | todo | — | — | — |
 | T-003 | E2E + accessibility harness | 1 | todo | — | — | — |
 | T-004 | Documentation alignment & verified brand values | 1 | todo | — | — | — |
