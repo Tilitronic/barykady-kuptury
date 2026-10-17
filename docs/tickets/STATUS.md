@@ -8,7 +8,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-002 | Unit/component test harness | 1 | done | @reviewer (rev-1) | 3c3fb98 | 2026-10-17 |
 | T-003 | E2E + accessibility harness | 1 | done | @reviewer (rev-1, rev-2) | 4159506 | 2026-10-17 |
 | T-004 | Documentation alignment & verified brand values | 1 | done | @reviewer (rev-1, architecture checkpoints) | 670dfc8 | 2026-10-17 |
-| T-005 | CI quality gates | 1 | todo | — | — | — |
+| T-005 | CI quality gates | 1 | done | @reviewer (rev-1) | c3d751e | 2026-10-17 |
 | T-006 | Brand tokens & Quasar mapping | 2 | todo | — | — | — |
 | T-007 | Typography: self-hosted Inter + scale | 2 | todo | — | — | — |
 | T-008 | BrandLogo component | 2 | todo | — | — | — |
@@ -44,4 +44,4 @@ Updated by the orchestrator at every state change. `done` requires an independen
 
 | Session | Started | Closed | Handoff file | User verified |
 |---|---|---|---|---|
-| 1 | 2026-10-17 | paused (context limit; T-003, T-005 carried) | `HANDOFF-S1-2026-10-17.md` | git push verified; OpenCode restart + lane probe pending |
+| 1 | 2026-10-17 | 2026-10-17 (T-001…T-005 all done; restart + lane probe verified) | `HANDOFF-S1-2026-10-17.md` | push pending (main ahead 4) |
