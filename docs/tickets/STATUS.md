@@ -44,4 +44,4 @@ Updated by the orchestrator at every state change. `done` requires an independen
 
 | Session | Started | Closed | Handoff file | User verified |
 |---|---|---|---|---|
-| 1 | 2026-10-17 | paused (context limit; T-003, T-005 carried) | `HANDOFF-S1-2026-10-17.md` | pending |
+| 1 | 2026-10-17 | paused (context limit; T-003, T-005 carried) | `HANDOFF-S1-2026-10-17.md` | git push verified; OpenCode restart + lane probe pending |
