@@ -12,6 +12,11 @@ In:
 - `src/css/tokens.css` (or `.scss`): `--color-background`, `--color-surface`, `--color-surface-raised`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-accent-text`, `--color-border`, `--color-link`, `--color-focus`, `--color-success|warning|danger`, plus disabled state, form control, dialog/dropdown surfaces, and shadow tokens.
 - Light theme from brandbook: GRAY93 background, NERO text, SCARLET accent.
 - Dark theme: NERO background, GRAY93 text, and a **lightened scarlet** for text/links that passes 4.5:1 on nero (brandbook only supplies `#C60001`, which fails; document the derived value and its computation).
+- **Derivation policy (D-18).** Non-brand tokens must be derived deterministically, never picked ad hoc:
+  - Step neutrals from the three brand colors in OKLCH lightness (e.g. surface steps above GRAY93, border steps below it), keeping the brand hue.
+  - Derive the dark-theme accent by raising SCARLET's OKLCH lightness until measured contrast on NERO is ≥ 4.5:1; record the resulting hex and ratio.
+  - Source `success`/`warning`/`danger` from a standard accessible palette rather than shifting brand hues; each must clear 4.5:1 on both light and dark backgrounds and be documented with its measured ratio.
+  - Every derived token is recorded next to its measured contrast pair in the token file; a token without a documented measurement is not allowed to ship.
 - `src/css/quasar.variables.scss`: map `$primary`, `$secondary`, `$accent`, `$dark`, `$positive`, `$negative`, `$warning`, `$info` to brand tokens — no default Quasar blue/purple may remain.
 - Pure util `src/shared/color/contrast.ts` (`relativeLuminance`, `contrastRatio`) + unit test `src/shared/color/__tests__/contrast.test.ts` that enumerates every documented text/background pair and asserts the required ratio (4.5 normal, 3.0 large/UI).
 - `prefers-reduced-motion` token/utility and a focus-ring token meeting 3:1 against adjacent surfaces.

@@ -21,6 +21,15 @@ Owners: `user` (project owner must supply), `boss` (orchestrator decides within 
 | D-14 | Event description language | open | user | T-024 | Calendar descriptions are single-language. Show the calendar language as-is with a locale note? Or require separate calendars per locale? Recommendation: display as-is + "content in <lang>" note. |
 | D-15 | Turborepo / shared packages | deferred | architector | — | Only when a second consumer exists (docs/architecture.md §2). |
 | D-16 | Admin locale content workflow (translate in admin vs seed-only) | open | user | T-028 | MVP recommendation: admin edits one locale at a time and sees missing-translation flags. |
+| D-17 | Canonical admin claim key | decided | boss | T-013, T-026 | `app_metadata.role = 'admin'`. `app_metadata` is server-controlled and not user-editable. Enforced through a single `is_admin()` SQL helper; no policy repeats the claim expression. Raised by the T-004 architecture review to remove security-boundary ambiguity. |
+| D-18 | Derivation policy for non-brand design tokens | decided | boss | T-006 | Deterministic derivation, documented with measured contrast: neutrals stepped from the brand colors in OKLCH lightness; dark accent = SCARLET lightness raised until ≥4.5:1 on NERO; success/warning/danger taken from a standard accessible palette, never hue-shifted brand colors. A token without a recorded measurement may not ship. |
+| D-19 | Single source of truth per fact (documentation governance) | decided | boss | — | `DECISIONS.md` owns decision state; `DESIGN_SYSTEM.md` owns verified design values; `AGENTS.md` owns enforcement rules. Other documents reference the owning file by ID instead of restating rationale. Applied opportunistically, not as a bulk rewrite. |
+
+## Governance notes from the Session 1 architecture review
+
+- Token contract precision: T-006 now carries the derivation policy (D-18) so no contributor has to guess neutral steps, surface steps or the dark accent.
+- Admin authorization: the canonical claim is fixed (D-17) before any RLS work starts.
+- Duplication debt: D-01/D-02 state, brand values and the lint rule still appear in several documents; D-19 records who owns each fact. A bulk de-duplication edit is deliberately not part of T-004.
 
 ## Resolved inputs
 

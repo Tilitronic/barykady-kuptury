@@ -9,7 +9,7 @@ Deny-by-default authorization enforced in PostgreSQL: anonymous visitors read pu
 
 ## Scope
 In:
-- `is_admin()` SQL function reading the trusted claim (`app_metadata.role = 'admin'` or `app_metadata.is_admin = true` — pick one and document it).
+- `is_admin()` SQL function reading the canonical trusted claim: **`app_metadata.role = 'admin'`** (decision D-17). `app_metadata` is server-controlled; do not read a user-editable profile field. This function is the single enforcement point for admin authorization — policies call it rather than repeating the claim expression.
 - Policies per table: anonymous `select` only when `status = 'published'` (or `is_published`), joined translations only for published rows; insert/update/delete admin-only; `publication_files` and `organization_documents` metadata follow their parent's publish state.
 - `calendar_event_links`: public read allowed (it contains only IDs and a nullable project reference), admin write.
 - Explicit `revoke`/`grant` where defaults are too broad; no `security definer` without a documented reason and a pinned `search_path`.

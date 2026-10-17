@@ -2,7 +2,7 @@
 
 ## Project purpose
 
-Build an accessible, multilingual public website and lightweight content-management interface for an NGO. The primary stack is Quasar (Vue 3 + TypeScript), pnpm workspaces, Turborepo, Supabase, Netlify, Google Calendar, and Playwright.
+Build an accessible, multilingual public website and lightweight content-management interface for an NGO. The target stack is Quasar (Vue 3 + TypeScript), Supabase, Netlify, Google Calendar, and Playwright. A pnpm workspaces + Turborepo monorepo is a **future option**, not the current layout (decision D-01 in `docs/tickets/DECISIONS.md`).
 
 Before implementation, read:
 
