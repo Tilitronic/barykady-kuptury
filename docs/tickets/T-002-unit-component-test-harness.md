@@ -46,4 +46,11 @@ pnpm typecheck
 - @reviewer: no test-only code leaking into production bundles, config not duplicating Quasar aliases by hand where they can be imported, no fake assertions that cannot fail.
 
 ## Log
-- (author) start:
+- (author) start: T-001 closed at `0f34816`.
+- RED: created `src/pages/__tests__/index.test.ts` and `src/test-utils/mount.ts` first, then ran `pnpm test` — exit code 1 with no script output (`vitest` not installed, no `test` script). Captured at `/tmp/opencode/red-t002.log`.
+- Dependencies added (dev): `vitest` + `@vitest/coverage-v8` (runner + coverage), `@vue/test-utils` (component mounting), `happy-dom` (fast DOM environment), `@vitejs/plugin-vue` (SFC compilation in tests). Each is the minimum needed for the layer `docs/TESTING.md` §2 requires; no second test framework was added.
+- Config: `vitest.config.ts` aliases `@`/`app` → `src` and `#q-app` → `@quasar/app-vite/client` (the runtime counterpart of the type-only `.quasar/tsconfig.json` path). Reusing Quasar's generated alias table was not possible without importing Quasar's internal config-tools, so aliases are declared explicitly and documented in the config.
+- Convention: app tests live in `src/**/__tests__/*.test.ts`; infrastructure tests live in `test/unit/`; shared mount helpers in `src/test-utils/`. Setup file `test/unit/setup.ts` provides the `matchMedia` stub happy-dom lacks (needed by T-010).
+- Tests: 4 falsifiable assertions — h1 text, and the placeholder paragraph in `en`, `pl`, `uk`. Alias resolution is proven by importing the page and helper through `@/`.
+- Verification: `pnpm test` → 4 passed (1 file), exit 0. `pnpm test:coverage` → v8 report generated, exit 0. `pnpm typecheck` → exit 0 (only the pre-existing `vue-router` rootDir advisory). `pnpm lint:check` → 28 files formatted, oxlint clean.
+- No production code changed; only the app `package.json` scripts, test config, test utilities and the ticket itself.

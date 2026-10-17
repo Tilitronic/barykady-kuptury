@@ -22,7 +22,11 @@
     "dev": "quasar dev",
     "build": "quasar build",
     "typecheck": "vue-tsc --noEmit",
-    "postinstall": "quasar prepare --silent"
+    "postinstall": "quasar prepare --silent",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@quasar/extras": "^2.1.0",
@@ -36,12 +40,17 @@
     "@intlify/unplugin-vue-i18n": "^11.0.0",
     "@quasar/app-vite": "^3.10.3",
     "@types/node": "^22.19.11",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@vitest/coverage-v8": "^5.0.5",
+    "@vue/test-utils": "^2.5.1",
     "autoprefixer": "^10.4.27",
+    "happy-dom": "^21.0.3",
     "oxfmt": "^0.x",
     "oxlint": "^1.x",
     "oxlint-tsgolint": "^7.0.2001",
     "postcss": "^8.5.8",
     "typescript": "^6.0.0",
+    "vitest": "^5.0.5",
     "vue-tsc": "^3.3.3"
   },
   "engines": {

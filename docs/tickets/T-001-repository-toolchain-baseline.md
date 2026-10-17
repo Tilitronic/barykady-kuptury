@@ -34,8 +34,7 @@ Infra ticket — verification-first.
 - [ ] `git rev-parse --show-toplevel` returns the project root; `git status` is clean.
 - [ ] `docs/`, `AGENTS.md`, `NGOinfoSources/` are tracked.
 - [ ] No demo page/component/store/asset remains; `rg -i "quasar-logo|EssentialLink|second.vue"` returns nothing.
-- [ ] Router uses `history`; a deep link (`/en/`) resolves after `pnpm build && pnpm preview`.
-      *Clarified during review:* T-001 proves the SPA fallback contract — `history` mode plus a server that returns `index.html` for unknown paths (verified locally against `dist/spa`; `netlify.toml` provides it in production). Locale-prefixed routes do not exist yet and are implemented in **T-009**; the route map contains `/` only until then. This is a deliberate scope boundary, not a passing claim about T-009.
+- [ ] Router uses `history`; the built SPA served with a history fallback returns `index.html` for unknown paths (`/` → 200, `/en/` → 200), and `netlify.toml` provides the same redirect in production. Locale-prefixed routes themselves are implemented in **T-009** — this ticket proves the fallback contract, not locale routing.
 - [ ] `pnpm lint:check`, `pnpm typecheck`, `pnpm build` pass.
 - [ ] `DECISIONS.md` D-01/D-02 are `decided` with rationale.
 
@@ -61,3 +60,7 @@ pnpm --dir apps/web/barykadyKultury build
 - `rg -i "quasar-logo|EssentialLink|second.vue" src` → no matches.
 - Commit: `bec10ba`.
 - Note: `quasar serve` is unavailable in `@quasar/app-vite` v3 (no `serve` command); no `preview` script was added. T-003 owns the preview server for Playwright.
+- Independent review (rev-1, range `fdbe7c9...0f34816`): 5 Standards + 4 Spec findings raised, all Major/Critical items resolved in `0f34816`; verdict: "T-001 can be closed".
+- Review fixes: `docs/architecture.md` records D-01/D-02 and the implemented layout; pl/uk i18n bundles added (rule 9); README documents app-local install and content-source policy; acceptance criterion reworded to the actual history-fallback contract (locale routes explicitly T-009).
+- Clean tree evidence: `git status --short` empty immediately after `0f34816`; subsequent ledger/ticket edits are committed bookkeeping only.
+- Carried to T-004: the batch commit (`bec10ba`) mixes baseline and source-material import; no action required beyond the doc alignment ticket.

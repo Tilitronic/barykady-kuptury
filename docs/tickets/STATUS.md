@@ -4,8 +4,8 @@ Updated by the orchestrator at every state change. `done` requires an independen
 
 | Ticket | Title | Session | Status | Reviewer | Commit | Date |
 |---|---|---|---|---|---|---|
-| T-001 | Repository & toolchain baseline | 1 | review | — | bec10ba | — |
-| T-002 | Unit/component test harness | 1 | todo | — | — | — |
+| T-001 | Repository & toolchain baseline | 1 | done | @reviewer (rev-1) | 0f34816 | 2026-10-17 |
+| T-002 | Unit/component test harness | 1 | review | — | — | 2026-10-17 |
 | T-003 | E2E + accessibility harness | 1 | todo | — | — | — |
 | T-004 | Documentation alignment & verified brand values | 1 | todo | — | — | — |
 | T-005 | CI quality gates | 1 | todo | — | — | — |
