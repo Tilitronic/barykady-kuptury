@@ -45,3 +45,4 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | Session | Started | Closed | Handoff file | User verified |
 |---|---|---|---|---|
 | 1 | 2026-10-17 | 2026-10-17 (T-001…T-005 all done; restart + lane probe verified) | `HANDOFF-S1-2026-10-17.md` | push pending (main ahead 4) |
+| 2 | 2026-10-17 | 2026-10-18 (T-006 + T-009 done & reviewed; T-007/T-008/T-010/T-011 parked) | `HANDOFF-S2-2026-10-18.md` | push pending (main ahead 3) |
