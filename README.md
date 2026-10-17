@@ -32,8 +32,39 @@ Run from the repository root:
 - `pnpm lint` / `pnpm lint:check` — oxlint + oxfmt (fix / verify)
 - `pnpm format:check` — formatting check only
 - `pnpm typecheck` — Vue/TypeScript type checking
+- `pnpm test` — unit/component tests (vitest)
+- `pnpm test:coverage` — unit/component tests with coverage
+- `pnpm test:e2e` — Playwright E2E tests (starts and stops its own server)
+- `pnpm test:e2e:install` — install the Playwright browsers used by E2E
 
-Test commands are added by tickets T-002 and T-003.
+## Continuous integration
+
+[![CI](https://github.com/Tilitronic/barykady-kuptury/actions/workflows/ci.yml/badge.svg)](https://github.com/Tilitronic/barykady-kuptury/actions/workflows/ci.yml)
+
+`.github/workflows/ci.yml` runs the eight quality gates from `docs/TESTING.md`
+§5 on every push to `main` and every pull request, in order:
+
+1. install from the committed lockfile (`--frozen-lockfile`)
+2. formatting check (oxfmt)
+3. lint (oxlint + oxfmt)
+4. type check (vue-tsc)
+5. unit/component tests (vitest)
+6. DB/RLS tests — optional; skipped cleanly while Supabase is not configured
+7. Playwright E2E — cached chromium; the HTML report is uploaded even on failure
+8. production build (`quasar build`)
+
+CI pins Node 24 and pnpm 10.33.0 to match the local toolchain, and no secret is
+required for a green run: the workflow exports obviously fake, loopback-pointing
+`VITE_SUPABASE_*` placeholders instead of credentials (architecture §9).
+
+Reproduce the full gate sequence locally:
+
+```bash
+bash scripts/ci-local.sh
+```
+
+The script stops at the first failing gate, prints it by name, and exits
+non-zero. Its gate names mirror the workflow's step names one-to-one.
 
 ## Content sources
 

@@ -1,0 +1,136 @@
+# CI quality gates (T-005).
+#
+# Runs the eight gates from docs/TESTING.md §5 in order:
+#   1 install (frozen lockfile) → 2 formatting → 3 lint → 4 type check →
+#   5 unit/component tests → 6 DB/RLS (optional) → 7 Playwright E2E →
+#   8 production build.
+#
+# CONTRACT: the `Gate N — …` step names below are a 1:1 mirror of the labels in
+# scripts/ci-local.sh, which reproduces this workflow locally. Keep the two
+# lists identical, in the same order, so a failure is attributable to the same
+# name in both places.
+#
+# Design rules honoured here:
+# - No production credentials (docs/architecture.md §9): the Supabase values in
+#   `env` are obviously fake and point at a loopback origin.
+# - The lockfile lives in the app workspace, so the frozen install targets
+#   apps/web/barykadyKultury and never the repository root.
+# - `secrets` is never referenced from an `if:` (GitHub Actions cannot resolve
+#   it there, at job *or* step level). The optional Gate 6 instead maps the
+#   secret to `env` and tests that env value in a step-level `if:`, which is the
+#   supported pattern.
+# - No `|| true` anywhere: a failing gate fails the job.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Pinned toolchain. Node 24 matches the local developer toolchain (v24.18.0)
+  # and satisfies package.json engines (">= 26 || ^24 || ^22.12"). pnpm is
+  # pinned to an exact version; `latest` would make CI non-reproducible.
+  NODE_VERSION: "24"
+  PNPM_VERSION: "10.33.0"
+  APP_DIR: apps/web/barykadyKultury
+  # Browser-safe, obviously fake placeholders. Loopback origin, dummy key —
+  # not credentials, and safe to expose to the client bundle.
+  VITE_SUPABASE_URL: "http://127.0.0.1:54321"
+  VITE_SUPABASE_PUBLISHABLE_KEY: "ci-dummy-publishable-key-not-a-real-credential"
+
+jobs:
+  quality-gates:
+    name: Quality gates (TESTING §5)
+    runs-on: ubuntu-latest
+    env:
+      # Mapped from secrets so the optional Gate 6 can test presence with a
+      # step-level `if: env.SUPABASE_DB_URL != ''`. Expands to an empty string
+      # when the secret is not configured, so the gate skips cleanly.
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup — pnpm ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup — Node ${{ env.NODE_VERSION }} with pnpm store cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ${{ env.APP_DIR }}/pnpm-lock.yaml
+
+      - name: Gate 1 — Install dependencies (frozen lockfile)
+        run: pnpm --dir "$APP_DIR" install --frozen-lockfile
+
+      - name: Gate 2 — Formatting check (oxfmt)
+        run: pnpm format:check
+
+      - name: Gate 3 — Lint (oxlint + oxfmt)
+        run: pnpm lint:check
+
+      - name: Gate 4 — Type check (vue-tsc)
+        run: pnpm typecheck
+
+      - name: Gate 5 — Unit/component tests (vitest)
+        run: pnpm test
+
+      - name: Gate 6 — DB/RLS tests (optional; skipped unless Supabase is configured)
+        if: env.SUPABASE_DB_URL != ''
+        run: |
+          if [ ! -d supabase/migrations ]; then
+            echo "::notice title=Gate 6 skipped::SUPABASE_DB_URL is set but supabase/migrations does not exist yet (T-012/T-013)."
+            exit 0
+          fi
+          # Supabase CLI convention: RLS/pgTAP assertions live in supabase/tests.
+          npx --yes supabase@2 test db
+
+      - name: Setup — resolve Playwright version for the browser cache key
+        id: playwright-version
+        run: |
+          version="$(pnpm --dir "$APP_DIR" exec playwright --version | awk '{print $2}')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Playwright version: $version"
+
+      - name: Setup — cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          # Keyed on the Playwright version resolved from the installed
+          # lockfile, so a browser revision change is always a cache miss.
+          # No env value or secret is part of this key.
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Gate 7 — Playwright E2E tests (install browsers + run suite)
+        run: |
+          pnpm test:e2e:install
+          pnpm test:e2e
+
+      - name: Gate 8 — Production build (quasar build)
+        run: pnpm build
+
+      - name: Upload Playwright report (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            ${{ env.APP_DIR }}/playwright-report/
+            ${{ env.APP_DIR }}/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
