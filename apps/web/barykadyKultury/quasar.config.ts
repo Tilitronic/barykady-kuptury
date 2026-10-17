@@ -11,7 +11,9 @@ export default defineConfig(ctx => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ["i18n"],
+    // `theme` (T-010) applies the resolved light/dark theme to both D-20
+    // mechanisms and wires the live system-preference listener.
+    boot: ["i18n", "theme"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: ["app.scss"],

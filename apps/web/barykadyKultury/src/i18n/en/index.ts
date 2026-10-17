@@ -16,6 +16,9 @@ const en = {
   nav: {
     language: "Language"
   },
+  theme: {
+    toggleLabel: "Toggle dark theme"
+  },
   home: {
     title: "Barykady Kultury",
     description: "Official website of the Barykady Kultury association.",

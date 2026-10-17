@@ -15,6 +15,9 @@ const pl: MessageSchema = {
   nav: {
     language: "Język"
   },
+  theme: {
+    toggleLabel: "Przełącz tryb ciemny"
+  },
   home: {
     title: "Barykady Kultury",
     description: "Oficjalna strona stowarzyszenia Barykady Kultury.",

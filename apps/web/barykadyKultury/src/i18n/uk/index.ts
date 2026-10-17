@@ -15,6 +15,9 @@ const uk: MessageSchema = {
   nav: {
     language: "Мова"
   },
+  theme: {
+    toggleLabel: "Перемкнути темну тему"
+  },
   home: {
     title: "Barykady Kultury",
     description: "Офіційний сайт організації Barykady Kultury.",

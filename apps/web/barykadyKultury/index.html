@@ -15,6 +15,14 @@
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';<% if (ctx.dev) { %> connect-src 'self' ws://localhost:*; worker-src 'self' blob:;<% } %>"
     />
 
+    <!--
+      T-010 no-flash theme bootstrap. A same-origin external script is allowed by
+      `script-src 'self'` (no inline script, no CSP hash to maintain) and, being
+      a classic parser-blocking <head> script, it sets `[data-theme]` before the
+      first paint. See public/theme-init.js for the D-20/CSP rationale.
+    -->
+    <script src="/theme-init.js"></script>
+
     <link
       rel="icon"
       type="image/png"

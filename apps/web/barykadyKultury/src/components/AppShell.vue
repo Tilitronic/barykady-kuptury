@@ -5,6 +5,7 @@
     </a>
     <header class="app-shell__header">
       <LanguageSwitcher />
+      <ThemeToggle />
     </header>
     <main id="main-content" class="app-shell__main">
       <slot />
@@ -16,11 +17,12 @@
 import { useI18n } from "vue-i18n";
 
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import ThemeToggle from "@/components/ThemeToggle.vue";
 
 /**
- * Minimal page shell: a skip link, the language switcher and a single `main`
- * landmark. T-010/T-011 grow the real navigation; this shell exists so every
- * locale page exposes the selector and satisfies the a11y landmark rules
+ * Minimal page shell: a skip link, the language and theme controls and a single
+ * `main` landmark. T-011 grows the real navigation; this shell exists so every
+ * locale page exposes the controls and satisfies the a11y landmark rules
  * (docs/DESIGN_SYSTEM.md §6).
  */
 const { t } = useI18n();
@@ -47,7 +49,9 @@ const { t } = useI18n();
 
 .app-shell__header {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.75rem;
   padding: 0.75rem 1.25rem;
 }
 
