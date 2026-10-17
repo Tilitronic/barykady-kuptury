@@ -18,10 +18,12 @@ Verified palette:
 
 | Pair | Ratio | Verdict |
 |---|---|---|
-| nero on GRAY93 | 13.1:1 | AAA body text |
+| nero on GRAY93 | 13.19:1 | AAA body text |
 | white on scarlet | 6.17:1 | AA body text |
 | scarlet on GRAY93 | 5.27:1 | AA body text; use sparingly |
-| scarlet on nero | 2.48:1 | **Forbidden for text.** Dark theme needs a lightened accent variant for text/links that clears 4.5:1; pure brand scarlet stays for surfaces carrying white text. |
+| scarlet on nero | 2.50:1 | **Forbidden for text.** Dark theme needs a lightened accent variant for text/links that clears 4.5:1; pure brand scarlet stays for surfaces carrying white text. |
+
+Ratios are computed with the WCAG 2.x relative-luminance formula and rounded to two decimals.
 
 The brandbook supplies exactly three colors. Any additional token (borders, muted text, links, focus, success/warning/error) must be derived and documented with its own measured contrast — not guessed and not borrowed from an unrelated palette.
 

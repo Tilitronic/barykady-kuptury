@@ -40,7 +40,9 @@ These documents are complementary: product requirements define observable behavi
 
 ## Repository and commands
 
-The intended repository is a pnpm/Turborepo monorepo with `apps/web` for Quasar, root-level `supabase/` migrations/functions/tests, and `docs/` for product and engineering documentation. Adapt commands to the actual scaffolded package scripts; do not assume a script exists until verified.
+The repository root is the git repository (decision D-01). Today it contains a single Quasar app at `apps/web/barykadyKultury`, `docs/` for product and engineering documentation, and `NGOinfoSources/` for supplied source material. Root-level `supabase/` migrations and `netlify/functions/` are added by their tickets. A pnpm/Turborepo monorepo with shared packages is a **future option**, not the current layout — see `docs/architecture.md` §2 and `docs/tickets/DECISIONS.md`.
+
+Install app dependencies app-locally (`pnpm --dir apps/web/barykadyKultury install`); the root scripts delegate into the app. Adapt commands to the actual package scripts and do not assume a script exists until verified.
 
 Expected root-level command intent:
 
