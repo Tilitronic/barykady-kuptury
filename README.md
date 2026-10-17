@@ -1,38 +1,47 @@
-# Barykady Kultury (barykadykultury)
+# Barykady Kultury — website
 
-## Install the dependencies
+Public website and lightweight admin panel for the ordinary association
+**Barykady Kultury** (Poznań, Poland). Trilingual: English, Polish, Ukrainian.
 
-```bash
-pnpm install
-# or: yarn/npm/bun install
+## Stack
+
+Quasar (Vue 3 + TypeScript), Supabase (Postgres, Auth, Storage), Netlify
+(hosting + read-only Google Calendar function), Playwright for E2E.
+
+## Layout
+
+```text
+apps/web/barykadyKultury/   Quasar application (single app for now)
+docs/                       Product, architecture, design and testing docs
+docs/tickets/               Vertical task board, decision register, status ledger
+NGOinfoSources/             Source material: brandbook, regulations, logo, legal IDs
 ```
 
-### Start the app in development mode (HMR, error reporting, etc.)
+Turborepo is deliberately not used while a single app exists
+(`docs/tickets/DECISIONS.md` D-01, D-15).
 
-```bash
-quasar dev
-```
+## Commands
 
-### Format & Lint the files
+Run from the repository root:
 
-```bash
-pnpm run lint
-# or: yarn/npm/bun run lint
-```
+- `pnpm dev` — start the app in development mode
+- `pnpm build` — production build (`apps/web/barykadyKultury/dist/spa`)
+- `pnpm lint` / `pnpm lint:check` — oxlint + oxfmt (fix / verify)
+- `pnpm format:check` — formatting check only
+- `pnpm typecheck` — Vue/TypeScript type checking
 
-...or just check formatting & linting:
+Test commands are added by tickets T-002 and T-003.
 
-```bash
-pnpm run lint:check
-# or: yarn/npm/bun run lint:check
-```
+## Documentation
 
-### Build the app for production
+- [Product requirements](./docs/PRODUCT_REQUIREMENTS.md)
+- [Architecture](./docs/architecture.md)
+- [Design system and accessibility](./docs/DESIGN_SYSTEM.md)
+- [Testing and TDD policy](./docs/TESTING.md)
+- [Ticket board and working protocol](./docs/tickets/README.md)
 
-```bash
-quasar build
-```
+## Content rule
 
-### Customize the configuration
-
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-file).
+No contact details, social URLs, team biographies, donation information or
+legal identifiers may be invented. Only values supplied in `NGOinfoSources/`
+or by the project owner are rendered; everything else stays hidden.

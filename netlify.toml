@@ -1,0 +1,10 @@
+[build]
+  base = "apps/web/barykadyKultury"
+  command = "pnpm build"
+  publish = "dist/spa"
+
+# Client-side routing: every unknown path resolves to the SPA entry point.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
