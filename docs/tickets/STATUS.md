@@ -13,7 +13,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-007 | Typography: self-hosted Inter + scale | 2 | todo | — | — | — |
 | T-008 | BrandLogo component | 2 | todo | — | — | — |
 | T-009 | Locale routing, detection, persistence | 2 | done | @reviewer (rev-2) | fd5cb85 | 2026-10-18 |
-| T-010 | Theme preference system | 2 | todo | — | — | — |
+| T-010 | Theme preference system | 2 | done | @reviewer (rev-1) | 9c36396 | 2026-10-18 |
 | T-011 | Public shell: header, nav, footer, a11y | 2 | todo | — | — | — |
 | T-012 | Content schema migrations | 3 | todo | — | — | — |
 | T-013 | RLS policies & admin claim | 3 | todo | — | — | — |
