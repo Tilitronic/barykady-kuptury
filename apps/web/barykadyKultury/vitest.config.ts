@@ -9,9 +9,10 @@ import { defineConfig } from "vitest/config";
  *
  * - `@` points at `src`, matching `tsconfig.json` and the Quasar build.
  * - `app` is Quasar's shorthand for the application root.
- * - `#q-app` maps to Quasar's client runtime export, the runtime counterpart of
- *   the type-only path declared in `.quasar/tsconfig.json` (which points at the
- *   `.d.ts` entry and therefore cannot be imported at runtime).
+ * - `#q-app` maps to the `@quasar/app-vite` runtime wrapper module. This mirrors
+ *   Quasar's own alias (`quasar-config-file.js`: `'#q-app': '@quasar/app-vite'`)
+ *   whose package root resolves to `exports/wrappers.js`. Pointing it at the
+ *   package's `/client` sub-path would resolve to a declaration file only.
  *
  * Everything else (Vue SFC compilation, happy-dom) is a deliberate test-only
  * concern and does not affect the production bundle.
@@ -20,7 +21,7 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      "#q-app": "@quasar/app-vite/client",
+      "#q-app": "@quasar/app-vite",
       "@": fileURLToPath(new URL("./src", import.meta.url)),
       app: fileURLToPath(new URL("./src", import.meta.url))
     }
@@ -34,7 +35,15 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**/*.{ts,vue}"],
-      exclude: ["src/**/__tests__/**", "src/test-utils/**"]
+      exclude: [
+        "src/**/__tests__/**",
+        "src/test-utils/**",
+        // Bootstrap wiring executed by Quasar, not unit-testable logic. The v8
+        // remapper also cannot parse their type-only syntax when they are never
+        // transformed by a test import, which would silently drop them anyway.
+        "src/boot/**",
+        "src/stores/**"
+      ]
     }
   }
 });
