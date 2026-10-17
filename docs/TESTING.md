@@ -83,7 +83,7 @@ The CI pipeline should run these as appropriate to the repository:
 
 1. Install dependencies from the committed lockfile using frozen-lockfile mode.
 2. Formatting check.
-3. ESLint.
+3. Lint (oxlint + oxfmt).
 4. TypeScript/Vue type check.
 5. Unit/component tests.
 6. Local database migration/RLS tests, where configured.

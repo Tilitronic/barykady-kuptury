@@ -7,7 +7,7 @@ Build an accessible, multilingual public website and lightweight content-managem
 Before implementation, read:
 
 - `docs/PRODUCT_REQUIREMENTS.md`
-- `docs/ARCHITECTURE.md`
+- `docs/architecture.md`
 - `docs/DESIGN_SYSTEM.md`
 - `docs/TESTING.md`
 
@@ -24,7 +24,7 @@ These documents are complementary: product requirements define observable behavi
 7. **Avoid needless complexity.** Keep one Quasar app until there is a proven need for another app. Do not add a backend server, workspace package, dependency, abstraction, or CMS feature without a concrete requirement.
 8. **Accessibility is a release requirement.** Do not merge changes that knowingly break keyboard operation, focus visibility, semantic structure, color contrast, reduced-motion behavior, or accessible form feedback.
 9. **Preserve multilingual behavior.** Any new UI string must use the localization system and include English, Polish, and Ukrainian messages. Avoid hard-coded user-facing strings.
-10. **Use ESLint + Prettier.** Follow the configuration produced by the Quasar scaffold. Keep linting, formatting, TypeScript checking, tests, and build as separate, reproducible commands.
+10. **Use oxlint + oxfmt.** Follow the configuration produced by the Quasar scaffold (decision D-02). Keep linting, formatting, TypeScript checking, tests, and build as separate, reproducible commands.
 
 ## Coding conventions
 

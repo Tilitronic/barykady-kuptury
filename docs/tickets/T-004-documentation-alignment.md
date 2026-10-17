@@ -31,7 +31,7 @@ Docs ticket — verification-first.
 3. Spot-check every hex against `NGOinfoSources/logo/SVG-*/logo_red.svg` / `logo_black.svg` fills.
 
 ## Acceptance criteria
-- [ ] `rg "docs/ARCHITECTURE\\.md|has not been included|Do not guess hex"` returns nothing.
+- [ ] `rg "docs/ARCHITECTURE\\.md|has not been included|Do not guess hex"` returns no hits outside this ticket file and the other ticket files that quote it by design.
 - [ ] Contrast matrix present, with the forbidden pair documented and the dark-theme accent requirement stated.
 - [ ] Logo/typography rules match the brandbook, with page references.
 - [ ] Architecture doc reflects the actual repository layout without contradicting `AGENTS.md`.
@@ -48,4 +48,8 @@ rg -n "#C60001|#262424|#EDEDED" docs/DESIGN_SYSTEM.md
 - @reviewer: doc/code truthfulness — claims must match the repo after T-001.
 
 ## Log
-- (author) start:
+- (author) start: T-001/T-002 closed (`0f34816`, `3c3fb98`).
+- RED: `grep` for `docs/ARCHITECTURE.md` hit `AGENTS.md:10`, `docs/README.md:9` and `docs/README.md:22`; `docs/DESIGN_SYSTEM.md` still carried the "brandbook has not been included" caveat and the ESLint reference remained in `AGENTS.md` rule 10 and `docs/TESTING.md` §5.
+- GREEN (in this ticket): `docs/DESIGN_SYSTEM.md` §1 rewritten — verified palette table, measured contrast matrix (13.1:1 / 6.17:1 / 5.27:1 / forbidden 2.48:1), a derivation rule for the dark-theme accent, and logo/logotype rules including the explicit "brandbook gives no numeric clear space or minimum size" note. §2 rewritten — Inter confirmed with printed anchors 64/34/16 px and subset requirements. `docs/README.md` — casing fixed, tickets folder added, brandbook decision marked resolved with the verified values and a pointer to `DECISIONS.md`. `AGENTS.md` — casing fixed and rule 10 updated to oxlint + oxfmt (D-02, user-approved; this is an instruction-file correction, so it is also flagged for `@ai_specialist` awareness in the session handoff). `docs/TESTING.md` — gate 3 renamed to "Lint (oxlint + oxfmt)".
+- Every value and rule in the edit traces to the brandbook (pages 4, 5, 8–14) or to the logo SVG fills; nothing was inferred. Contact, social, team and donation data remain explicitly unsupplied.
+- Verification: stale-reference grep returns hits only inside ticket files that quote the strings by design; brand hexes and all four contrast ratios present in `docs/DESIGN_SYSTEM.md`; `pnpm lint:check` still clean (29 files).

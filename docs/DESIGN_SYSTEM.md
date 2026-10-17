@@ -2,23 +2,47 @@
 
 ## 1. Brand alignment
 
-Follow the NGO's official brandbook for logo use, clear space, visual tone, and other brand rules. The brandbook itself has not been included in this brief; exact color values and logo constraints are therefore still unverified. **Do not guess hex values from the token names.** Ask the project owner to add the brandbook file or confirm its relevant values before declaring the design system final.
+The brandbook is supplied: `NGOinfoSources/brand_book_barykady_kultury_red_scarlet copy.pdf` (19 pages, 2026, Danylo Shulha). The values below are transcribed from it and cross-checked against the supplied logo SVGs; they are authoritative.
 
-Color roles supplied by the project owner:
+Verified palette:
 
-- `GRAY93` — primary background color.
-- `nero` — primary text color.
-- `scarlet` — accent color and logo color.
+| Token | Hex | RGB | Role |
+|---|---|---|---|
+| `scarlet` | `#C60001` | 198, 0, 1 | Accent, logo color, primary-action emphasis |
+| `nero` | `#262424` | 38, 36, 36 | Primary text, dark surfaces |
+| `GRAY93` | `#EDEDED` | 237, 237, 237 | Primary background |
 
-Represent these with semantic design tokens rather than scattering raw values across components. Add separate tokens for borders, surfaces, muted text, links, focus rings, success/warning/error, and their dark-theme equivalents. Confirm the exact source values against the brandbook; ensure all combinations pass contrast requirements. If the brand values fail contrast in a particular use, preserve brand identity while adding accessible variants for text, borders, or surfaces instead of using low-contrast colors unchanged.
+`GRAY93` is 93 % white — **not** `#939393`. Never derive a value from the token name; quote the hex from this table or the brandbook.
+
+### Contrast constraints (measured)
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| nero on GRAY93 | 13.1:1 | AAA body text |
+| white on scarlet | 6.17:1 | AA body text |
+| scarlet on GRAY93 | 5.27:1 | AA body text; use sparingly |
+| scarlet on nero | 2.48:1 | **Forbidden for text.** Dark theme needs a lightened accent variant for text/links that clears 4.5:1; pure brand scarlet stays for surfaces carrying white text. |
+
+The brandbook supplies exactly three colors. Any additional token (borders, muted text, links, focus, success/warning/error) must be derived and documented with its own measured contrast — not guessed and not borrowed from an unrelated palette.
+
+Represent colors with semantic design tokens rather than scattering raw values across components. Provide light and dark values for every token, including form controls, dialogs, dropdowns, borders and disabled states. Where a brand value fails contrast in a particular use, keep the brand identity and add an accessible variant for that role instead of using the low-contrast color unchanged.
+
+### Logo and logotype rules (brandbook p. 8–9, 12)
+
+- **Logo** (mark + type) for shorter, compact formats; **logotype** for longer formats. Leave equal space between the mark and the type and between lines of type.
+- Use the red or black variant on a solid background; when two colors are used they must contrast; when all three brand colors appear, keep the brandbook order.
+- Provide a light-surface and a dark-surface variant. Never place the black logo on nero, or the red logo on scarlet.
+- Exact minimum sizes and numeric clear-space values are **not** specified in the brandbook. Derive one clear-space spacing token and record it here rather than inventing a measurement.
 
 ## 2. Typography
 
-- The brandbook's named font may be replaced by a free/open-licensed sans-serif typeface.
-- Provisional recommendation: **Inter**, self-hosted from a pinned package where practical, with appropriate Latin and Cyrillic subsets for Polish, Ukrainian, and English.
-- Verify glyph coverage, font loading, fallback behavior, font license, and performance. Do not depend on a third-party font CDN if self-hosting is practical.
-- Use a clear type scale, comfortable body line-height, readable line lengths, and visible heading hierarchy. Do not use font size, weight, or color as the only indicator of state.
-- Treat Inter as provisional until checked against the brandbook and the selected visual direction.
+Inter is confirmed by the brandbook (p. 13–14) with Black, Bold, Medium, Regular and Light weights. Self-host it from a pinned package with Latin, Latin Extended and Cyrillic subsets for Polish, Ukrainian and English. Verify glyph coverage, loading, fallback and license; do not depend on a third-party font CDN.
+
+Printed hierarchy anchors: **display 64 px** (Medium/Bold), **section heading 34 px** (Bold), **body 16 px** (Regular). Scale fluidly below the desktop anchor rather than shrinking the scale ad hoc.
+
+- Use comfortable body line-height, readable line lengths and a visible heading hierarchy.
+- Do not use font size, weight or color as the only indicator of state.
+- Confirm real glyph coverage for Polish diacritics and Ukrainian Cyrillic before declaring the type system final.
 
 ## 3. Visual direction
 
