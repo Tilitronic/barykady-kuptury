@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import HomePage from "@/pages/index.vue";
+import HomePage from "@/pages/[locale]/index.vue";
 import { mountWithPlugins } from "@/test-utils/mount";
 
+/**
+ * T-009 moved the home page under the locale route segment. The intent of this
+ * suite is unchanged: the page renders the organization name as its heading and
+ * the locale-specific placeholder copy from the catalogues.
+ */
 describe("home page", () => {
   it("renders the organization name as the page heading", () => {
     const wrapper = mountWithPlugins(HomePage);

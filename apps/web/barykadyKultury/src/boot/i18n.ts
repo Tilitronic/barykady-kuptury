@@ -1,31 +1,13 @@
 import { defineBoot } from "#q-app";
-import { createI18n } from "vue-i18n";
 
-import messages from "@/i18n";
+import { i18n } from "@/features/i18n/i18nInstance";
 
-export type MessageLanguages = keyof typeof messages;
-// Type-define 'en' as the master schema for the resource
-export type MessageSchema = (typeof messages)["en"];
-
-// See https://vue-i18n.intlify.dev/guide/advanced/typescript.html#global-resource-schema-type-definition
-declare module "vue-i18n" {
-  // define the locale messages schema
-  export interface DefineLocaleMessage extends MessageSchema {}
-
-  // define the datetime format schema
-  export interface DefineDateTimeFormat {}
-
-  // define the number format schema
-  export interface DefineNumberFormat {}
-}
-
+/**
+ * Installs the shared i18n instance on the Vue app.
+ *
+ * The instance lives in `@/features/i18n/i18nInstance` so the router locale
+ * guard mutates the same locale the components consume (T-009).
+ */
 export default defineBoot(({ app }) => {
-  const i18n = createI18n<{ message: MessageSchema }, MessageLanguages>({
-    locale: "en",
-    legacy: false,
-    messages
-  });
-
-  // Set i18n instance on app
   app.use(i18n);
 });

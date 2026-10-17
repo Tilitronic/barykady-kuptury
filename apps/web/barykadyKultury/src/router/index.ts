@@ -1,11 +1,17 @@
 import { defineRouter } from "#q-app";
-import { routes, handleHotUpdate } from "vue-router/auto-routes";
 import {
   createMemoryHistory,
   createRouter,
   createWebHashHistory,
   createWebHistory
 } from "vue-router";
+
+import { getBrowserLanguages } from "@/features/i18n/browserLocale";
+import { i18n } from "@/features/i18n/i18nInstance";
+import { createLocaleGuard } from "@/features/i18n/localeGuard";
+import { localeStore } from "@/features/i18n/localeStorage";
+
+import { routes } from "./routes";
 
 /*
  * If not building with SSR mode, you can
@@ -33,10 +39,20 @@ export default defineRouter((/* { store, ssrContext } */) => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE)
   });
 
-  // enable HMR for it
-  if (import.meta.hot) {
-    handleHotUpdate(Router);
-  }
+  // Mirror the active locale onto document lang/dir, the i18n locale and the
+  // route title/description (docs/DESIGN_SYSTEM.md §6, docs/architecture.md §8).
+  // The guard is read-only with respect to the persisted choice.
+  Router.beforeEach(
+    createLocaleGuard({
+      doc: typeof document === "undefined" ? null : document,
+      store: localeStore,
+      getLanguages: getBrowserLanguages,
+      setLocale: locale => {
+        i18n.global.locale.value = locale;
+      },
+      translate: key => i18n.global.t(key)
+    })
+  );
 
   return Router;
 });
