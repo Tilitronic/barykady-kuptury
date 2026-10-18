@@ -1,7 +1,7 @@
 # T-015 — Generated types & feature data access
 
-**Session:** 3 · **Lane:** data/architecture · **Owner:** @coder · **Status:** todo
-**Reviewers:** @reviewer + @architector
+**Session:** 3 · **Lane:** data/architecture · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1: 0 Spec, 1 Minor Standards, close YES) + @architector (arc-1: PASS)
 **Depends on:** T-012, T-013 · **Blocks:** T-016…T-025, T-027…T-031
 
 ## Outcome
@@ -32,12 +32,12 @@ Out: UI components, RLS (T-013), admin mutations (T-027+).
 5. REFACTOR: one shared `Result`/state type across modules.
 
 ## Acceptance criteria
-- [ ] No component-level `supabase.from(...)` exists after this ticket (grep check).
-- [ ] Domain models contain locale-resolved fields plus `isFallback` metadata.
-- [ ] Fallback is English-only and can be disabled per call site.
-- [ ] Featured/recent helpers are pure and fully tested.
-- [ ] Missing env vars produce a clear, non-crashing state; no secret-shaped variable is referenced.
-- [ ] Generated types are committed and reproducible via the documented script.
+- [x] No component-level `supabase.from(...)` exists after this ticket (grep check).
+- [x] Domain models contain locale-resolved fields plus `isFallback` metadata.
+- [x] Fallback is English-only and can be disabled per call site.
+- [x] Featured/recent helpers are pure and fully tested.
+- [x] Missing env vars produce a clear, non-crashing state; no secret-shaped variable is referenced.
+- [x] Generated types are committed and reproducible via the documented script.
 
 ## Verification
 ```
@@ -64,3 +64,21 @@ rg -n "supabase\\.from" src --glob '!src/features/*/api.ts' || true
 - `supabase.from` scan (`grep -rn "supabase\.from" apps/web/barykadyKultury/src`): 6 matches, all in `src/features/*/api.ts` (`content`, `documents`, `events`, `projects`, `publications`, `team`). No component/page match. (The scan only matches because each `api.ts` builds `const query = supabase.from("<table>")` on one line; a full chained `await supabase\n .from(...)` is line-wrapped by oxfmt and would not match the literal — noted so the check stays meaningful.)
 - E2E regression found and fixed: registering the `supabase` boot (part 1) slightly lengthens startup, which exposed a race in the T-011 `page-meta.spec.ts` description assertion — it read `meta[name=description]` once right after `goto`, before the async router guard applied metadata. Replaced the one-shot read with Playwright's auto-waiting `expect(locator).toHaveAttribute(...)` (no assertion weakened); verified stable (3 consecutive passes) and full suite green.
 - Part 2 verification: `pnpm test` 29 files / 331 tests pass; `pnpm typecheck` OK; `pnpm lint:check` OK; `pnpm build` succeeds; `pnpm test:e2e` 36 passed.
+
+### Review verdicts (2026-10-18) — @reviewer (rev-1) + @architector (arc-1)
+
+Implementation `cf01ff6` (part 1) + `e819aa2` (part 2); fixed point `485ba8c`.
+
+- **@reviewer (two-axis): 0 Spec findings; 1 Minor Standards.** The ticket Log said "D-22 finalised" while `DECISIONS.md` still read `decided (provisional)` — a D-19 single-source-of-truth drift. **Resolved:** D-22 is now `decided` in `DECISIONS.md`. All six acceptance criteria verified: the `supabase.from` scan is confined to `src/features/*/api.ts`; domain models carry locale-resolved fields + `isFallback`; fallback is English-only and per-call disableable (tests prove the disable path and that pl/uk never fall back to each other); `ordering.ts` is pure and tested (rank, recent fallback, draft/archived exclusion); missing env vars degrade without crashing and no secret-shaped variable is referenced; generated types are committed and reproducible. The `e2e/page-meta.spec.ts` change was assessed as a **legitimate** race fix (auto-waiting `toHaveAttribute`; assertions not weakened). **Close verdict: YES.**
+- **@architector: PASS.** Feature-module boundary correct with no generic service layer; the `shared → features/i18n` import is acceptable because `i18n/locales` is app-wide infrastructure (D-19); the per-content-type `requiredFields` completeness filter is a sound read-time interpretation of architecture §4 that must agree with T-027's write-time publish gate; the nullable-client injection seam is correct (testability + avoids tripping the boot dev-throw); D-22 correctly resolved (app-local devDependency + absolute `--workdir`). **No new decision records needed.**
+
+#### Final verification (orchestrator, on the committed tree)
+- `pnpm test` → 29 files / 331 tests pass.
+- `pnpm typecheck` → clean; `pnpm lint:check` → clean.
+- `pnpm build` → succeeds.
+- `pnpm test:e2e` → 36 passed.
+- `grep -rn "supabase\.from" apps/web/barykadyKultury/src` → 6 matches, all under `src/features/*/api.ts`.
+
+#### Follow-ups
+- **T-027**'s publish gate must agree with the data-access `requiredFields` completeness definition (architector).
+- Consumption tickets **T-016…T-025** wire these modules into pages (no component-level queries).
