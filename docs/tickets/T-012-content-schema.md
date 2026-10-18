@@ -51,4 +51,44 @@ pnpm typecheck
 - @reviewer: constraints are declarative (not app-enforced), naming consistent, seed data obviously fake.
 
 ## Log
-- (author) start:
+- (author) start: 2026-10-18 — implemented by @coder.
+
+### RED (final `schema_test.sql` before the migration existed)
+`pnpm dlx supabase@2.121.0 test db` → exit 1:
+```
+psql:.../schema_test.sql:29: ERROR:  type "public.content_status" does not exist
+Dubious, test returned 3
+Failed 41/41 subtests
+Test Summary Report
+  Parse errors: Bad plan.  You planned 41 tests but ran 0.
+Result: FAIL
+```
+
+### GREEN
+- `pnpm dlx supabase@2.121.0 db reset` → exit 0:
+```
+Applying migration 20261018091038_content_model.sql...
+Seeding data from supabase/seed.sql...
+Finished supabase db reset on branch main.
+```
+- `pnpm dlx supabase@2.121.0 test db` → exit 0:
+```
+schema_test.sql .. ok
+All tests successful.
+Files=1, Tests=41, ... Result: PASS
+```
+- `pnpm typecheck` → exit 0.
+- Seed idempotency: re-ran `supabase/seed.sql` twice through `psql`; counts unchanged
+  (2 projects, 4 project_translations, 2 publications, 2 publication_files, 3 calendar_event_links, 1 site_page).
+
+### Security posture applied
+RLS `enable` on all 12 content tables with **zero policies** (deny-by-default); no RLS
+disabled anywhere. Policies land in T-013; seed runs as the migration superuser and bypasses RLS.
+
+### Notes / uncertainty for @architector
+- `projects` intentionally has no `sort_order`: featured order uses `featured_rank` (unique
+  partial index, T-030) and the public listing uses `published_at`/`updated_at`. Flag if a
+  manual editorial project order is expected and should be added before T-019/T-030.
+- "RLS enabled with zero policies" in T-012 vs deferring enablement to T-013 — see handoff note.
+- CLI provisioning (`pnpm dlx supabase@2.121.0` vs a committed dependency) for the future
+  `pnpm types:db` script (T-015) — see handoff note.
