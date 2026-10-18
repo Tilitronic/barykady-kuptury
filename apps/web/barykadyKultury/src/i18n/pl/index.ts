@@ -46,7 +46,16 @@ const pl: MessageSchema = {
   contact: {
     title: "Kontakt",
     description: "Dane kontaktowe Barykad Kultury.",
-    placeholder: "Informacje kontaktowe są w przygotowaniu."
+    notConfigured: "Dane kontaktowe nie zostały jeszcze opublikowane.",
+    guidance:
+      "W międzyczasie możesz dowiedzieć się więcej o nas lub znaleźć sposoby wsparcia:",
+    emailSubject: "Wiadomość ze strony internetowej",
+    fields: {
+      email: "E-mail",
+      phone: "Telefon",
+      address: "Adres",
+      officeHours: "Godziny pracy"
+    }
   },
   about: {
     title: "O nas",

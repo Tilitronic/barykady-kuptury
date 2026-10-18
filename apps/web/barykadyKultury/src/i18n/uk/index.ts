@@ -46,7 +46,16 @@ const uk: MessageSchema = {
   contact: {
     title: "Контакти",
     description: "Контактна інформація Barykady Kultury.",
-    placeholder: "Контактна інформація готується."
+    notConfigured: "Контактні дані ще не опубліковано.",
+    guidance:
+      "Тим часом ви можете дізнатися більше про нас або знайти способи підтримки:",
+    emailSubject: "Повідомлення із сайту",
+    fields: {
+      email: "Електронна пошта",
+      phone: "Телефон",
+      address: "Адреса",
+      officeHours: "Години роботи"
+    }
   },
   about: {
     title: "Про нас",

@@ -1,27 +1,116 @@
 <template>
   <div class="contact-page">
     <h1 class="contact-page__title">{{ t("contact.title") }}</h1>
-    <p class="contact-page__lead">{{ t("contact.placeholder") }}</p>
+
+    <!--
+      Only configured channels render. When none are configured (D-04 open),
+      the page shows a translated explanation and in-page routes to About and
+      Support — never an invented email, phone or address.
+    -->
+    <ContactChannels v-if="hasChannels" :details="details" />
+
+    <div v-else class="contact-page__empty">
+      <p class="contact-page__empty-message">{{
+        t("contact.notConfigured")
+      }}</p>
+      <p class="contact-page__empty-guidance">{{ t("contact.guidance") }}</p>
+      <ul class="contact-page__empty-links">
+        <li>
+          <RouterLink
+            :to="`/${currentLocale}/about`"
+            class="contact-page__link focus-ring"
+          >
+            {{ t("nav.about") }}
+          </RouterLink>
+        </li>
+        <li>
+          <RouterLink
+            :to="`/${currentLocale}/support`"
+            class="contact-page__link focus-ring"
+          >
+            {{ t("nav.support") }}
+          </RouterLink>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import ContactChannels from "@/components/contact/ContactChannels.vue";
+import { organization } from "@/config/organization";
+import {
+  hasContactDetails,
+  readContactOverride,
+  resolveContactDetails
+} from "@/features/contact/contactDetails";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
+
 /**
- * Contact page stub. T-011 wires the route; T-021 owns the real content.
- * PublicLayout (the router layout parent) provides the shell — do NOT add AppShell here.
+ * Contact page (T-021).
+ *
+ * Renders only verified contact channels from the organization config (D-04).
+ * While the config is empty this is the translated "not published yet" state
+ * with routes to About and Support; no fake form and no invented details ship
+ * (docs/PRODUCT_REQUIREMENTS.md §4, docs/architecture.md §7, decisions D-04 and
+ * D-09). PublicLayout provides the shell — do NOT add AppShell here.
+ *
+ * The optional `readContactOverride()` is the E2E-only fixture seam; it is
+ * inert in every build that does not opt in (see contactDetails.ts).
  */
 const { t } = useI18n();
+const route = useRoute();
+
+const currentLocale = computed<Locale>(() => {
+  const { locale } = route.params as { locale?: unknown };
+  return isLocale(locale) ? locale : DEFAULT_LOCALE;
+});
+
+const details = computed(() =>
+  resolveContactDetails(organization.contact, readContactOverride())
+);
+
+const hasChannels = computed(() => hasContactDetails(details.value));
 </script>
 
 <style scoped>
 .contact-page__title {
+  max-width: 65ch;
+  margin: 0 0 1.5rem;
+}
+
+.contact-page__empty {
+  max-width: 65ch;
+}
+
+.contact-page__empty-message {
   margin: 0 0 1rem;
 }
 
-.contact-page__lead {
-  margin: 0;
+.contact-page__empty-guidance {
+  margin: 0 0 0.5rem;
   color: var(--color-text-muted);
+}
+
+.contact-page__empty-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-page__link {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
+.contact-page__link:hover {
+  text-decoration: none;
 }
 </style>

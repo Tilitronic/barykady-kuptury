@@ -59,7 +59,20 @@ const en = {
   contact: {
     title: "Contact",
     description: "Contact information for Barykady Kultury.",
-    placeholder: "Contact information is being prepared."
+    /** Listing state while no contact channel is published (T-021, D-04). */
+    notConfigured: "Contact details have not been published yet.",
+    /** Guidance shown next to the in-page routes to About and Support. */
+    guidance:
+      "In the meantime, you can learn more about us or find ways to support us:",
+    /** Prefilled subject line for the `mailto:` link. */
+    emailSubject: "Message from the website",
+    /** Labels for the contact definition list. */
+    fields: {
+      email: "Email",
+      phone: "Phone",
+      address: "Address",
+      officeHours: "Office hours"
+    }
   },
   about: {
     title: "About us",

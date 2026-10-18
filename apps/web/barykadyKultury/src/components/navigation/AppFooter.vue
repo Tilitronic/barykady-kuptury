@@ -39,14 +39,18 @@
       -->
       <address v-if="hasContactData" class="app-footer__contact">
         <a
-          v-if="organization.email"
-          :href="`mailto:${organization.email}`"
+          v-if="organization.contact.email"
+          :href="`mailto:${organization.contact.email}`"
           class="app-footer__contact-link focus-ring"
         >
-          {{ organization.email }}
+          {{ organization.contact.email }}
         </a>
-        <span v-if="organization.phone">{{ organization.phone }}</span>
-        <span v-if="organization.address">{{ organization.address }}</span>
+        <span v-if="organization.contact.phone">{{
+          organization.contact.phone
+        }}</span>
+        <span v-if="organization.contact.address">{{
+          organization.contact.address
+        }}</span>
       </address>
 
       <!-- Social links — D-05 OPEN: SocialLinks renders nothing when empty -->
@@ -114,9 +118,9 @@ const currentLocale = computed(() => {
 /** Contact block is visible only when at least one contact field is supplied. */
 const hasContactData = computed(
   () =>
-    organization.email.length > 0 ||
-    organization.phone.length > 0 ||
-    organization.address.length > 0
+    organization.contact.email.length > 0 ||
+    organization.contact.phone.length > 0 ||
+    organization.contact.address.length > 0
 );
 
 function isActivePage(item: NavItem): boolean {

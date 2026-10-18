@@ -20,6 +20,17 @@ interface ImportMetaEnv {
    */
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
+  /**
+   * T-021: enables the E2E-only contact fixture seam when set to `"enabled"`.
+   * The Playwright build opts in so `e2e/contact.spec.ts` can prove the
+   * configured-rendering branch without editing the verified organization
+   * config. Absent in production, where the seam stays inert.
+   *
+   * The value is deliberately non-numeric: Quasar regenerates
+   * `.quasar/quasar.d.ts` from the ambient environment and types numeric-looking
+   * values as `number`, which would make a string comparison a type error.
+   */
+  readonly VITE_CONTACT_FIXTURE?: string;
 }
 
 /**
