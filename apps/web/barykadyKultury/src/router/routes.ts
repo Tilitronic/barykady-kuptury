@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from "vue-router";
 
 import { LOCALE_ROUTE_PATTERN } from "@/features/i18n/locales";
+import type { LocalePageMeta } from "@/features/i18n/pageMeta";
 import { resolveInitialLocale } from "@/features/i18n/resolveInitialLocale";
 
 import PublicLayout from "@/layouts/PublicLayout.vue";
@@ -15,6 +16,20 @@ import AboutDocumentsPage from "@/pages/[locale]/about-documents.vue";
 import SupportPage from "@/pages/[locale]/support.vue";
 import EventsPage from "@/pages/[locale]/events.vue";
 import PublicationsPage from "@/pages/[locale]/publications.vue";
+
+declare module "vue-router" {
+  interface RouteMeta {
+    /**
+     * Localized document metadata for this route (T-011 follow-up defect).
+     *
+     * The route table is the single source of truth for page metadata; the
+     * navigation guard reads `to.meta.pageMeta` instead of a hand-maintained
+     * path map, so a route cannot drift out of sync. `routeMeta.test.ts` fails
+     * if a real page route is missing it or resolves to the not-found keys.
+     */
+    pageMeta?: LocalePageMeta;
+  }
+}
 
 /**
  * Application route table.
@@ -54,62 +69,122 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "",
         name: "home",
-        component: HomePage
+        component: HomePage,
+        meta: {
+          pageMeta: {
+            titleKey: "home.title",
+            descriptionKey: "home.description"
+          }
+        }
       },
       // Contact (D-04 OPEN: page exists, content hidden until data supplied)
       {
         path: "contact",
         name: "contact",
-        component: ContactPage
+        component: ContactPage,
+        meta: {
+          pageMeta: {
+            titleKey: "contact.title",
+            descriptionKey: "contact.description"
+          }
+        }
       },
       // About landing
       {
         path: "about",
         name: "about",
-        component: AboutPage
+        component: AboutPage,
+        meta: {
+          pageMeta: {
+            titleKey: "about.title",
+            descriptionKey: "about.description"
+          }
+        }
       },
       // About → Team
       {
         path: "about/team",
         name: "about-team",
-        component: AboutTeamPage
+        component: AboutTeamPage,
+        meta: {
+          pageMeta: {
+            titleKey: "aboutTeam.title",
+            descriptionKey: "aboutTeam.description"
+          }
+        }
       },
       // About → Documents
       {
         path: "about/documents",
         name: "about-documents",
-        component: AboutDocumentsPage
+        component: AboutDocumentsPage,
+        meta: {
+          pageMeta: {
+            titleKey: "aboutDocuments.title",
+            descriptionKey: "aboutDocuments.description"
+          }
+        }
       },
       // Support us (D-06 OPEN: page exists, options shown when configured)
       {
         path: "support",
         name: "support",
-        component: SupportPage
+        component: SupportPage,
+        meta: {
+          pageMeta: {
+            titleKey: "support.title",
+            descriptionKey: "support.description"
+          }
+        }
       },
       // Projects (T-016 owns real content)
       {
         path: "projects",
         name: "projects",
-        component: ProjectsPage
+        component: ProjectsPage,
+        meta: {
+          pageMeta: {
+            titleKey: "projects.title",
+            descriptionKey: "projects.description"
+          }
+        }
       },
       // Events (T-023/T-024 own real content)
       {
         path: "events",
         name: "events",
-        component: EventsPage
+        component: EventsPage,
+        meta: {
+          pageMeta: {
+            titleKey: "events.title",
+            descriptionKey: "events.description"
+          }
+        }
       },
       // Publications (T-018/T-019 own real content)
       {
         path: "publications",
         name: "publications",
-        component: PublicationsPage
+        component: PublicationsPage,
+        meta: {
+          pageMeta: {
+            titleKey: "publications.title",
+            descriptionKey: "publications.description"
+          }
+        }
       },
       // Locale-prefixed catch-all — unknown sub-paths within a valid locale.
       // Does NOT redirect so the URL is preserved (T-009 acceptance criteria).
       {
         path: ":pathMatch(.*)*",
         name: "locale-not-found",
-        component: LocaleNotFoundPage
+        component: LocaleNotFoundPage,
+        meta: {
+          pageMeta: {
+            titleKey: "notFound.title",
+            descriptionKey: "notFound.description"
+          }
+        }
       }
     ]
   },
@@ -121,6 +196,12 @@ export const routes: RouteRecordRaw[] = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
-    component: NotFoundPage
+    component: NotFoundPage,
+    meta: {
+      pageMeta: {
+        titleKey: "notFound.title",
+        descriptionKey: "notFound.description"
+      }
+    }
   }
 ];

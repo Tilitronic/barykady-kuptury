@@ -4,6 +4,7 @@ import type { NavigationGuard, RouteLocationNormalized } from "vue-router";
 import { createLocaleGuard } from "@/features/i18n/localeGuard";
 import type { Locale } from "@/features/i18n/locales";
 import type { LocaleStore } from "@/features/i18n/localeStorage";
+import type { LocalePageMeta } from "@/features/i18n/pageMeta";
 
 /**
  * Guards the invariants from docs/PRODUCT_REQUIREMENTS.md §2:
@@ -16,10 +17,15 @@ import type { LocaleStore } from "@/features/i18n/localeStorage";
  * which keeps "the URL is authoritative" a structural property.
  */
 
-function routeOf(path: string, locale?: string): RouteLocationNormalized {
+function routeOf(
+  path: string,
+  locale?: string,
+  pageMeta?: LocalePageMeta
+): RouteLocationNormalized {
   return {
     path,
-    params: locale === undefined ? {} : { locale }
+    params: locale === undefined ? {} : { locale },
+    meta: pageMeta === undefined ? {} : { pageMeta }
   } as unknown as RouteLocationNormalized;
 }
 
@@ -79,10 +85,17 @@ describe("locale navigation guard", () => {
     expect(document.documentElement.dir).toBe("ltr");
   });
 
-  it("applies route title and description from the typed meta helper", () => {
+  it("applies route title and description from the route's pageMeta", () => {
     const { guard } = createDeps();
 
-    run(guard, routeOf("/en/projects", "en"), routeOf("/en", "en"));
+    run(
+      guard,
+      routeOf("/en/projects", "en", {
+        titleKey: "projects.title",
+        descriptionKey: "projects.description"
+      }),
+      routeOf("/en", "en")
+    );
 
     expect(document.title).toBe("projects.title");
     expect(
@@ -90,6 +103,14 @@ describe("locale navigation guard", () => {
         .querySelector('meta[name="description"]')
         ?.getAttribute("content")
     ).toBe("projects.description");
+  });
+
+  it("falls back to the not-found metadata when a route declares none", () => {
+    const { guard } = createDeps();
+
+    run(guard, routeOf("/404", undefined), routeOf("/en", "en"));
+
+    expect(document.title).toBe("notFound.title");
   });
 
   it("never rewrites the persisted choice when navigating inside a locale", () => {

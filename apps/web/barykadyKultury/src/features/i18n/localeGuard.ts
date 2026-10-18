@@ -4,7 +4,7 @@ import { applyDocumentLocale } from "./documentLocale";
 import { isLocale, type Locale } from "./locales";
 import type { LocaleStore } from "./localeStorage";
 import type { MessageKey } from "./messageKey";
-import { applyPageMeta, pageMetaForPath } from "./pageMeta";
+import { applyPageMeta, NOT_FOUND_META } from "./pageMeta";
 import { resolveLocale } from "./resolveLocale";
 
 export interface LocaleGuardDependencies {
@@ -61,9 +61,13 @@ export function createLocaleGuard(
 
     dependencies.setLocale(locale);
     applyDocumentLocale(dependencies.doc, locale);
+    // The route table is the single source of truth for page metadata: a route
+    // declares its own catalogue keys in `meta.pageMeta`, so adding a route
+    // without metadata is caught by the route-table regression gate instead of
+    // silently shipping the 404 title (T-011 follow-up defect).
     applyPageMeta(
       dependencies.doc,
-      pageMetaForPath(to.path),
+      to.meta.pageMeta ?? NOT_FOUND_META,
       dependencies.translate
     );
 

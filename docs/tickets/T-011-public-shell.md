@@ -244,3 +244,52 @@ impacts, so the criterion's "critical/serious" bar is met with margin).
 - `AppShell.vue` is retained solely for the locale-agnostic global 404.
 
 **Close-out:** acceptance criteria all satisfied; ticket moved to `done`.
+
+---
+
+### Post-close defect (2026-10-18)
+
+**Defect.** Seven routes rendered their own `<h1>` correctly but set the wrong
+`document.title`/description: `pageMeta.ts` still used a hand-maintained
+`PAGE_META` path map containing only `/`, `/projects` and `/404`, so
+`/en/contact`, `/en/about`, `/en/about/team`, `/en/about/documents`,
+`/en/support`, `/en/events` and `/en/publications` (and their pl/uk variants)
+fell back to `NOT_FOUND_META` — the tab read **"Page not found"** with the 404
+description. T-011 added the routes but never extended the map.
+
+**Fix — route table is now the single source of truth.** Removed `PAGE_META`,
+`pageMetaForPath()` and `stripLocalePrefix()` from
+`src/features/i18n/pageMeta.ts` (only `LocalePageMeta`, `NOT_FOUND_META` and
+`applyPageMeta` remain). Each page route and both catch-alls now carry
+`meta.pageMeta: { titleKey, descriptionKey }` in `src/router/routes.ts`, with a
+`RouteMeta` module augmentation for typing; the guard reads
+`to.meta.pageMeta ?? NOT_FOUND_META`. Reused the existing stub-page catalogue
+keys (`contact.title`, `about.title`, `aboutTeam.title`, `aboutDocuments.title`,
+`support.title`, `events.title`, `publications.title`, plus the existing
+`projects`/`home`/`notFound` keys) — **no new i18n keys** were added, so
+catalogue parity is unchanged.
+
+**Regression gate (mandatory).** `src/router/__tests__/routeMeta.test.ts`
+iterates the *actual route table* (flattening named routes, skipping the
+redirect-only root), resolves a concrete URL per route, runs the real
+`createLocaleGuard`, and fails if any real page resolves to `notFound.title`,
+is missing `meta.pageMeta`, or does not apply its own `titleKey`. Adding a route
+without metadata now fails here.
+
+**E2E.** `e2e/page-meta.spec.ts` asserts the localized `document.title` for all
+eight English destinations, all seven Polish destinations and Ukrainian contact,
+asserts none is "Page not found", and checks the description per locale.
+
+**RED → GREEN evidence.**
+- Unit RED: `routeMeta.test.ts` → 10 failed / 2 passed, e.g.
+  `events resolved to "notFound.title"` and
+  `projects is missing meta.pageMeta`.
+- E2E RED (built app): `/en/contact` expected `Contact`, received
+  **"Page not found"**; description received
+  "The page you requested could not be found."
+- GREEN: `pnpm test` → **23 files / 278 passed**; `pnpm test:e2e` →
+  **36 passed**; `pnpm typecheck`, `pnpm lint:check`, `pnpm build` → clean.
+
+**Prevention note.** Nothing asserted per-route titles before; a path map can
+only be trusted when a table-driven gate covers it. The route records are now
+the only place that owns page metadata.

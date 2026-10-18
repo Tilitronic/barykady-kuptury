@@ -1,39 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import { applyPageMeta, pageMetaForPath } from "@/features/i18n/pageMeta";
+import { applyPageMeta, NOT_FOUND_META } from "@/features/i18n/pageMeta";
 
 /**
  * The URL contract (docs/architecture.md §8): "Set document lang, page title,
- * description ... appropriate to the active route." Title/description are keyed
- * off the locale-stripped path so the same route in any locale shares metadata.
+ * description ... appropriate to the active route."
+ *
+ * Route metadata now lives on the route records (`meta.pageMeta`) so the route
+ * table is the single source of truth (T-011 follow-up defect). This module only
+ * owns the not-found fallback constant and the DOM application.
  */
 describe("page meta helper", () => {
-  it("maps a locale-prefixed home path to the home meta", () => {
-    expect(pageMetaForPath("/pl")).toEqual({
-      titleKey: "home.title",
-      descriptionKey: "home.description"
-    });
-  });
-
-  it("maps a locale-prefixed sub-route to the same meta in every locale", () => {
-    expect(pageMetaForPath("/en/projects")).toEqual(
-      pageMetaForPath("/uk/projects")
-    );
-  });
-
-  it("uses the not-found meta for unknown paths and the 404 route", () => {
-    const notFound = {
+  it("exposes the not-found fallback used when a route declares no metadata", () => {
+    expect(NOT_FOUND_META).toEqual({
       titleKey: "notFound.title",
       descriptionKey: "notFound.description"
-    };
-    expect(pageMetaForPath("/xx")).toEqual(notFound);
-    expect(pageMetaForPath("/404")).toEqual(notFound);
+    });
   });
 
   it("writes the title and ensures a description meta tag", () => {
     const translate = (key: string) => `t:${key}`;
 
-    applyPageMeta(document, pageMetaForPath("/pl"), translate);
+    applyPageMeta(
+      document,
+      { titleKey: "home.title", descriptionKey: "home.description" },
+      translate
+    );
 
     expect(document.title).toBe("t:home.title");
     expect(
@@ -41,5 +33,9 @@ describe("page meta helper", () => {
         .querySelector('meta[name="description"]')
         ?.getAttribute("content")
     ).toBe("t:home.description");
+  });
+
+  it("is a no-op without a document (non-browser)", () => {
+    expect(() => applyPageMeta(null, NOT_FOUND_META, key => key)).not.toThrow();
   });
 });
