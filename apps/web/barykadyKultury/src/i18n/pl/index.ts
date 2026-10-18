@@ -16,7 +16,24 @@ const pl: MessageSchema = {
     skipToContent: "Przejdź do treści"
   },
   nav: {
-    language: "Język"
+    language: "Język",
+    openMenu: "Otwórz menu nawigacji",
+    closeMenu: "Zamknij menu nawigacji",
+    mainNav: "Nawigacja główna",
+    contact: "Kontakt",
+    about: "O nas",
+    support: "Wesprzyj nas",
+    projects: "Projekty",
+    events: "Wydarzenia",
+    publications: "Publikacje",
+    aboutOrg: "Organizacja",
+    team: "Zespół",
+    documents: "Dokumenty"
+  },
+  footer: {
+    nav: "Nawigacja stopki",
+    privacyPolicy: "Polityka prywatności",
+    socialNav: "Media społecznościowe"
   },
   theme: {
     toggleLabel: "Przełącz tryb ciemny"
@@ -25,6 +42,41 @@ const pl: MessageSchema = {
     title: "Barykady Kultury",
     description: "Oficjalna strona stowarzyszenia Barykady Kultury.",
     placeholder: "Treść strony jest w przygotowaniu."
+  },
+  contact: {
+    title: "Kontakt",
+    description: "Dane kontaktowe Barykad Kultury.",
+    placeholder: "Informacje kontaktowe są w przygotowaniu."
+  },
+  about: {
+    title: "O nas",
+    description: "O stowarzyszeniu Barykady Kultury.",
+    placeholder: "Informacje o nas są w przygotowaniu."
+  },
+  aboutTeam: {
+    title: "Zespół",
+    description: "Zespół Barykad Kultury.",
+    placeholder: "Informacje o zespole są w przygotowaniu."
+  },
+  aboutDocuments: {
+    title: "Dokumenty",
+    description: "Dokumenty organizacyjne Barykad Kultury.",
+    placeholder: "Dokumenty są w przygotowaniu."
+  },
+  support: {
+    title: "Wesprzyj nas",
+    description: "Wesprzyj stowarzyszenie Barykady Kultury.",
+    placeholder: "Opcje wsparcia są w przygotowaniu."
+  },
+  events: {
+    title: "Wydarzenia",
+    description: "Nadchodzące wydarzenia organizowane przez Barykady Kultury.",
+    placeholder: "Wydarzenia są w przygotowaniu."
+  },
+  publications: {
+    title: "Publikacje",
+    description: "Publikacje Barykad Kultury.",
+    placeholder: "Publikacje są w przygotowaniu."
   },
   projects: {
     title: "Projekty",

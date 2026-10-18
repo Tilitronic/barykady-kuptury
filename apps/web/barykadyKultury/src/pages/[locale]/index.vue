@@ -1,20 +1,17 @@
 <template>
-  <AppShell>
-    <div class="home">
-      <h1 class="home__title">{{ t("app.name") }}</h1>
-      <p class="home__lead">{{ t("home.placeholder") }}</p>
-    </div>
-  </AppShell>
+  <div class="home">
+    <h1 class="home__title">{{ t("app.name") }}</h1>
+    <p class="home__lead">{{ t("home.placeholder") }}</p>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 
-import AppShell from "@/components/AppShell.vue";
-
 /**
  * Home page for a locale-prefixed route (`/:locale`). Copy comes from the
  * catalogues; nothing here is locale-conditional.
+ * PublicLayout (router parent) provides the shell — AppShell is not used here.
  */
 const { t } = useI18n();
 </script>

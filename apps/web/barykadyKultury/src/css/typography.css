@@ -231,6 +231,13 @@ body {
   font-family: var(--font-family-sans);
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
+  /*
+   * Base canvas colour (B, rev-2): GRAY93 in light, NERO in dark.
+   * Without this, the main canvas stays browser-white while the header and
+   * footer surfaces are correctly on --color-surface, producing an inverted
+   * hierarchy. tokens.css owns the value; typography.css owns the body rule.
+   */
+  background-color: var(--color-background);
   font-feature-settings:
     "kern" 1,
     "liga" 1;

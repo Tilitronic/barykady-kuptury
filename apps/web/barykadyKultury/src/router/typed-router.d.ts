@@ -38,9 +38,65 @@ declare module 'vue-router/auto-routes' {
       { locale: ParamValue<false> },
       | never
     >,
+    '/[locale]/about': RouteRecordInfo<
+      '/[locale]/about',
+      '/:locale/about',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
+    '/[locale]/about-documents': RouteRecordInfo<
+      '/[locale]/about-documents',
+      '/:locale/about-documents',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
+    '/[locale]/about-team': RouteRecordInfo<
+      '/[locale]/about-team',
+      '/:locale/about-team',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
+    '/[locale]/contact': RouteRecordInfo<
+      '/[locale]/contact',
+      '/:locale/contact',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
+    '/[locale]/events': RouteRecordInfo<
+      '/[locale]/events',
+      '/:locale/events',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
+    '/[locale]/not-found': RouteRecordInfo<
+      '/[locale]/not-found',
+      '/:locale/not-found',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
     '/[locale]/projects': RouteRecordInfo<
       '/[locale]/projects',
       '/:locale/projects',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
+    '/[locale]/publications': RouteRecordInfo<
+      '/[locale]/publications',
+      '/:locale/publications',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
+    '/[locale]/support': RouteRecordInfo<
+      '/[locale]/support',
+      '/:locale/support',
       { locale: ParamValue<true> },
       { locale: ParamValue<false> },
       | never
@@ -73,9 +129,73 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
+    'src/pages/[locale]/about.vue': {
+      routes:
+        | '/[locale]/about'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/about-documents.vue': {
+      routes:
+        | '/[locale]/about-documents'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/about-team.vue': {
+      routes:
+        | '/[locale]/about-team'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/contact.vue': {
+      routes:
+        | '/[locale]/contact'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/events.vue': {
+      routes:
+        | '/[locale]/events'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/not-found.vue': {
+      routes:
+        | '/[locale]/not-found'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
     'src/pages/[locale]/projects.vue': {
       routes:
         | '/[locale]/projects'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/publications.vue': {
+      routes:
+        | '/[locale]/publications'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/support.vue': {
+      routes:
+        | '/[locale]/support'
       views:
         | never
       pathParamNames:

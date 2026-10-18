@@ -16,7 +16,24 @@ const uk: MessageSchema = {
     skipToContent: "Перейти до вмісту"
   },
   nav: {
-    language: "Мова"
+    language: "Мова",
+    openMenu: "Відкрити меню навігації",
+    closeMenu: "Закрити меню навігації",
+    mainNav: "Головна навігація",
+    contact: "Контакти",
+    about: "Про нас",
+    support: "Підтримайте нас",
+    projects: "Проєкти",
+    events: "Події",
+    publications: "Публікації",
+    aboutOrg: "Організація",
+    team: "Команда",
+    documents: "Документи"
+  },
+  footer: {
+    nav: "Навігація підвалу",
+    privacyPolicy: "Політика конфіденційності",
+    socialNav: "Соціальні мережі"
   },
   theme: {
     toggleLabel: "Перемкнути темну тему"
@@ -25,6 +42,41 @@ const uk: MessageSchema = {
     title: "Barykady Kultury",
     description: "Офіційний сайт організації Barykady Kultury.",
     placeholder: "Вміст сайту готується."
+  },
+  contact: {
+    title: "Контакти",
+    description: "Контактна інформація Barykady Kultury.",
+    placeholder: "Контактна інформація готується."
+  },
+  about: {
+    title: "Про нас",
+    description: "Про організацію Barykady Kultury.",
+    placeholder: "Інформація про нас готується."
+  },
+  aboutTeam: {
+    title: "Команда",
+    description: "Команда Barykady Kultury.",
+    placeholder: "Інформація про команду готується."
+  },
+  aboutDocuments: {
+    title: "Документи",
+    description: "Організаційні документи Barykady Kultury.",
+    placeholder: "Документи готуються."
+  },
+  support: {
+    title: "Підтримайте нас",
+    description: "Підтримайте організацію Barykady Kultury.",
+    placeholder: "Варіанти підтримки готуються."
+  },
+  events: {
+    title: "Події",
+    description: "Майбутні події, організовані Barykady Kultury.",
+    placeholder: "Події готуються."
+  },
+  publications: {
+    title: "Публікації",
+    description: "Публікації Barykady Kultury.",
+    placeholder: "Публікації готуються."
   },
   projects: {
     title: "Проєкти",

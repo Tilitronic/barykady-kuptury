@@ -22,7 +22,31 @@ const en = {
     skipToContent: "Skip to main content"
   },
   nav: {
-    language: "Language"
+    language: "Language",
+    /** Mobile drawer controls (DESIGN_SYSTEM.md §4 — explicit open/close state). */
+    openMenu: "Open navigation menu",
+    closeMenu: "Close navigation menu",
+    /** Accessible name for the header nav landmark. */
+    mainNav: "Main navigation",
+    /** Top-level destinations (PRODUCT_REQUIREMENTS.md §4). */
+    contact: "Contact",
+    about: "About us",
+    support: "Support us",
+    projects: "Projects",
+    events: "Events",
+    publications: "Publications",
+    /** About sub-navigation items. */
+    aboutOrg: "Organization",
+    team: "Team",
+    documents: "Documents"
+  },
+  footer: {
+    /** Screen-reader label for the footer navigation landmark. */
+    nav: "Footer navigation",
+    /** Privacy policy link text — only rendered when privacyUrl is configured. */
+    privacyPolicy: "Privacy policy",
+    /** Accessible label for the social media links list. */
+    socialNav: "Social media"
   },
   theme: {
     toggleLabel: "Toggle dark theme"
@@ -31,6 +55,41 @@ const en = {
     title: "Barykady Kultury",
     description: "Official website of the Barykady Kultury association.",
     placeholder: "Website content is being prepared."
+  },
+  contact: {
+    title: "Contact",
+    description: "Contact information for Barykady Kultury.",
+    placeholder: "Contact information is being prepared."
+  },
+  about: {
+    title: "About us",
+    description: "About the Barykady Kultury association.",
+    placeholder: "Information about us is being prepared."
+  },
+  aboutTeam: {
+    title: "Team",
+    description: "The Barykady Kultury team.",
+    placeholder: "Team information is being prepared."
+  },
+  aboutDocuments: {
+    title: "Documents",
+    description: "Organizational documents of Barykady Kultury.",
+    placeholder: "Documents are being prepared."
+  },
+  support: {
+    title: "Support us",
+    description: "Support the Barykady Kultury association.",
+    placeholder: "Support options are being prepared."
+  },
+  events: {
+    title: "Events",
+    description: "Upcoming events organized by Barykady Kultury.",
+    placeholder: "Events are being prepared."
+  },
+  publications: {
+    title: "Publications",
+    description: "Publications by Barykady Kultury.",
+    placeholder: "Publications are being prepared."
   },
   projects: {
     title: "Projects",
