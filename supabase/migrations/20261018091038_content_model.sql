@@ -47,7 +47,11 @@ end;
 $$;
 
 comment on function public.set_updated_at() is
-  'Advances updated_at to clock_timestamp() on each UPDATE (T-012).';
+  'Advances updated_at to clock_timestamp() on each UPDATE (T-012). '
+  'Precondition: may only be bound as a BEFORE UPDATE row trigger on tables that '
+  'declare a non-null updated_at timestamptz column. The body assigns '
+  'NEW.updated_at unconditionally, so binding it to a table without that column '
+  'fails at UPDATE time rather than at CREATE TRIGGER time.';
 
 -- ---------------------------------------------------------------------------
 -- Site pages

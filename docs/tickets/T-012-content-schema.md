@@ -92,3 +92,43 @@ disabled anywhere. Policies land in T-013; seed runs as the migration superuser 
 - "RLS enabled with zero policies" in T-012 vs deferring enablement to T-013 — see handoff note.
 - CLI provisioning (`pnpm dlx supabase@2.121.0` vs a committed dependency) for the future
   `pnpm types:db` script (T-015) — see handoff note.
+
+### Review round 1 (2026-10-18) — @architector + @reviewer
+
+Verdicts: **@architector PASS-WITH-FINDINGS** (0 blockers, 0 majors, 2 observations + 1 nit + 2 decision-record gaps); **@reviewer** 2 Standards + 2 Spec findings. Fixed point `9940c90`; implementation under review `a2218e6`.
+
+| Finding | Axis | Disposition |
+|---|---|---|
+| `auth.enable_signup = true` contradicts architecture §6 / D-08 "no public registration" | Standards (Major) | **Fixed** — `[auth].enable_signup=false`, `[auth.email].enable_signup=false` |
+| `storage.s3_protocol` + `storage.vector` enabled with no requirement | Standards (Suggestion) | **Fixed** — both `enabled=false` (AGENTS.md rule 7) |
+| Seed-idempotency AC had no automated gate | Spec (Major) | **Fixed** — see "Idempotency gate" below |
+| `needs_review` columns are scope creep | Spec (Minor) | **Documented amendment** — kept (see below) |
+| F-01 `publication_files` unique key `(publication_id, locale)` possibly too restrictive | Arch observation | **Forward flag for T-029** |
+| F-03 `projects` has no `sort_order` | Arch observation | **Confirmed correct** for now; forward flag for T-030 |
+| F-02 `set_updated_at()` comment omits precondition | Arch nit | **Fixed** — comment now states the non-null `updated_at` precondition |
+
+Decision records added: **D-21** (RLS enablement point — tables closed at creation in T-012, policies authored in T-013; @architector verdict: correct posture) and **D-22** (Supabase CLI provisioning for the local stack + `pnpm types:db`; provisional, finalised in T-015).
+
+#### `needs_review` — reviewed scope amendment
+The migration adds `needs_review` to every translation table, which the ticket's in-scope list did not name. @reviewer flagged it as scope creep; @architector explicitly endorsed it as a reasonable pre-load for D-16 (admin locale workflow). Reconciliation: **kept and recorded here as a reviewed T-012 scope amendment** so it is not a silent expansion. The @reviewer dissent stands on record.
+
+#### Idempotency gate — why it is a host script, not a pgTAP test
+The first attempt added `supabase/tests/seed_idempotency_test.sql` re-applying the seed via `\ir ../seed.sql`. That cannot work: `supabase test db` runs psql inside the `pg_prove` container, which mounts **only** `supabase/tests` — probing the container shows `ls supabase` ⇒ `tests` alone, and the include fails with
+`error: /…/supabase/seed.sql: No such file or directory`. `docs/architecture.md` §2 fixes the seed at `supabase/seed.sql`, so the file is unreachable from pgTAP; relocating or duplicating it was rejected (drift / contradiction of the documented layout).
+The gate therefore runs on the host and drives psql inside the database container:
+```
+pnpm dlx supabase@2.121.0 db reset        # application #1 (migration + seed)
+pnpm test:db:idempotency                  # applies supabase/seed.sql again; asserts no change
+```
+`scripts/verify-seed-idempotency.mjs` digests every content table (row count + md5 over ordered primary keys) before and after the second application and fails on any difference; it refuses to pass on an empty database (vacuous-pass guard).
+
+#### Review-round verification (re-run by the orchestrator on the reworked tree)
+- `pnpm dlx supabase@2.121.0 db reset` → exit 0.
+- `pnpm test:db:idempotency` → exit 0: `PASS — re-applying supabase/seed.sql changed nothing (12 tables, 24 rows verified)`.
+- `pnpm dlx supabase@2.121.0 test db` → exit 0: `schema_test.sql .. ok / Files=1, Tests=41 / Result: PASS`.
+- `pnpm typecheck` → exit 0.
+
+#### Follow-ups for later tickets
+- **T-029**: revisit the `publication_files` unique key if a real "two files per locale" need appears (architector F-01).
+- **T-030**: add `projects.sort_order` only if a manual editorial order is actually required (architector F-03).
+- **D-22**: finalise CLI provisioning; once the CLI is on `PATH`, wire `pnpm test:db:idempotency` into `scripts/ci-local.sh` Gate 6 (T-005's DB gate currently SKIPs without a CLI on PATH).
