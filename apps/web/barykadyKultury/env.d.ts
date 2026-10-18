@@ -12,7 +12,15 @@
  *   readonly MY_OTHER_VAR: string;
  * }
  */
-interface ImportMetaEnv {}
+interface ImportMetaEnv {
+  /**
+   * T-015: browser-safe Supabase project URL and publishable key. Both are
+   * optional at build time; the boot client degrades when either is absent.
+   * Only these two publishable values belong in the client bundle.
+   */
+  readonly VITE_SUPABASE_URL?: string;
+  readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
+}
 
 /**
  * T-008: Vite resolves static SVG imports as URL strings.

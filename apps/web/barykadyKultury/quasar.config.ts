@@ -13,7 +13,9 @@ export default defineConfig(ctx => {
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     // `theme` (T-010) applies the resolved light/dark theme to both D-20
     // mechanisms and wires the live system-preference listener.
-    boot: ["i18n", "theme"],
+    // `supabase` (T-015) initializes the single browser client and surfaces a
+    // development misconfiguration as a loud startup error.
+    boot: ["i18n", "theme", "supabase"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: ["app.scss"],
