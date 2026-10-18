@@ -10,6 +10,14 @@ const en = {
   app: {
     name: "Barykady Kultury"
   },
+  brand: {
+    /**
+     * Accessible name for the BrandLogo component when used in a non-decorative
+     * context (role="img" or alt text). Grounded in the verified organisation
+     * name only — no invented taglines (T-008 scope).
+     */
+    logoLabel: "Barykady Kultury"
+  },
   common: {
     skipToContent: "Skip to main content"
   },

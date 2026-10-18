@@ -13,3 +13,13 @@
  * }
  */
 interface ImportMetaEnv {}
+
+/**
+ * T-008: Vite resolves static SVG imports as URL strings.
+ * Declaring this module type prevents TypeScript from rejecting
+ * `import src from '@/assets/brand/logo_red.svg'`.
+ */
+declare module "*.svg" {
+  const src: string;
+  export default src;
+}

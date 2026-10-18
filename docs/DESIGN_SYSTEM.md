@@ -36,6 +36,10 @@ Represent colors with semantic design tokens rather than scattering raw values a
 - Provide a light-surface and a dark-surface variant. Never place the black logo on nero, or the red logo on scarlet.
 - Exact minimum sizes and numeric clear-space values are **not** specified in the brandbook. Derive one clear-space spacing token and record it here rather than inventing a measurement.
 
+**Logo clear space token (T-008, D-19):** `--logo-clear-space: 0.5rem` (8 px at the 16 px root scale). Applied as equal padding on all four sides of the `.brand-logo` wrapper in `BrandLogo.vue`. Derived as the body-text x-height approximation (≈ 0.5 rem at 16 px base, consistent with the `gap: 0.5rem` used in other layout components). The brandbook mandates "equal clear space on all sides" without a numeric value; this token is the minimum — callers may increase it via the CSS custom property but must not reduce below it.
+
+**Dark-surface variant (T-008):** use `logo_red_small` (SCARLET ring + white interior) for logo mark on dark backgrounds. No logotype small-variant exists in the supplied assets — the logotype is designed for light surfaces; if used on a dark surface it uses SCARLET paths which have low decorative contrast (2.5:1 on NERO); this is documented and acceptable for a decorative brand element.
+
 ## 2. Typography
 
 Inter is confirmed by the brandbook (p. 13–14) with Black, Bold, Medium, Regular and Light weights. Self-host it from a pinned package with Latin, Latin Extended and Cyrillic subsets for Polish, Ukrainian and English. Verify glyph coverage, loading, fallback and license; do not depend on a third-party font CDN.

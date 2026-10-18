@@ -9,6 +9,9 @@ const pl: MessageSchema = {
   app: {
     name: "Barykady Kultury"
   },
+  brand: {
+    logoLabel: "Barykady Kultury"
+  },
   common: {
     skipToContent: "Przejdź do treści"
   },
