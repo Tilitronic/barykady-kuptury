@@ -25,7 +25,17 @@
     <p v-if="member.role" class="team-card__role">{{ member.role }}</p>
     <p v-if="member.bio" class="team-card__bio">{{ member.bio }}</p>
 
-    <p v-if="member.isFallback" class="team-card__fallback" role="note">
+    <!--
+      The note names the source language only when English role/bio text has
+      actually been substituted (DESIGN_SYSTEM.md §6); a fallback selection
+      with no localized fields would otherwise claim a substitution that is
+      not visible (T-018 review, Spec finding 2).
+    -->
+    <p
+      v-if="member.isFallback && (member.role || member.bio)"
+      class="team-card__fallback"
+      role="note"
+    >
       {{
         t("content.fallbackNote", { language: t("content.fallbackLanguage") })
       }}
@@ -34,15 +44,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from "vue";
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
-import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import type { TeamMember } from "@/features/team/api";
-import { teamPortraitUrl } from "@/features/team/portrait";
 
 /**
  * One team member card (T-018).
+ *
+ * Pure presentational component: the feature layer resolves the portrait
+ * public URL (`useTeamMembers` → `teamPortraitUrl`) and passes it in as
+ * plain data, so this card injects no client and builds no storage request
+ * (AGENTS.md coding conventions; T-018 review, Standards finding 1).
  *
  * Optional role/bio collapse cleanly (no placeholder dashes); the portrait is
  * lazy-loaded with an alt composed from name + role because the image
@@ -50,14 +63,12 @@ import { teamPortraitUrl } from "@/features/team/portrait";
  * approved photo exists. Text is never truncated — longer Polish and
  * Ukrainian copy simply grows the card.
  */
-const props = defineProps<{ member: TeamMember }>();
+const props = defineProps<{
+  member: TeamMember;
+  portraitUrl: string | null;
+}>();
 
 const { t } = useI18n();
-const supabase = inject(SUPABASE_CLIENT_KEY, null);
-
-const portraitUrl = computed(() =>
-  teamPortraitUrl(supabase, props.member.portraitPath)
-);
 
 const altText = computed(() =>
   [props.member.name, props.member.role].filter(Boolean).join(", ")

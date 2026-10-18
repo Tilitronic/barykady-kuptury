@@ -5,6 +5,7 @@ import {
   fetchPublishedTeamMembers,
   type TeamMember
 } from "@/features/team/api";
+import { teamPortraitUrl } from "@/features/team/portrait";
 import type { Locale } from "@/features/i18n/locales";
 import type { ContentResult } from "@/shared/content/result";
 
@@ -17,14 +18,24 @@ import type { ContentResult } from "@/shared/content/result";
  * success, and re-fetches when the requested locale changes — for example
  * when the header language switcher navigates to another locale prefix. The
  * `sort_order` ranking is locale-independent; only role/bio text localizes.
+ *
+ * Review fix (T-018 rev-1, Standards): the hook resolves the portrait public
+ * URL through `teamPortraitUrl` so components receive plain view-model data —
+ * Supabase access stays behind the feature layer (AGENTS.md coding
+ * conventions) and `PersonCard` needs no client at all.
  */
 type MaybeRef<T> = Ref<T> | T;
 
+/** A member plus the resolved portrait URL (`null` → monogram fallback). */
+export interface TeamMemberView extends TeamMember {
+  readonly portraitUrl: string | null;
+}
+
 export function useTeamMembers(locale: MaybeRef<Locale>): {
-  readonly result: Ref<ContentResult<TeamMember>>;
+  readonly result: Ref<ContentResult<TeamMemberView>>;
 } {
   const supabase = inject(SUPABASE_CLIENT_KEY, null);
-  const result = ref<ContentResult<TeamMember>>({ kind: "loading" });
+  const result = ref<ContentResult<TeamMemberView>>({ kind: "loading" });
 
   watchEffect(onInvalidate => {
     const activeLocale = typeof locale === "string" ? locale : locale.value;
@@ -38,7 +49,18 @@ export function useTeamMembers(locale: MaybeRef<Locale>): {
 
     void (async () => {
       const next = await fetchPublishedTeamMembers(supabase, activeLocale);
-      if (!stale) result.value = next;
+      if (stale) return;
+
+      result.value =
+        next.kind === "ok"
+          ? {
+              kind: "ok",
+              items: next.items.map(member => ({
+                ...member,
+                portraitUrl: teamPortraitUrl(supabase, member.portraitPath)
+              }))
+            }
+          : next;
     })();
   });
 

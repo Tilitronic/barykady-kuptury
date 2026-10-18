@@ -19,7 +19,12 @@
       {{ t("content.unavailable") }}
     </div>
     <ul v-else class="team-grid">
-      <PersonCard v-for="member in members" :key="member.id" :member="member" />
+      <PersonCard
+        v-for="member in members"
+        :key="member.id"
+        :member="member"
+        :portrait-url="member.portraitUrl"
+      />
     </ul>
   </div>
 </template>
@@ -30,8 +35,10 @@ import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import PersonCard from "@/components/team/PersonCard.vue";
-import type { TeamMember } from "@/features/team/api";
-import { useTeamMembers } from "@/features/team/useTeamMembers";
+import {
+  useTeamMembers,
+  type TeamMemberView
+} from "@/features/team/useTeamMembers";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
@@ -54,7 +61,7 @@ const currentLocale = computed<Locale>(() => {
 
 const { result } = useTeamMembers(currentLocale);
 
-const members = computed<readonly TeamMember[]>(() =>
+const members = computed<readonly TeamMemberView[]>(() =>
   result.value.kind === "ok" ? result.value.items : []
 );
 </script>

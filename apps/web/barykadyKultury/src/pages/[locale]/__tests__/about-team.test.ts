@@ -192,17 +192,39 @@ describe("team page", () => {
     const wrapper = await mountTeam(fake.client, "uk");
 
     expect(wrapper.get(".team-card__bio").text()).toBe(longBio);
+    // The translation is in the requested locale: no fallback note.
+    expect(wrapper.find(".team-card__fallback").exists()).toBe(false);
   });
 
-  it("names the source language on a card whose translation is an English stand-in", async () => {
+  it("names the source language on a card whose English role/bio stand in", async () => {
     // Requested locale has no translation at all; the English row stands in
-    // (required fields are empty for team members), so the card must say so.
+    // (required fields are empty for team members) and substitutes visible
+    // role/bio text, so the card must say so (DESIGN_SYSTEM.md §6).
     const fake = createFakeSupabase({
       tables: { team_members: [memberRow()] }
     });
     const wrapper = await mountTeam(fake.client, "pl");
 
     expect(wrapper.text()).toContain("po angielsku");
+  });
+
+  it("hides the fallback note when the stand-in translation substitutes no visible text", async () => {
+    // isFallback is true (the en row is used for pl) but role and bio are
+    // both null — a note would claim a substitution that is not visible
+    // (T-018 review, Spec finding 2).
+    const fake = createFakeSupabase({
+      tables: {
+        team_members: [
+          memberRow({
+            team_member_translations: [translation({ role: null, bio: null })]
+          })
+        ]
+      }
+    });
+    const wrapper = await mountTeam(fake.client, "pl");
+
+    expect(wrapper.get(".team-card__name").text()).toBe("Anna Kowalska");
+    expect(wrapper.find(".team-card__fallback").exists()).toBe(false);
   });
 
   it("keeps exactly one h1 and one h2 per member", async () => {
