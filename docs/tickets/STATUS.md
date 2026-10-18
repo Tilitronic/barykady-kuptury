@@ -25,7 +25,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-019 | Projects: listing, detail, draft protection | 4 | done | @reviewer (rev-1, rev-2) + @designer (des-1) | 882bfad | 2026-10-18 |
 | T-020 | Publications: listing, detail, files | 4 | done | @reviewer (rev-1) + @designer (des-1) | 33f4db0 | 2026-10-18 |
 | T-021 | Contact page | 4 | done | @reviewer (rev-1, rev-2) | 5def43d | 2026-10-18 |
-| T-022 | Support page | 4 | todo | — | — | — |
+| T-022 | Support page | 4 | done | @reviewer (rev-1) + @designer (des-1) | ba2510b | 2026-10-18 |
 | T-023 | Calendar adapter function | 5 | todo | — | — | — |
 | T-024 | Events page | 5 | todo | — | — | — |
 | T-025 | Homepage composition | 5 | todo | — | — | — |
@@ -39,6 +39,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-033 | Accessibility audit & fixes | 7 | todo | — | — | — |
 | T-034 | SEO, metadata, deploy configuration (favicon delivered early; manifest/OG remain) | 7 | todo | — | — | — |
 | T-035 | Release readiness & handoff | 7 | todo | — | — | — |
+| T-036 | Support: "what your support does" content slot (deferred from T-022) | — | todo | — | — | — |
 
 ## Session log
 
