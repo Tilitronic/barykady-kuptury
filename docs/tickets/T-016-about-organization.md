@@ -1,6 +1,6 @@
 # T-016 — About: organization content
 
-**Session:** 4 · **Lane:** feature/content · **Owner:** @designer · **Status:** todo
+**Session:** 4 · **Lane:** feature/content · **Owner:** @designer · **Status:** done
 **Reviewers:** @reviewer + @designer
 **Depends on:** T-011, T-015 · **Blocks:** T-025, T-028
 
@@ -31,12 +31,12 @@ Out: editing UI (T-028), invented biographies, translated copy that has not been
 4. REFACTOR: extract `LocalizedRichText.vue` (sanitised rendering, no `v-html` of untrusted input) reused by projects/publications.
 
 ## Acceptance criteria
-- [ ] Mission/history/values render from data, not literals in the template.
-- [ ] Fallback note appears with the source language name; no untranslated string shown as if translated.
-- [ ] PL/UK unapproved content is seeded as draft or marked `needsReview`, never silently published.
-- [ ] Empty/error states are explicit and translated.
-- [ ] Single h1; headings ordered; body measure readable.
-- [ ] No invented organizational facts.
+- [x] Mission/history/values render from data, not literals in the template.
+- [x] Fallback note appears with the source language name; no untranslated string shown as if translated.
+- [x] PL/UK unapproved content is seeded as draft or marked `needsReview`, never silently published.
+- [x] Empty/error states are explicit and translated.
+- [x] Single h1; headings ordered; body measure readable.
+- [x] No invented organizational facts.
 
 ## Verification
 ```
@@ -95,3 +95,23 @@ pnpm typecheck && pnpm lint:check
     - `pnpm dlx supabase@2.121.0 test db`: pass (231 tests).
     - `pnpm test:db:idempotency`: pass (12 tables, 25 rows).
 - Regression fix (2026-10-18): localized the external-link "opens in a new tab" SR suffix via new `content.opensInNewTab` key in en/pl/uk, added `newTabLabel`/`labelLang` props to `LocalizedRichText`, and marked the suffix `<span>` with the matching `lang` attribute. Updated `richText.test.ts` to prove non-English labels are used and no hardcoded English remains. Re-verified: `pnpm test` 31 files / 355 tests; `pnpm typecheck`; `pnpm lint:check`; `pnpm build`; `pnpm test:e2e` 40 passed.
+
+### Review verdicts (2026-10-18) — @reviewer (rev-1) + @designer (des-2)
+
+Implementation `3f455c1`; fixed point `f3362e4`.
+
+- **@reviewer (two-axis): 1 Spec Major, 2 Standards Suggestions — all resolved.** Spec Major: the ticket-required heading-hierarchy component test was missing → added (`about.test.ts` asserts one `h1` and `h2` order Mission→History→Values→Aims). Standards Suggestions: (a) no `CODEOWNERS` to codify cross-cutting ownership — **deferred** as repo governance, not T-016 scope; (b) canonical About text duplicated between E2E and seed — **addressed** by asserting only verified excerpts in E2E. Confirmed **no assertions were weakened**; `supabase.from` remains confined to `src/features/*/api.ts`; no `v-html`. **Close verdict: YES (Standards + Spec).**
+- **@designer (design/a11y): 2 Major, 4 Minor, 3 polish — all resolved, then 1 new regression resolved.** Resolved: EN fallback prose marked `lang="en"`; E2E now asserts ordered `h2`s, `aria-current="page"`, and runs `checkA11y` on success + fallback journeys; Polish fallback grammar fixed ("po angielsku"); sub-nav moved before body copy; sub-nav tap target ≤24px raised to `min-height: 2.75rem`; external links announce the new tab; branded `:focus-visible` ring; `65ch` measure on title/state; `overflow-wrap: break-word`. The fix initially hard-coded the new-tab announcement in English → **regression resolved** by localizing via `content.opensInNewTab` (en/pl/uk) with a matching `lang` attribute. **Design verdict: gate satisfied.**
+
+#### Final verification (orchestrator, on the committed tree `3f455c1`)
+
+- `pnpm test` → **31 files / 355 tests pass**.
+- `pnpm typecheck` → clean; `pnpm lint:check` → clean (140 files).
+- `pnpm test:e2e` → **40 passed**.
+- (Author-reported, corroborated by both review lanes: `pnpm build` pass; `supabase db reset` pass; `supabase test db` 231 pgTAP pass; `pnpm test:db:idempotency` pass — 12 tables, 25 rows.)
+
+#### Follow-ups
+
+- **CODEOWNERS** (reviewer Suggestion) deferred — candidate for the release/handoff backlog.
+- T-027's publish gate must agree with the T-015 `requiredFields` read-time completeness definition (carried from T-015).
+- `LocalizedRichText.vue` + `richText.ts` are the shared safe-render contract for T-019/T-020 — reuse, do not fork.

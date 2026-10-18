@@ -19,7 +19,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-013 | RLS policies & admin claim | 3 | done | @reviewer (rev-1) + @architector (arc-1) | 85c4d8e | 2026-10-18 |
 | T-014 | Storage buckets & upload policy | 3 | done | @reviewer (rev-1) + @architector (arc-1) | 0208ee3 | 2026-10-18 |
 | T-015 | Generated types & feature data access | 3 | done | @reviewer (rev-1) + @architector (arc-1) | e819aa2 | 2026-10-18 |
-| T-016 | About: organization content | 4 | todo | — | — | — |
+| T-016 | About: organization content | 4 | done | @reviewer (rev-1) + @designer (des-2) | 3f455c1 | 2026-10-18 |
 | T-017 | About: documents | 4 | todo | — | — | — |
 | T-018 | About: team | 4 | todo | — | — | — |
 | T-019 | Projects: listing, detail, draft protection | 4 | todo | — | — | — |
