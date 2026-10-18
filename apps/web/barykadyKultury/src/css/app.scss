@@ -1,3 +1,5 @@
 // app global css
 // T-006: Import brand design tokens (CSS custom properties for light + dark).
 @import "./tokens.css";
+// T-007: Import Inter Variable font-face declarations + fluid type scale tokens.
+@import "./typography.css";

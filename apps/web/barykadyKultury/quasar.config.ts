@@ -27,7 +27,8 @@ export default defineConfig(ctx => {
       // 'themify',
       // 'line-awesome',
 
-      "roboto-font", // optional, you are not bound to it
+      // T-007: roboto-font removed — Inter Variable is self-hosted via
+      // public/fonts/ and declared in src/css/typography.css.
       "material-icons" // optional, you are not bound to it
     ],
 

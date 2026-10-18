@@ -1,0 +1,325 @@
+/**
+ * T-007 — Typography: self-hosted Inter Variable + fluid type scale
+ * ==================================================================
+ *
+ * FONT LOADING STRATEGY
+ * ---------------------
+ * Chosen approach: stable paths under /fonts/ (public/ directory), with
+ * hand-written @font-face declarations and a <link rel="preload"> in index.html.
+ *
+ * WHY this approach over importing the package CSS:
+ *   Importing @fontsource-variable/inter/wght.css causes Vite to emit woff2
+ *   files with content hashes (e.g. `inter-latin-wght-normal-XXXXXXXX.woff2`).
+ *   A <link rel="preload"> in index.html must reference the same URL as the
+ *   CSS font-src — but content hashes are only known after the build, making
+ *   it impossible to hard-code a stable preload href in the source HTML.
+ *   A Vite plugin could scan the manifest and inject the correct hash at build
+ *   time, but that adds complexity and is brittle across Vite version changes.
+ *
+ *   Self-hosting in public/ gives stable, hash-free paths that are identical
+ *   in the source HTML and in the CSS at all times — one URL per font file,
+ *   zero chance of preload/load mismatch.
+ *
+ * TRADE-OFF:
+ *   The four woff2 files are checked in to public/fonts/. When
+ *   @fontsource-variable/inter is upgraded, they must be re-copied from
+ *   node_modules/@fontsource-variable/inter/files/ to public/fonts/.
+ *   A `postinstall` hook could automate this; deferred to a future ticket.
+ *
+ * SUBSETS INCLUDED
+ * ----------------
+ * Four of the six subsets in wght.css are included:
+ *   latin           — ASCII and common Western European characters
+ *   latin-ext       — Polish diacritics: ą ć ę ł ń ó ś ź ż (U+0100..U+02BA)
+ *   cyrillic        — Ukrainian core: і ї є ґ (U+0400..U+045F range)
+ *   cyrillic-ext    — Extended Cyrillic used in some Ukrainian orthography
+ *
+ * Greek and Vietnamese subsets are NOT included — not needed for the NGO's
+ * three content languages (Polish, Ukrainian, English).
+ *
+ * Each @font-face has font-display: swap so text renders immediately in the
+ * fallback stack; Inter swaps in when downloaded.
+ *
+ * CSP NOTE
+ * --------
+ * The existing CSP in index.html has `default-src 'self'`. There is no explicit
+ * `font-src` directive, so fonts fall back to `default-src 'self'`, which
+ * allows same-origin /fonts/*.woff2 requests. No CSP change is needed.
+ *
+ * SINGLE SOURCE OF TRUTH (HAND-MIRRORED, MACHINE-GATED)
+ * -------------------------------------------------------
+ * All CSS custom properties for font sizes, weights, line-heights, and the
+ * prose measure are HAND-MIRRORED from src/shared/typography/scale.ts.
+ * They are NOT auto-generated. scale.test.ts asserts that every token in this
+ * file matches the corresponding exported value in scale.ts — edit scale.ts
+ * first, then update this file; the test will fail if they diverge.
+ *
+ * unicode-range values below are copied verbatim from
+ * @fontsource-variable/inter/wght.css (package version 5.3.0).
+ *
+ * LICENSE
+ * -------
+ * The Inter font binaries redistributed in public/fonts/ are licensed under the
+ * SIL Open Font License 1.1 (Copyright 2016 The Inter Project Authors,
+ * https://github.com/rsms/inter). The full license text ships alongside the
+ * binaries at public/fonts/OFL.txt (copied from
+ * @fontsource-variable/inter/LICENSE, package version 5.3.0).
+ */
+
+/* ==========================================================================
+   1. @font-face — Inter Variable (self-hosted, stable paths)
+   ========================================================================== */
+
+/* --- cyrillic-ext: Extended Cyrillic (some Ukrainian orthography variants) -- */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-cyrillic-ext-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+/* --- cyrillic: Core Ukrainian Cyrillic (і ї є ґ at U+0456, U+0457, U+0454, U+0491) --- */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-cyrillic-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+/* --- latin-ext: Polish diacritics (ą ć ę ł ń ó ś ź ż live in this range) --- */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-latin-ext-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* --- latin: ASCII + common Western European (preloaded subset) ------------- */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/* ==========================================================================
+   2. Custom properties — font family, sizes, line-heights, weights, measure
+   ==========================================================================
+   All values are HAND-MIRRORED from src/shared/typography/scale.ts and
+   MACHINE-GATED by scale.test.ts. Edit scale.ts first, then update here.
+   ========================================================================== */
+
+:root {
+  /* --- Font family -------------------------------------------------------- */
+
+  /**
+   * Sans-serif stack. Inter Variable first; `Inter` as a non-variable
+   * fallback for older browsers that don't support variable fonts but do have
+   * Inter static installed; system-ui and generic sans-serif as last resort.
+   */
+  --font-family-sans: "Inter Variable", Inter, system-ui, sans-serif;
+
+  /* --- Font sizes (fluid) ------------------------------------------------- */
+  /*
+   * All values are clamp(mobile, slope*vw + intercept, desktop).
+   * Design widths: mobile = 375 px, desktop = 1280 px (brandbook reference).
+   * See src/shared/typography/scale.ts for derivation.
+   *
+   * Brandbook anchors verified at desktop (1280 px):
+   *   display  → 64 px  (brandbook p. 13, Medium/Bold)
+   *   h2       → 34 px  (brandbook p. 13, section heading, Bold)
+   *   body     → 16 px  (brandbook p. 14, Regular)
+   */
+
+  /** Display — 40 px (mobile) → 64 px (desktop, brandbook anchor) */
+  --font-size-display: clamp(40px, 2.6519vw + 30.0552px, 64px);
+
+  /** H1 — 28 px (mobile) → 46 px (desktop) */
+  --font-size-h1: clamp(28px, 1.989vw + 20.5414px, 46px);
+
+  /** H2 / section heading — 22 px (mobile) → 34 px (desktop, brandbook anchor) */
+  --font-size-h2: clamp(22px, 1.326vw + 17.0276px, 34px);
+
+  /** H3 — 18 px (mobile) → 24 px (desktop) */
+  --font-size-h3: clamp(18px, 0.663vw + 15.5138px, 24px);
+
+  /** H4 — 16 px (mobile) → 20 px (desktop) */
+  --font-size-h4: clamp(16px, 0.442vw + 14.3425px, 20px);
+
+  /** Body — 15 px (mobile) → 16 px (desktop, brandbook anchor) */
+  --font-size-body: clamp(15px, 0.1105vw + 14.5856px, 16px);
+
+  /** Small / caption — 12 px (mobile) → 14 px (desktop) */
+  --font-size-small: clamp(12px, 0.221vw + 11.1713px, 14px);
+
+  /* --- Line heights ------------------------------------------------------- */
+
+  /**
+   * Display uses a tight leading so large headlines don't feel airy.
+   * Heading uses a slightly looser leading for multi-line heading readability.
+   * Body uses a comfortable reading leading (WCAG 1.4.8 recommends ≥ 1.5).
+   * Small text uses the same comfortable lead.
+   */
+  --line-height-display: 1.1;
+  --line-height-heading: 1.25;
+  --line-height-body: 1.6;
+  --line-height-small: 1.5;
+
+  /* --- Font weights ------------------------------------------------------- */
+
+  /**
+   * Inter Variable supports the full 100–900 weight axis.
+   *
+   * display: 500 (Medium) — editorial register at 40–64 px; achieves dominance
+   *   through size, not weight. Stronger contrast with 700 headings below it.
+   *   Brandbook p. 13 sanctions both "Medium" and "Bold" for display.
+   *   Decision: Medium chosen (A3 review finding, see scale.ts for rationale).
+   *
+   * heading (h1–h3): 700 (Bold) — brandbook anchor for section headings.
+   *
+   * h4: 600 (Semi-bold) — A2 review finding: h3 (18 px, 700) and h4 (16 px)
+   *   with the same weight creates only a 2 px size gap. 600 vs 700 is visibly
+   *   distinct in Inter Variable at 16–18 px; h4 reads as a sub-heading rather
+   *   than a slightly smaller heading.
+   *
+   * body: 400 (Regular) — brandbook anchor.
+   * small: 400 (Regular) — consistent with body.
+   */
+  --font-weight-display: 500;
+  --font-weight-heading: 700;
+  --font-weight-h4: 600;
+  --font-weight-body: 400;
+  --font-weight-small: 400;
+
+  /* --- Measure ------------------------------------------------------------ */
+
+  /**
+   * Maximum line length for body prose. ~68ch keeps line length within the
+   * comfortable 50–75 character range at the body font size, improving
+   * readability in English, Polish, and Ukrainian (longer-word languages).
+   * Applied via the .prose utility class — NOT globally on <p> — to avoid
+   * constraining card/utility paragraphs unexpectedly (A1 review finding).
+   */
+  --prose-measure: 68ch;
+}
+
+/* ==========================================================================
+   3. Global baseline — apply Inter Variable to the document
+   ==========================================================================
+   Setting font-family on body ensures Quasar components inherit Inter.
+   Font-size and line-height use the body tokens as the root values.
+   ========================================================================== */
+
+body {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  font-feature-settings:
+    "kern" 1,
+    "liga" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   4. Base element typography layer
+   ==========================================================================
+   A1 review finding: bare semantic elements must render the scale tokens,
+   not UA defaults. This layer covers h1–h4, p, and small.
+
+   SCOPE: this is the BASE type system only.
+   - Quasar components: NOT touched here (they inherit via body above).
+   - Feature/page components: NOT touched here (apply tokens at feature level).
+   - Prose measure: via .prose utility ONLY (never on a bare <p>) so that
+     utility and card paragraphs are not width-constrained.
+
+   HEADING MARGIN DECISION: margins reset to 0.
+   WHY: UA heading margins vary across browsers; a brandbook-driven layout
+   should control spacing through layout/component tokens, not UA defaults.
+   Zero margin is predictable and safe. Feature components add their own
+   spacing through their own styles. This is the minimal safe choice.
+
+   A4 advisory: h4 weight is set explicitly on the element to ensure it is
+   never accidentally inherited from a heavier parent element.
+   ========================================================================== */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-heading);
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
+h3 {
+  font-size: var(--font-size-h3);
+}
+
+h4 {
+  font-size: var(--font-size-h4);
+  /* A2 + A4: explicit weight — 600 distinguishes h4 from h3 (700) at 16–18 px. */
+  font-weight: var(--font-weight-h4);
+}
+
+p {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: 0;
+  /* No max-width here — use .prose utility class on prose containers. */
+}
+
+small {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+/* ==========================================================================
+   5. Utility classes
+   ========================================================================== */
+
+/**
+ * Hero / display text. Apply to any element that needs the display-scale size
+ * (40–64 px fluid). Intentionally a class, not tied to a specific element,
+ * because display text can appear in <h1>, <p>, or <span> depending on context.
+ */
+.text-display {
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-display);
+  line-height: var(--line-height-display);
+}
+
+/**
+ * Prose measure constraint. Apply to any block element containing long-form
+ * reading text. NOT applied globally to <p> (card/utility paragraphs must not
+ * be width-constrained — A1 review finding).
+ */
+.prose {
+  max-width: var(--prose-measure);
+}

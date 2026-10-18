@@ -23,6 +23,23 @@
     -->
     <script src="/theme-init.js"></script>
 
+    <!--
+      T-007: Preload the latin subset of Inter Variable (the primary weight file).
+      Using a stable /fonts/ path (public/ directory) so the href here and the
+      src: url() in typography.css are IDENTICAL — no hash mismatch possible.
+      `crossorigin` is required for font preloads even on same-origin to match
+      the CORS-enabled font fetch the browser performs when loading the CSS rule.
+      The CSP `default-src 'self'` covers same-origin font-src requests without
+      an explicit `font-src` directive.
+    -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/inter-latin-wght-normal.woff2"
+      crossorigin
+    />
+
     <link
       rel="icon"
       type="image/png"
