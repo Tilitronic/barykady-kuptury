@@ -7,7 +7,8 @@ import { mountWithPlugins } from "@/test-utils/mount";
 /**
  * Spec axis: docs/tickets/T-019-projects-public.md — the card matrix: optional
  * cover, optional dates, long titles, real-anchor links with the localized
- * slug, and a status label that never renders raw enum jargon.
+ * slug. Status lives on the detail page, not the card (T-019 review): the
+ * published-only listing would repeat one uniform badge on every card.
  */
 
 function projectView(
@@ -118,21 +119,6 @@ describe("ProjectCard", () => {
     const wrapper = await mountCard(projectView({ summary: null }));
 
     expect(wrapper.find(".project-card__summary").exists()).toBe(false);
-  });
-
-  it("hides the status chip for published projects (the public default)", async () => {
-    const wrapper = await mountCard(projectView());
-
-    expect(wrapper.find(".project-card__status").exists()).toBe(false);
-  });
-
-  it("shows a localized status label for a non-published status, never the raw enum", async () => {
-    const wrapper = await mountCard(projectView({ status: "archived" }), {
-      locale: "en"
-    });
-
-    const chip = wrapper.get(".project-card__status");
-    expect(chip.text()).toBe("Archived");
   });
 
   it("names the source language when the English translation stands in", async () => {

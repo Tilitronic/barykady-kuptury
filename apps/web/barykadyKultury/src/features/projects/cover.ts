@@ -12,6 +12,14 @@ import type { Database } from "@/types/database.types";
  * (AGENTS.md coding conventions). A missing client or path yields `null`, and
  * the card/detail simply omit the image: no broken frames, no invented
  * covers (docs/DESIGN_SYSTEM.md §3).
+ *
+ * Duplication note (T-019 review, Standards): this helper deliberately
+ * mirrors `src/features/team/portrait.ts` instead of sharing one abstraction.
+ * Each feature owns its bucket/URL policy (public-media today, but the
+ * paths, alt semantics and lifecycle differ), so the per-feature seam keeps
+ * them decoupled. Introduce a shared helper only when a third media seam
+ * appears — three similar call sites make the abstraction obvious, two do not
+ * (AGENTS.md rule 7).
  */
 export const PROJECT_COVER_BUCKET = "public-media";
 

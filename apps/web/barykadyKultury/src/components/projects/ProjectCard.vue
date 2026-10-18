@@ -24,8 +24,6 @@
       </template>
     </p>
 
-    <p v-if="statusLabel" class="project-card__status">{{ statusLabel }}</p>
-
     <p v-if="project.isFallback" class="project-card__fallback" role="note">
       {{
         t("content.fallbackNote", { language: t("content.fallbackLanguage") })
@@ -76,16 +74,9 @@ function formatted(date: string): string {
   });
 }
 
-/**
- * Status placement decision (T-019): the public surfaces show published
- * content only, so a chip would always read "Published" — noise, not news.
- * The localized label renders only when a non-published status reaches the
- * view (defensive path, reused by T-025/T-027 surfaces), never raw enum text.
- */
-const statusLabel = computed(() => {
-  if (props.project.status === "published") return null;
-  return t(`projects.status.${props.project.status}`);
-});
+// Lifecycle status is deliberately not shown here (T-019 review, Spec
+// finding 1): the listing is published-only, so a per-card badge would be
+// uniform noise. The detail page surfaces the localized status instead.
 </script>
 
 <style scoped>
@@ -132,13 +123,6 @@ const statusLabel = computed(() => {
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
-}
-
-.project-card__status {
-  margin: 0;
-  color: var(--color-accent);
-  font-size: var(--font-size-small);
-  font-weight: 600;
 }
 
 .project-card__fallback {

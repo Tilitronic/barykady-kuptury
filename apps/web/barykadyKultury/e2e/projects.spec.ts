@@ -120,6 +120,11 @@ test.describe("projects", () => {
     await expect(cover).toHaveAttribute("width", "1280");
     await expect(cover).toHaveAttribute("height", "720");
 
+    // Localized lifecycle status on the detail (T-019 review, Spec finding 1).
+    await expect(page.locator(".project-detail__status")).toHaveText(
+      "Published"
+    );
+
     await expectNoSeriousViolations(page);
   });
 

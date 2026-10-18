@@ -11,6 +11,8 @@ import type { Database } from "@/types/database.types";
  * storage requests (docs/architecture.md §3). A missing client (unconfigured
  * production build) or a missing path yields `null`, and the card falls back
  * to the neutral monogram — never a fabricated photo (DESIGN_SYSTEM.md §3).
+ * Intentionally parallel to `src/features/projects/cover.ts` (per-feature
+ * media seam; read the duplication note there before extracting a shared one).
  */
 export const TEAM_PORTRAIT_BUCKET = "public-media";
 

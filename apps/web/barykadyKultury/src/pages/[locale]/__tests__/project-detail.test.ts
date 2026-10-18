@@ -124,6 +124,25 @@ describe("project detail", () => {
     expect(times[1]!.attributes("datetime")).toBe("2026-03-20");
   });
 
+  it("shows the localized lifecycle status on the detail (T-019 review)", async () => {
+    const fake = createFakeSupabase({ tables: { projects: [publishedRow()] } });
+    const en = await mountDetail(
+      fake.client,
+      "en",
+      "sample-community-workshop"
+    );
+    expect(en.get(".project-detail__status").text()).toBe("Published");
+
+    const plWrapper = await mountDetail(
+      fake.client,
+      "pl",
+      "przykladowy-warsztat-spoleczny"
+    );
+    expect(plWrapper.get(".project-detail__status").text()).toBe(
+      "Opublikowany"
+    );
+  });
+
   it("links back to the listing under the current locale", async () => {
     const fake = createFakeSupabase({ tables: { projects: [publishedRow()] } });
     const wrapper = await mountDetail(

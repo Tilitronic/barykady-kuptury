@@ -59,12 +59,25 @@
         height="720"
       />
 
-      <p v-if="dates.length > 0" class="project-detail__dates">
-        <template v-for="(date, index) in dates" :key="date">
-          <span v-if="index > 0" aria-hidden="true"> – </span>
-          <time :datetime="date">{{ formatted(date) }}</time>
-        </template>
-      </p>
+      <div class="project-detail__meta">
+        <!--
+          Localized lifecycle status (docs/PRODUCT_REQUIREMENTS.md §4; T-019
+          review, Spec finding 1): the detail is where a status is news. The
+          published-only listing would repeat one uniform badge on every card,
+          so the card omits it — this page resolves only published rows, so the
+          label renders the `projects.status.*` family through the enum value.
+        -->
+        <p class="project-detail__status">
+          {{ t(`projects.status.${project.status}`) }}
+        </p>
+
+        <p v-if="dates.length > 0" class="project-detail__dates">
+          <template v-for="(date, index) in dates" :key="date">
+            <span v-if="index > 0" aria-hidden="true"> – </span>
+            <time :datetime="date">{{ formatted(date) }}</time>
+          </template>
+        </p>
+      </div>
 
       <!--
         Associated upcoming events (T-019 scope, filled by T-024): the slot
@@ -199,8 +212,22 @@ function formatted(date: string): string {
   background-color: var(--color-surface);
 }
 
+.project-detail__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-block-end: 2rem;
+}
+
+.project-detail__status {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
 .project-detail__dates {
-  margin: 0 0 2rem;
+  margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
 }
