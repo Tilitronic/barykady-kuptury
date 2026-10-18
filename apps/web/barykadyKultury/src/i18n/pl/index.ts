@@ -102,7 +102,15 @@ const pl: MessageSchema = {
   projects: {
     title: "Projekty",
     description: "Projekty realizowane przez stowarzyszenie Barykady Kultury.",
-    placeholder: "Projekty są w przygotowaniu."
+    empty: "Brak dostępnych projektów.",
+    detail: {
+      back: "Powrót do projektów"
+    },
+    status: {
+      published: "Opublikowany",
+      draft: "Szkic",
+      archived: "Zarchiwizowany"
+    }
   },
   notFound: {
     title: "Nie znaleziono strony",

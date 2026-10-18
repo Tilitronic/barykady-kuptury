@@ -87,6 +87,13 @@ declare module 'vue-router/auto-routes' {
       { locale: ParamValue<false> },
       | never
     >,
+    '/[locale]/project-detail': RouteRecordInfo<
+      '/[locale]/project-detail',
+      '/:locale/project-detail',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
     '/[locale]/projects': RouteRecordInfo<
       '/[locale]/projects',
       '/:locale/projects',
@@ -187,6 +194,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/[locale]/not-found.vue': {
       routes:
         | '/[locale]/not-found'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/project-detail.vue': {
+      routes:
+        | '/[locale]/project-detail'
       views:
         | never
       pathParamNames:

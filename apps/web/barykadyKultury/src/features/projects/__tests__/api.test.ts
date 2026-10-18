@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { fetchPublishedProjects } from "@/features/projects/api";
+import {
+  fetchPublishedProjectBySlug,
+  fetchPublishedProjects,
+  findProjectBySlug,
+  type ProjectRowWithTranslations
+} from "@/features/projects/api";
 import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 
 /**
@@ -27,7 +32,9 @@ const PL_TRANSLATION = {
   body: "Tresc (PL)"
 };
 
-function projectRow(overrides: Record<string, unknown> = {}) {
+function projectRow(
+  overrides: Record<string, unknown> = {}
+): ProjectRowWithTranslations {
   return {
     id: "00000000-0000-4000-8000-000000000201",
     status: "published",
@@ -35,10 +42,15 @@ function projectRow(overrides: Record<string, unknown> = {}) {
     cover_path: "fixtures/projects/cover.webp",
     start_date: "2026-01-10",
     end_date: "2026-03-20",
+    published_at: "2026-01-05T12:00:00Z",
+    created_at: "2026-01-05T12:00:00Z",
     updated_at: "2026-02-01T00:00:00Z",
     project_translations: [EN_TRANSLATION, PL_TRANSLATION],
     ...overrides
-  };
+    // Fixture rows carry only the columns the SELECT reads and the mapping
+    // touches; the cast confines that approximation to the test seam
+    // (same pattern as `fakeSupabase.ts`).
+  } as unknown as ProjectRowWithTranslations;
 }
 
 function eqValue(
@@ -114,6 +126,96 @@ describe("fetchPublishedProjects", () => {
     const fake = createFakeSupabase({ error: { message: "boom" } });
 
     expect(await fetchPublishedProjects(fake.client, "pl")).toEqual({
+      kind: "unavailable"
+    });
+  });
+});
+
+/**
+ * T-019 slug rule (docs/tickets/T-019-projects-public.md line 16): detail
+ * resolution is STRICT on (requestedLocale, slug) — an English fallback slug
+ * must never resolve a Polish URL, and a draft row is never resolvable even
+ * if it somehow reaches the client.
+ */
+describe("findProjectBySlug", () => {
+  const rows = [projectRow()];
+
+  it("resolves the exact (locale, slug) pair", () => {
+    const row = findProjectBySlug(rows, "warsztat-spoleczny", "pl");
+
+    expect(row).toBeDefined();
+    expect(row?.id).toBe("00000000-0000-4000-8000-000000000201");
+  });
+
+  it("does not resolve the English slug through a Polish URL", () => {
+    expect(findProjectBySlug(rows, "community-workshop", "pl")).toBeNull();
+  });
+
+  it("does not resolve a Polish slug through an English URL", () => {
+    expect(findProjectBySlug(rows, "warsztat-spoleczny", "en")).toBeNull();
+  });
+
+  it("never resolves a draft row, even when the payload contains it", () => {
+    const draft = projectRow({
+      id: "00000000-0000-4000-8000-000000000202",
+      status: "draft",
+      project_translations: [
+        { ...EN_TRANSLATION, slug: "sample-draft-project" }
+      ]
+    });
+
+    expect(findProjectBySlug([draft], "sample-draft-project", "en")).toBeNull();
+  });
+});
+
+describe("fetchPublishedProjectBySlug", () => {
+  it("returns the single project whose translation matches (locale, slug)", async () => {
+    const fake = createFakeSupabase({ tables: { projects: [projectRow()] } });
+
+    const result = await fetchPublishedProjectBySlug(
+      fake.client,
+      "warsztat-spoleczny",
+      "pl"
+    );
+
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.title).toBe("Warsztat spoleczny (PL)");
+    expect(result.items[0]!.isFallback).toBe(false);
+  });
+
+  it("returns empty — not a fallback resolution — when only another locale owns the slug", async () => {
+    const fake = createFakeSupabase({ tables: { projects: [projectRow()] } });
+
+    expect(
+      await fetchPublishedProjectBySlug(fake.client, "community-workshop", "pl")
+    ).toEqual({ kind: "empty" });
+  });
+
+  it("returns empty for a draft slug even when the payload leaks the row", async () => {
+    const draft = projectRow({
+      id: "00000000-0000-4000-8000-000000000202",
+      status: "draft",
+      project_translations: [
+        { ...EN_TRANSLATION, slug: "sample-draft-project" }
+      ]
+    });
+    const fake = createFakeSupabase({
+      tables: { projects: [projectRow(), draft] }
+    });
+
+    expect(
+      await fetchPublishedProjectBySlug(
+        fake.client,
+        "sample-draft-project",
+        "en"
+      )
+    ).toEqual({ kind: "empty" });
+  });
+
+  it("returns the unavailable state without a client", async () => {
+    expect(await fetchPublishedProjectBySlug(null, "any", "en")).toEqual({
       kind: "unavailable"
     });
   });

@@ -126,7 +126,21 @@ const en = {
   projects: {
     title: "Projects",
     description: "Projects run by the Barykady Kultury association.",
-    placeholder: "Projects are being prepared."
+    /** Listing state when no project is published yet (T-019). */
+    empty: "No projects are available yet.",
+    detail: {
+      back: "Back to projects"
+    },
+    /**
+     * Localized lifecycle labels. The public surfaces show published content
+     * only, so the chip renders only for a non-published status reaching a
+     * view (defensive; never raw enum jargon — T-019 placement decision).
+     */
+    status: {
+      published: "Published",
+      draft: "Draft",
+      archived: "Archived"
+    }
   },
   notFound: {
     title: "Page not found",

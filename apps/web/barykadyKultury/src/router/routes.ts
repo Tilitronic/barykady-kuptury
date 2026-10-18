@@ -9,6 +9,7 @@ import HomePage from "@/pages/[locale]/index.vue";
 import NotFoundPage from "@/pages/404.vue";
 import LocaleNotFoundPage from "@/pages/[locale]/not-found.vue";
 import ProjectsPage from "@/pages/[locale]/projects.vue";
+import ProjectDetailPage from "@/pages/[locale]/project-detail.vue";
 import ContactPage from "@/pages/[locale]/contact.vue";
 import AboutPage from "@/pages/[locale]/about.vue";
 import AboutTeamPage from "@/pages/[locale]/about-team.vue";
@@ -152,11 +153,25 @@ export const routes: RouteRecordRaw[] = [
           }
         }
       },
-      // Projects (T-016 owns real content)
+      // Projects (T-019 real content)
       {
         path: "projects",
         name: "projects",
         component: ProjectsPage,
+        meta: {
+          pageMeta: {
+            titleKey: "projects.title",
+            descriptionKey: "projects.description"
+          }
+        }
+      },
+      // Projects → detail (T-019). The slug is locale-specific and resolves
+      // strictly against the requested locale: an unknown or foreign slug
+      // renders 404 content in-page, never a cross-locale match.
+      {
+        path: "projects/:slug",
+        name: "project-detail",
+        component: ProjectDetailPage,
         meta: {
           pageMeta: {
             titleKey: "projects.title",

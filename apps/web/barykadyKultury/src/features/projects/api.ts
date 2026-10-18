@@ -97,6 +97,70 @@ export async function fetchPublishedProjects(
 ): Promise<ContentResult<ProjectSummary>> {
   if (!supabase) return unavailable();
 
+  const rows = await fetchPublishedProjectRows(supabase);
+  if (rows.kind !== "ok") return rows;
+
+  return fromRows(rows.items, row => mapProject(row, locale));
+}
+
+/**
+ * Finds the published project whose OWN locale carries `slug`.
+ *
+ * T-019 slug rule (docs/tickets/T-019-projects-public.md line 16): resolution
+ * is STRICT on (locale, slug) — an English fallback slug must never resolve a
+ * Polish URL, and no pl↔uk substitution exists. A draft row is rejected here
+ * even if a misconfigured payload leaks it (docs/PRODUCT_REQUIREMENTS.md §8):
+ * RLS is the real boundary (proven in `rls_content_matrix_test.sql`), this is
+ * the app-layer complement so no draft content can render or link.
+ */
+export function findProjectBySlug(
+  rows: readonly ProjectRowWithTranslations[],
+  slug: string,
+  locale: Locale
+): ProjectRowWithTranslations | null {
+  return (
+    rows.find(
+      row =>
+        row.status === "published" &&
+        row.project_translations.some(
+          translation =>
+            translation.locale === locale && translation.slug === slug
+        )
+    ) ?? null
+  );
+}
+
+/**
+ * The published project reachable at `slug` for the requested locale.
+ *
+ * Slug resolution happens in process against the published rows because
+ * embedded-resource filtering cannot both select the parent by a translation
+ * column and return all of its translations in one PostgREST request (same
+ * seam the T-017 document reader uses; the public project set is small).
+ * An empty result means "no such public page" — the page renders 404 content,
+ * never a cross-locale fallback (AGENTS.md rule 7: no extra query round-trips).
+ */
+export async function fetchPublishedProjectBySlug(
+  supabase: SupabaseClient<Database> | null,
+  slug: string,
+  locale: Locale
+): Promise<ContentResult<ProjectSummary>> {
+  if (!supabase) return unavailable();
+
+  const rows = await fetchPublishedProjectRows(supabase);
+  if (rows.kind !== "ok") return rows;
+
+  const row = findProjectBySlug(rows.items, slug, locale);
+  if (!row) return { kind: "empty" };
+
+  const project = mapProject(row, locale);
+  return project ? { kind: "ok", items: [project] } : { kind: "empty" };
+}
+
+/** Shared published-rows query for the listing and the by-slug detail read. */
+async function fetchPublishedProjectRows(
+  supabase: SupabaseClient<Database>
+): Promise<ContentResult<ProjectRowWithTranslations>> {
   const query = supabase.from("projects");
   const { data, error } = await query
     .select(PROJECT_SELECT)
@@ -106,5 +170,5 @@ export async function fetchPublishedProjects(
 
   if (error) return unavailable();
 
-  return fromRows(data ?? [], row => mapProject(row, locale));
+  return fromRows(data ?? [], row => row);
 }

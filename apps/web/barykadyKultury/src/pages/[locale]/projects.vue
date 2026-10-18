@@ -1,32 +1,106 @@
 <template>
-  <div class="projects">
-    <h1 class="projects__title">{{ t("projects.title") }}</h1>
-    <p class="projects__lead">{{ t("projects.placeholder") }}</p>
+  <div class="projects-page">
+    <h1 class="projects-page__title">{{ t("projects.title") }}</h1>
+
+    <div
+      v-if="result.kind === 'loading'"
+      class="projects-page__state"
+      role="status"
+    >
+      {{ t("content.loading") }}
+    </div>
+    <div v-else-if="result.kind === 'empty'" class="projects-page__state">
+      {{ t("projects.empty") }}
+    </div>
+    <div v-else-if="result.kind === 'unavailable'" class="projects-page__state">
+      {{ t("content.unavailable") }}
+    </div>
+    <!--
+      Pagination/"load more" is deliberately deferred (T-019 scope): the
+      published project set is small by construction; revisit when volume
+      justifies it.
+    -->
+    <ul v-else class="projects-grid">
+      <ProjectCard
+        v-for="project in projects"
+        :key="project.id"
+        :project="project"
+        :href="detailPath(project)"
+        :locale="currentLocale"
+      />
+    </ul>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import ProjectCard from "@/components/projects/ProjectCard.vue";
+import {
+  useProjects,
+  type ProjectSummaryView
+} from "@/features/projects/useProjects";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
+
 /**
- * Projects placeholder page. T-016 owns the real content; this route exists so
- * the locale URL contract (`/:locale/projects`) and language switching can be
- * exercised end to end (T-009 acceptance criteria).
- * PublicLayout (router parent) provides the shell — AppShell is not used here.
+ * Projects listing (T-019).
+ *
+ * Published projects only, newest-updated first; drafts are excluded by RLS
+ * and again by the data-access mapping (docs/PRODUCT_REQUIREMENTS.md §8).
+ * Linking honours the strict (locale, slug) rule: a card whose text stands in
+ * from English links under the English prefix — the slug always resolves
+ * under its own locale, so there are no dead links and no silent cross-locale
+ * slug resolution (ticket line 16). PublicLayout provides the shell.
  */
 const { t } = useI18n();
+const route = useRoute();
+
+const currentLocale = computed<Locale>(() => {
+  const { locale } = route.params as { locale?: unknown };
+  return isLocale(locale) ? locale : DEFAULT_LOCALE;
+});
+
+const { result } = useProjects(currentLocale);
+
+const projects = computed<readonly ProjectSummaryView[]>(() =>
+  result.value.kind === "ok" ? result.value.items : []
+);
+
+function detailPath(project: ProjectSummaryView): string {
+  // The slug belongs to the translation that produced it; fallback rows carry
+  // the English slug, so they link to the locale where it resolves.
+  const owningLocale = project.isFallback
+    ? DEFAULT_LOCALE
+    : currentLocale.value;
+  return `/${owningLocale}/projects/${project.slug}`;
+}
 </script>
 
 <style scoped>
-.projects__title {
-  margin: 0 0 1rem;
-  font-size: clamp(1.75rem, 5vw, 3rem);
-  line-height: 1.1;
+.projects-page__title {
+  max-width: 65ch;
+  margin: 0 0 1.5rem;
 }
 
-.projects__lead {
+.projects-page__state {
+  max-width: 65ch;
   margin: 0;
-  font-size: 1.125rem;
-  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+/**
+ * Fluid grid: one column on a 320 px phone (the `min(100%, 20rem)` floor
+ * prevents horizontal overflow), two to three columns on wider containers.
+ */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: 2rem 1.5rem;
+  max-width: 75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 </style>

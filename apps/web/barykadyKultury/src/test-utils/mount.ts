@@ -18,6 +18,8 @@ type Locale = keyof typeof messages;
 export interface MountOptions {
   /** Locale used by the test i18n instance. Defaults to English. */
   locale?: Locale;
+  /** Props for the component under test (presentational components). */
+  props?: Record<string, unknown>;
   /** Extra Vue plugins registered after Pinia, i18n and the router. */
   plugins?: Plugin[];
   /** Fake Supabase client provided to the component tree. Defaults to null. */
@@ -56,6 +58,7 @@ export async function mountWithPlugins(
 ) {
   const {
     locale = "en",
+    props = {},
     plugins = [],
     supabase = null,
     initialRoute = "/",
@@ -77,6 +80,7 @@ export async function mountWithPlugins(
   };
 
   return mount(component, {
+    props,
     global: {
       plugins: [
         createPinia(),

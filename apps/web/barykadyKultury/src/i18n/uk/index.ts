@@ -102,7 +102,15 @@ const uk: MessageSchema = {
   projects: {
     title: "Проєкти",
     description: "Проєкти організації Barykady Kultury.",
-    placeholder: "Проєкти готуються."
+    empty: "Наразі немає доступних проєктів.",
+    detail: {
+      back: "Назад до проєктів"
+    },
+    status: {
+      published: "Опубліковано",
+      draft: "Чернетка",
+      archived: "Заархівовано"
+    }
   },
   notFound: {
     title: "Сторінку не знайдено",
