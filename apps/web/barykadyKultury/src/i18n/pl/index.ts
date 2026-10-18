@@ -87,7 +87,21 @@ const pl: MessageSchema = {
   support: {
     title: "Wesprzyj nas",
     description: "Wesprzyj stowarzyszenie Barykady Kultury.",
-    placeholder: "Opcje wsparcia są w przygotowaniu."
+    intro: "Możesz wesprzeć nasze działania w poniższy sposób.",
+    empty:
+      "Formy wsparcia stowarzyszenia są przygotowywane. Zapraszamy ponownie później.",
+    noPayment:
+      "Nie przetwarzamy płatności kartowych w tej witrynie. Wsparcia udziela się bezpośrednio na stronie zweryfikowanego odbiorcy lub jako przelew bankowy.",
+    actions: {
+      donation: "Wesprzyj nas datkiem",
+      volunteering: "Zgłoś chęć wolontariatu"
+    },
+    bank: {
+      heading: "Przelew bankowy",
+      accountNumber: "Numer konta",
+      recipient: "Odbiorca",
+      paymentTitle: "Tytuł przelewu"
+    }
   },
   events: {
     title: "Wydarzenia",

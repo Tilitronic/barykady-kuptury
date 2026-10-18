@@ -111,7 +111,24 @@ const en = {
   support: {
     title: "Support us",
     description: "Support the Barykady Kultury association.",
-    placeholder: "Support options are being prepared."
+    /** Rendered only when at least one option is configured (D-06). */
+    intro: "You can support our activities in the following ways.",
+    /** D-06 OPEN: truthful state while no support destination exists. */
+    empty:
+      "Ways to support the association are being prepared. Please check back later.",
+    /** Boundary statement: shown in every state, never removed. */
+    noPayment:
+      "We do not process card payments on this website. Support is given directly on the verified destination's own page or by bank transfer.",
+    actions: {
+      donation: "Support us with a donation",
+      volunteering: "Volunteer with us"
+    },
+    bank: {
+      heading: "Bank transfer",
+      accountNumber: "Account number",
+      recipient: "Recipient",
+      paymentTitle: "Payment title"
+    }
   },
   events: {
     title: "Events",
