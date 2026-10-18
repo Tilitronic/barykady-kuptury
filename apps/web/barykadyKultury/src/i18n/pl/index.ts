@@ -61,7 +61,19 @@ const pl: MessageSchema = {
   aboutDocuments: {
     title: "Dokumenty",
     description: "Dokumenty organizacyjne Barykad Kultury.",
-    placeholder: "Dokumenty są w przygotowaniu."
+    placeholder: "Dokumenty są w przygotowaniu.",
+    empty: "Brak dostępnych dokumentów.",
+    reader: {
+      back: "Powrót do dokumentów",
+      languageLabel: "Język dokumentu",
+      notFound: "Ten dokument jest niedostępny.",
+      unavailable: "Ten dokument nie jest dostępny w wybranym języku."
+    },
+    types: {
+      regulations: "Regulamin",
+      statute: "Statut",
+      report: "Sprawozdanie"
+    }
   },
   support: {
     title: "Wesprzyj nas",

@@ -15,8 +15,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(41);
-
+select plan(47);
 -- ---------------------------------------------------------------------------
 -- Enumerated domains
 -- ---------------------------------------------------------------------------
@@ -242,6 +241,51 @@ select throws_ok(
   '23514',
   NULL,
   'projects.cover_path rejects a URL (a Storage path is required)'
+);
+
+-- ---------------------------------------------------------------------------
+-- T-017 (D-12): a document is either file-based or in-app readable text
+-- ---------------------------------------------------------------------------
+
+select has_column(
+  'public', 'organization_document_translations', 'body',
+  'organization_document_translations carries the optional in-app body'
+);
+
+select col_is_null(
+  'public', 'organization_documents', 'storage_path',
+  'organization_documents.storage_path is nullable (in-app text has no file)'
+);
+
+select col_is_null(
+  'public', 'organization_documents', 'language',
+  'organization_documents.language is nullable (in-app text has no file language)'
+);
+
+select lives_ok(
+  $sql$ insert into public.organization_documents (id, status, document_type, storage_path, language)
+        values ('55555555-5555-4555-8555-000000000002', 'published', 'regulations', null, null) $sql$,
+  'a text-only organization_document inserts without storage_path/language'
+);
+
+insert into public.organization_document_translations (document_id, locale, slug, title, body)
+values ('55555555-5555-4555-8555-000000000002', 'en', 'test-regulations',
+        'Test regulations (fictional)', E'## § 1\n\nFixture body.\n\n## § 2\n\nMore text.');
+
+select is(
+  (select body from public.organization_document_translations
+    where document_id = '55555555-5555-4555-8555-000000000002'),
+  E'## § 1\n\nFixture body.\n\n## § 2\n\nMore text.',
+  'the in-app body round-trips unchanged on the translation'
+);
+
+delete from public.organization_documents where id = '55555555-5555-4555-8555-000000000002';
+
+select is(
+  (select count(*) from public.organization_document_translations
+    where document_id = '55555555-5555-4555-8555-000000000002'),
+  0::bigint,
+  'a text document''s translations cascade on document delete'
 );
 
 select * from finish();

@@ -74,7 +74,25 @@ const en = {
   aboutDocuments: {
     title: "Documents",
     description: "Organizational documents of Barykady Kultury.",
-    placeholder: "Documents are being prepared."
+    placeholder: "Documents are being prepared.",
+    /** Listing state when no document is published yet. */
+    empty: "No documents are available yet.",
+    reader: {
+      back: "Back to documents",
+      /** Accessible name for the in-view language switcher group. */
+      languageLabel: "Document language",
+      notFound: "This document is not available.",
+      unavailable: "This document is not available in the selected language."
+    },
+    /**
+     * Localized `document_type` labels. An unknown type falls back to the raw
+     * stored label so a new type never renders blank copy.
+     */
+    types: {
+      regulations: "Regulations",
+      statute: "Statute",
+      report: "Report"
+    }
   },
   support: {
     title: "Support us",

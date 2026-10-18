@@ -13,6 +13,7 @@ import ContactPage from "@/pages/[locale]/contact.vue";
 import AboutPage from "@/pages/[locale]/about.vue";
 import AboutTeamPage from "@/pages/[locale]/about-team.vue";
 import AboutDocumentsPage from "@/pages/[locale]/about-documents.vue";
+import AboutDocumentPage from "@/pages/[locale]/about-document.vue";
 import SupportPage from "@/pages/[locale]/support.vue";
 import EventsPage from "@/pages/[locale]/events.vue";
 import PublicationsPage from "@/pages/[locale]/publications.vue";
@@ -118,6 +119,20 @@ export const routes: RouteRecordRaw[] = [
         path: "about/documents",
         name: "about-documents",
         component: AboutDocumentsPage,
+        meta: {
+          pageMeta: {
+            titleKey: "aboutDocuments.title",
+            descriptionKey: "aboutDocuments.description"
+          }
+        }
+      },
+      // About → Documents → in-app regulation reader (T-017, D-12).
+      // The slug is locale-specific (regulamin/regulations/rehlament); the
+      // reader keeps it stable while switching the content language in place.
+      {
+        path: "about/documents/:slug",
+        name: "about-document",
+        component: AboutDocumentPage,
         meta: {
           pageMeta: {
             titleKey: "aboutDocuments.title",

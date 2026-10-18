@@ -3,7 +3,11 @@ import { createPinia } from "pinia";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Component, Plugin } from "vue";
 import { createI18n } from "vue-i18n";
-import { createMemoryHistory, createRouter } from "vue-router";
+import {
+  createMemoryHistory,
+  createRouter,
+  type RouteRecordRaw
+} from "vue-router";
 
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import messages from "@/i18n";
@@ -20,6 +24,12 @@ export interface MountOptions {
   supabase?: SupabaseClient<Database> | null;
   /** Initial route path for the memory-history router. Defaults to "/". */
   initialRoute?: string;
+  /**
+   * Explicit route records for tests whose component reads named/typed route
+   * params (e.g. the documents reader's `:slug`). Defaults to a single
+   * catch-all that renders the component and exposes only `:locale`.
+   */
+  routes?: RouteRecordRaw[];
 }
 
 /**
@@ -48,12 +58,13 @@ export async function mountWithPlugins(
     locale = "en",
     plugins = [],
     supabase = null,
-    initialRoute = "/"
+    initialRoute = "/",
+    routes
   } = options;
 
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/:locale(.*)?", component }]
+    routes: routes ?? [{ path: "/:locale(.*)?", component }]
   });
 
   await router.push(initialRoute);

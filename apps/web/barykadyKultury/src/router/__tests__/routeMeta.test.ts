@@ -50,6 +50,11 @@ function resolveConcrete(
   if (String(route.path).includes("pathMatch")) {
     params.pathMatch = ["does-not-exist"];
   }
+  // Dynamic page params (e.g. the documents reader `:slug`) need a concrete
+  // value, otherwise resolution warns about a missing required param.
+  if (String(route.path).includes(":slug")) {
+    params.slug = "regulations";
+  }
 
   // The generated typed-router names come from filename-based routing while this
   // table is explicit (known T-009 follow-up), so resolve by runtime name via a

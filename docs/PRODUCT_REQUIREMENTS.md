@@ -69,7 +69,9 @@ The site footer should include appropriate navigation, contact details, configur
 
 - Organization information must have a clear hierarchy, be editable, and support all locales.
 - Team members must be presented consistently; optional fields may include name, role, short biography, and portrait. Publish only information and images provided/approved by the NGO.
-- Documents must show a descriptive title and, where known, document type, publication date, language, and file type/size. Public downloads must work without admin authentication.
+- Documents must show a descriptive title and, where known, document type and publication date. A document is published in one of two modes:
+  1. **In-app readable text document** — opens in a dedicated reader view with an in-view language switcher; the default reader language is the active UI locale. File metadata (type/size) is not required for this mode.
+  2. **Downloadable file document** — shows language and file metadata (type/size where known); anonymous public download must work without admin authentication.
 
 ### Support us
 

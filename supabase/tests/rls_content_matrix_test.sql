@@ -101,6 +101,20 @@ insert into public.organization_document_translations (id, document_id, locale, 
   ('a5100000-0000-4000-8000-000000000002', 'a5000000-0000-4000-8000-000000000002', 'en',
    'rls-document-draft', 'RLS Draft Document (fictional)');
 
+-- T-017 text documents: null file columns, body on the translation. Access stays
+-- status/parent-based, so the published/draft read rules must be unchanged.
+insert into public.organization_documents
+  (id, status, document_type, language, storage_path, sort_order, published_at)
+values
+  ('a5000000-0000-4000-8000-000000000005', 'published', 'regulations', null, null, 5, now()),
+  ('a5000000-0000-4000-8000-000000000006', 'draft', 'regulations', null, null, 6, null);
+
+insert into public.organization_document_translations (id, document_id, locale, slug, title, body) values
+  ('a5100000-0000-4000-8000-000000000005', 'a5000000-0000-4000-8000-000000000005', 'en',
+   'rls-document-text-published', 'RLS Published Text Document (fictional)', '## § 1\n\nFixture body.'),
+  ('a5100000-0000-4000-8000-000000000006', 'a5000000-0000-4000-8000-000000000006', 'en',
+   'rls-document-text-draft', 'RLS Draft Text Document (fictional)', '## § 1\n\nDraft body.');
+
 -- Event mappings: unlinked, linked to a published project, linked to a draft.
 insert into public.calendar_event_links (id, calendar_id, google_event_id, project_id) values
   ('a6000000-0000-4000-8000-000000000001', 'rls-calendar@example.org', 'rls-event-unlinked', null),
@@ -109,7 +123,7 @@ insert into public.calendar_event_links (id, calendar_id, google_event_id, proje
   ('a6000000-0000-4000-8000-000000000003', 'rls-calendar@example.org', 'rls-event-linked-draft',
    'a2000000-0000-4000-8000-000000000002');
 
-select plan(150);
+select plan(152);
 
 -- ===========================================================================
 -- Root content tables (12 assertions each)
@@ -246,6 +260,8 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a published organization_document');
 select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a draft organization_document');
+select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000005'), 1::bigint, 'anon reads a published text organization_document');
+select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000006'), 0::bigint, 'anon cannot read a draft text organization_document');
 select throws_ok($sql$ insert into public.organization_documents (id, document_type, language, storage_path) values ('a5000000-0000-4000-8000-0000000000f1', 'statute', 'en', 'fixtures/rls/anon-statute.pdf') $sql$, '42501', NULL, 'anon insert denied on organization_documents');
 select throws_ok($sql$ update public.organization_documents set sort_order = 99 where id = 'a5000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on organization_documents');
 select throws_ok($sql$ delete from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on organization_documents');

@@ -61,7 +61,19 @@ const uk: MessageSchema = {
   aboutDocuments: {
     title: "Документи",
     description: "Організаційні документи Barykady Kultury.",
-    placeholder: "Документи готуються."
+    placeholder: "Документи готуються.",
+    empty: "Наразі немає доступних документів.",
+    reader: {
+      back: "Назад до документів",
+      languageLabel: "Мова документа",
+      notFound: "Цей документ недоступний.",
+      unavailable: "Цей документ недоступний обраною мовою."
+    },
+    types: {
+      regulations: "Регламент",
+      statute: "Статут",
+      report: "Звіт"
+    }
   },
   support: {
     title: "Підтримайте нас",

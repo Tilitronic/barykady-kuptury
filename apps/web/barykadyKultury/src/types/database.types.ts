@@ -72,6 +72,7 @@ export type Database = {
       };
       organization_document_translations: {
         Row: {
+          body: string | null;
           created_at: string;
           description: string | null;
           document_id: string;
@@ -84,6 +85,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          body?: string | null;
           created_at?: string;
           description?: string | null;
           document_id: string;
@@ -95,6 +97,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          body?: string | null;
           created_at?: string;
           description?: string | null;
           document_id?: string;
@@ -121,13 +124,13 @@ export type Database = {
           document_type: string;
           file_size_bytes: number | null;
           id: string;
-          language: Database["public"]["Enums"]["content_locale"];
+          language: Database["public"]["Enums"]["content_locale"] | null;
           mime_type: string | null;
           publication_date: string | null;
           published_at: string | null;
           sort_order: number;
           status: Database["public"]["Enums"]["content_status"];
-          storage_path: string;
+          storage_path: string | null;
           updated_at: string;
         };
         ComputedFields: never;
@@ -136,13 +139,13 @@ export type Database = {
           document_type: string;
           file_size_bytes?: number | null;
           id?: string;
-          language: Database["public"]["Enums"]["content_locale"];
+          language?: Database["public"]["Enums"]["content_locale"] | null;
           mime_type?: string | null;
           publication_date?: string | null;
           published_at?: string | null;
           sort_order?: number;
           status?: Database["public"]["Enums"]["content_status"];
-          storage_path: string;
+          storage_path?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -150,13 +153,13 @@ export type Database = {
           document_type?: string;
           file_size_bytes?: number | null;
           id?: string;
-          language?: Database["public"]["Enums"]["content_locale"];
+          language?: Database["public"]["Enums"]["content_locale"] | null;
           mime_type?: string | null;
           publication_date?: string | null;
           published_at?: string | null;
           sort_order?: number;
           status?: Database["public"]["Enums"]["content_status"];
-          storage_path?: string;
+          storage_path?: string | null;
           updated_at?: string;
         };
         Relationships: [];
