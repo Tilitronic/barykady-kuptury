@@ -1,6 +1,6 @@
 # T-017 — About: documents (in-app regulation reader)
 
-**Session:** 4 · **Lane:** feature/content · **Owner:** @coder · **Status:** todo
+**Session:** 4 · **Lane:** feature/content · **Owner:** @coder · **Status:** done
 **Reviewers:** @reviewer + @designer (D-12 decision check)
 **Depends on:** T-012 (schema, amended), T-015, T-016 · **Blocks:** T-029
 
@@ -37,13 +37,13 @@ Out: file upload/editing UI (T-029), serving DOCX/PDF for regulations, literal c
 6. REFACTOR: reuse `LocalizedRichText`/`richText.ts` (do not fork the renderer).
 
 ## Acceptance criteria
-- [ ] Regulations render as in-app text in a dedicated reader; no file download is required for them.
-- [ ] Reader defaults to the active UI locale; the in-view language switcher changes the text; unavailable locales are disabled (never a silent pl↔uk substitution).
-- [ ] Initial-load fallback (requested→English) shows a note naming the source language; rendered content carries the matching `lang`.
-- [ ] One `h1`; headings ordered; readable measure; body rendered safely (no `v-html`).
-- [ ] Missing optional metadata renders nothing; empty/unavailable states are translated.
-- [ ] Migration committed, generated types regenerated, seed idempotency + pgTAP suites pass.
-- [ ] No invented content — regulation text is verbatim from the V4 `.docx` sources.
+- [x] Regulations render as in-app text in a dedicated reader; no file download is required for them.
+- [x] Reader defaults to the active UI locale; the in-view language switcher changes the text; unavailable locales are disabled (never a silent pl↔uk substitution).
+- [x] Initial-load fallback (requested→English) shows a note naming the source language; rendered content carries the matching `lang`.
+- [x] One `h1`; headings ordered; readable measure; body rendered safely (no `v-html`).
+- [x] Missing optional metadata renders nothing; empty/unavailable states are translated.
+- [x] Migration committed, generated types regenerated, seed idempotency + pgTAP suites pass.
+- [x] No invented content — regulation text is verbatim from the V4 `.docx` sources.
 
 ## Verification
 ```
@@ -73,5 +73,8 @@ pnpm types:db
 ### Review status (partial, 2026-10-18)
 
 - **@reviewer (rev-1, two-axis): 0 Spec findings; 1 Standards Suggestion (non-blocking).** All acceptance criteria mapped to evidence; no assertions weakened; migration limited to the agreed ALTERs + comments; pgTAP plans honest (schema 41→47, rls 150→152); seed regulation text verified **verbatim** against the three V4 `.docx`; `pnpm types:db` reproducible. The Suggestion: `src/router/typed-router.d.ts` lists `/[locale]/about-document` (file-derived) while the runtime route is `about/documents/:slug` — pre-existing file-based-vs-explicit-route advisory drift, **not** introduced by T-017. Recorded as a follow-up.
-- **@designer (design gate): BLOCKED — provider `Insufficient account funds` (3 attempts incl. a trivial probe).** The `barykady` preset designer model chain was fixed this session (§10: `kimi-k2.7-code` → `qwen3.8-flash` primary) and registered in the global `CHANGELOG.md` + learnings, but **an OpenCode restart is required** for it to take effect; the running process still holds the old preset. **Resume after restart:** dispatch `@designer` on the reader (`src/pages/[locale]/about-document.vue`, `about-documents.vue`, `e2e/documents.spec.ts`) for the reading-hierarchy / language-switcher / mobile gate, then close.
-- Implementation commit: `17a1063`. **Status remains `in-progress`** (design gate pending).
+- **@designer (design gate, 2026-10-18, session 6): PASS with notes** (resumed after the OpenCode restart made the `barykady` designer model fix effective). Reading hierarchy/measure ✅ (65ch enforced on the article and inherited by the body; reader order `back → h1 → description → fallback note → switcher → body`), mobile reading order ✅ (`flex-wrap`, 44px targets, natural narrow-width order), contrast/focus/reduced-motion ✅ (`.focus-ring`, `--motion-duration` → `0ms` under `prefers-reduced-motion`).
+  - Change applied: `src/pages/[locale]/about-document.vue` — surfaced the **existing** `aboutDocuments.reader.languageLabel` string (en/pl/uk, no new key) as a visible bold-muted label inside the switcher group, wired via `aria-labelledby` (so the pills are distinguishable from the sub-nav pills they otherwise match, and the accessible name is unchanged); removed the dead `is-active` class binding (CSS keys off `[aria-pressed="true"]`); added `align-items: center` to the switcher row. No structure, interaction, URL, or dependency change.
+  - Non-blocking notes (no change): during reader loading the h1 shows the generic "Documents" string — prefer the listing title if a skeleton title ever ships; give the back-link `padding-block: 0.375rem` only if axe tightens to WCAG 2.5.8.
+- Implementation commit: `17a1063`.
+- **Verification (orchestrator, working tree with the designer change):** `pnpm test` **34 files / 379 tests**; `pnpm typecheck` clean; `pnpm lint:check` clean (146 files); `pnpm build` PASS; `pnpm test:e2e` **45 passed**. **Status: done.**

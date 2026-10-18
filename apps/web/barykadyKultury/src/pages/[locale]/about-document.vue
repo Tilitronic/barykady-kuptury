@@ -53,19 +53,26 @@
       <!--
         In-view language switcher: the URL slug stays stable, an unavailable
         locale is disabled, and an explicit switch renders only that locale
-        (never a silent substitution).
+        (never a silent substitution). The visible label distinguishes this
+        control from the sub-nav pills it otherwise matches (T-017 design
+        review) and names the text it controls for AT via aria-labelledby.
       -->
       <div
         class="document-reader__languages"
         role="group"
-        :aria-label="t('aboutDocuments.reader.languageLabel')"
+        aria-labelledby="document-reader-language-label"
       >
+        <span
+          id="document-reader-language-label"
+          class="document-reader__languages-label"
+        >
+          {{ t("aboutDocuments.reader.languageLabel") }}
+        </span>
         <button
           v-for="option in SUPPORTED_LOCALES"
           :key="option"
           type="button"
           class="document-reader__language focus-ring"
-          :class="{ 'is-active': option === activeLocale }"
           :lang="option"
           :aria-pressed="option === activeLocale"
           :disabled="!isAvailable(option)"
@@ -219,8 +226,16 @@ function choose(locale: Locale): void {
 .document-reader__languages {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
   margin-block-end: 2rem;
+}
+
+.document-reader__languages-label {
+  margin-inline-end: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: 600;
 }
 
 .document-reader__language {
