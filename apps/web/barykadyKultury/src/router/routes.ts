@@ -18,6 +18,7 @@ import AboutDocumentPage from "@/pages/[locale]/about-document.vue";
 import SupportPage from "@/pages/[locale]/support.vue";
 import EventsPage from "@/pages/[locale]/events.vue";
 import PublicationsPage from "@/pages/[locale]/publications.vue";
+import PublicationDetailPage from "@/pages/[locale]/publication-detail.vue";
 
 declare module "vue-router" {
   interface RouteMeta {
@@ -191,11 +192,25 @@ export const routes: RouteRecordRaw[] = [
           }
         }
       },
-      // Publications (T-018/T-019 own real content)
+      // Publications (T-020 real content)
       {
         path: "publications",
         name: "publications",
         component: PublicationsPage,
+        meta: {
+          pageMeta: {
+            titleKey: "publications.title",
+            descriptionKey: "publications.description"
+          }
+        }
+      },
+      // Publications → detail (T-020). The slug is locale-specific and
+      // resolves strictly against the requested locale: an unknown or
+      // foreign slug renders 404 content in-page, never a cross-locale match.
+      {
+        path: "publications/:slug",
+        name: "publication-detail",
+        component: PublicationDetailPage,
         meta: {
           pageMeta: {
             titleKey: "publications.title",

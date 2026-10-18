@@ -115,6 +115,68 @@ export async function fetchPublishedPublications(
 ): Promise<ContentResult<PublicationSummary>> {
   if (!supabase) return unavailable();
 
+  const rows = await fetchPublishedPublicationRows(supabase);
+  if (rows.kind !== "ok") return rows;
+
+  return fromRows(rows.items, row => mapPublication(row, locale));
+}
+
+/**
+ * Finds the published publication whose OWN locale carries `slug`.
+ *
+ * T-019 precedent, applied to publications (ticket line: "an English fallback
+ * slug must not silently resolve a Polish URL"): STRICT (locale, slug)
+ * matching, and a draft row is never resolvable even if a misconfigured
+ * payload leaks it (docs/PRODUCT_REQUIREMENTS.md §8; RLS remains the real
+ * boundary, proven in `rls_content_matrix_test.sql`).
+ */
+export function findPublicationBySlug(
+  rows: readonly PublicationRowWithTranslations[],
+  slug: string,
+  locale: Locale
+): PublicationRowWithTranslations | null {
+  return (
+    rows.find(
+      row =>
+        row.status === "published" &&
+        row.publication_translations.some(
+          translation =>
+            translation.locale === locale && translation.slug === slug
+        )
+    ) ?? null
+  );
+}
+
+/**
+ * The published publication reachable at `slug` for the requested locale.
+ *
+ * In-process slug resolution against the published rows (same seam as the
+ * T-017 reader and the T-019 project detail): embedded-resource filtering
+ * cannot select the parent by a translation column while returning all
+ * translations, and the public set is small. Empty means "no such public
+ * page" — the page renders 404 content, never a cross-locale fallback.
+ */
+export async function fetchPublishedPublicationBySlug(
+  supabase: SupabaseClient<Database> | null,
+  slug: string,
+  locale: Locale
+): Promise<ContentResult<PublicationSummary>> {
+  if (!supabase) return unavailable();
+
+  const rows = await fetchPublishedPublicationRows(supabase);
+  if (rows.kind !== "ok") return rows;
+
+  const row = findPublicationBySlug(rows.items, slug, locale);
+  if (!row) return { kind: "empty" };
+
+  const publication = mapPublication(row, locale);
+  return publication ? { kind: "ok", items: [publication] } : { kind: "empty" };
+}
+
+/** Shared published-rows query for the listing and the by-slug detail read. */
+async function fetchPublishedPublicationRows(
+  supabase: SupabaseClient<Database>
+): Promise<ContentResult<PublicationRowWithTranslations>> {
   const query = supabase.from("publications");
   const { data, error } = await query
     .select(PUBLICATION_SELECT)
@@ -124,5 +186,5 @@ export async function fetchPublishedPublications(
 
   if (error) return unavailable();
 
-  return fromRows(data ?? [], row => mapPublication(row, locale));
+  return fromRows(data ?? [], row => row);
 }

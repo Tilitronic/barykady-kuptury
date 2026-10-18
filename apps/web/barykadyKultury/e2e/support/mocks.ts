@@ -26,6 +26,16 @@ const CALENDAR_EVENTS_GLOB = `**${CALENDAR_EVENTS_PATH}*`;
 /** Matches Supabase's REST/PostgREST endpoint surface. */
 const SUPABASE_REST_GLOB = "**/rest/v1/**";
 
+/** Matches Supabase Storage public object reads (`/storage/v1/object/...`). */
+const SUPABASE_STORAGE_GLOB = "**/storage/v1/object/**";
+
+/**
+ * Smallest deterministic PDF body (T-020): real enough for a content-type
+ * assertion, no binary asset to maintain, never fetched from a live bucket.
+ */
+export const PDF_FIXTURE_BODY =
+  "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF";
+
 export interface MockCalendarEventsOptions {
   /** Event list returned by the mock. Defaults to the shared fixture. */
   events?: CalendarEvent[];
@@ -87,6 +97,40 @@ export async function mockSupabaseRest(
       status,
       contentType: "application/json",
       body: JSON.stringify(payload)
+    });
+  });
+}
+
+export interface MockSupabaseStorageOptions {
+  /** Body served for every public object read. Defaults to the PDF fixture. */
+  body?: string;
+  /** Served `Content-Type`. Defaults to `application/pdf`. */
+  contentType?: string;
+  /** Override the HTTP status to exercise error states. */
+  status?: number;
+}
+
+/**
+ * Intercepts Supabase Storage public object reads (`/storage/v1/object/**`)
+ * so E2E download journeys never touch a live bucket (docs/TESTING.md §2).
+ * The `?download=` query is ignored — the app builds it, the test asserts
+ * the response, and the browser-side disposition is out of scope offline.
+ */
+export async function mockSupabaseStorage(
+  page: Page,
+  options: MockSupabaseStorageOptions = {}
+): Promise<void> {
+  const {
+    body = PDF_FIXTURE_BODY,
+    contentType = "application/pdf",
+    status = 200
+  } = options;
+
+  await page.route(SUPABASE_STORAGE_GLOB, async (route: Route) => {
+    await route.fulfill({
+      status,
+      contentType,
+      body
     });
   });
 }

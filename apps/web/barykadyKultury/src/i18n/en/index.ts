@@ -121,7 +121,18 @@ const en = {
   publications: {
     title: "Publications",
     description: "Publications by Barykady Kultury.",
-    placeholder: "Publications are being prepared."
+    /** Listing state when no publication is published yet (T-020). */
+    empty: "No publications are available yet.",
+    detail: {
+      back: "Back to publications",
+      filesHeading: "Available files"
+    },
+    /** Card availability indicator: files win over the external URL. */
+    availability: {
+      download: "Download",
+      online: "Online"
+    },
+    external: "Open online"
   },
   projects: {
     title: "Projects",

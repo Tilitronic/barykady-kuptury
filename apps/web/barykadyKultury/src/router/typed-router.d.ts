@@ -101,6 +101,13 @@ declare module 'vue-router/auto-routes' {
       { locale: ParamValue<false> },
       | never
     >,
+    '/[locale]/publication-detail': RouteRecordInfo<
+      '/[locale]/publication-detail',
+      '/:locale/publication-detail',
+      { locale: ParamValue<true> },
+      { locale: ParamValue<false> },
+      | never
+    >,
     '/[locale]/publications': RouteRecordInfo<
       '/[locale]/publications',
       '/:locale/publications',
@@ -210,6 +217,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/[locale]/projects.vue': {
       routes:
         | '/[locale]/projects'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/[locale]/publication-detail.vue': {
+      routes:
+        | '/[locale]/publication-detail'
       views:
         | never
       pathParamNames:

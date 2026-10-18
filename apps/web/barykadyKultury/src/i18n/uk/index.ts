@@ -97,7 +97,16 @@ const uk: MessageSchema = {
   publications: {
     title: "Публікації",
     description: "Публікації Barykady Kultury.",
-    placeholder: "Публікації готуються."
+    empty: "Наразі немає доступних публікацій.",
+    detail: {
+      back: "Назад до публікацій",
+      filesHeading: "Доступні файли"
+    },
+    availability: {
+      download: "Завантаження",
+      online: "Онлайн"
+    },
+    external: "Відкрити онлайн"
   },
   projects: {
     title: "Проєкти",

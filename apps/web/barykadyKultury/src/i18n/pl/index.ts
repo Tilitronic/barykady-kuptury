@@ -97,7 +97,16 @@ const pl: MessageSchema = {
   publications: {
     title: "Publikacje",
     description: "Publikacje Barykad Kultury.",
-    placeholder: "Publikacje są w przygotowaniu."
+    empty: "Brak dostępnych publikacji.",
+    detail: {
+      back: "Powrót do publikacji",
+      filesHeading: "Dostępne pliki"
+    },
+    availability: {
+      download: "Pobieranie",
+      online: "Online"
+    },
+    external: "Otwórz online"
   },
   projects: {
     title: "Projekty",
