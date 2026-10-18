@@ -17,7 +17,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-011 | Public shell: header, nav, footer, a11y | 2 | done | @reviewer (rev-2) + @designer (des-2) + orchestrator a11y spot-check | f4edb78 | 2026-10-18 |
 | T-012 | Content schema migrations | 3 | done | @reviewer (rev-1) + @architector (arc-1) | 5116568 | 2026-10-18 |
 | T-013 | RLS policies & admin claim | 3 | done | @reviewer (rev-1) + @architector (arc-1) | 85c4d8e | 2026-10-18 |
-| T-014 | Storage buckets & upload policy | 3 | todo | — | — | — |
+| T-014 | Storage buckets & upload policy | 3 | done | @reviewer (rev-1) + @architector (arc-1) | 0208ee3 | 2026-10-18 |
 | T-015 | Generated types & feature data access | 3 | todo | — | — | — |
 | T-016 | About: organization content | 4 | todo | — | — | — |
 | T-017 | About: documents | 4 | todo | — | — | — |

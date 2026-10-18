@@ -1,7 +1,7 @@
 # T-014 — Storage buckets & upload policy
 
-**Session:** 3 · **Lane:** data/security · **Owner:** @coder · **Status:** todo
-**Reviewers:** @reviewer + @architector
+**Session:** 3 · **Lane:** data/security · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1: 0 findings, close YES) + @architector (arc-1: PASS)
 **Depends on:** T-012, T-013 · **Blocks:** T-017, T-020, T-029
 
 ## Outcome
@@ -30,12 +30,12 @@ Out: virus scanning, image transformation pipeline, signed URLs (not needed for 
 4. GREEN: policies until matrix passes; then prove public read of an existing object succeeds.
 
 ## Acceptance criteria
-- [ ] Anonymous GET of a known public object succeeds; anonymous upload/list-denied per policy.
-- [ ] Admin upload of allowed types succeeds; disallowed types rejected by both bucket config and app validation.
-- [ ] Filenames sanitised (no path traversal, no unicode control chars, collision-safe append).
-- [ ] No SVG/HTML upload path exists in V1.
-- [ ] File links download rather than execute; documents open with a predictable filename.
-- [ ] Tests cover size boundary (just under/over limit).
+- [x] Anonymous GET of a known public object succeeds; anonymous upload/list-denied per policy.
+- [x] Admin upload of allowed types succeeds; disallowed types rejected by both bucket config and app validation.
+- [x] Filenames sanitised (no path traversal, no unicode control chars, collision-safe append).
+- [x] No SVG/HTML upload path exists in V1.
+- [x] File links download rather than execute; documents open with a predictable filename.
+- [x] Tests cover size boundary (just under/over limit).
 
 ## Verification
 ```
@@ -164,3 +164,19 @@ by passing the sanitised `fileName` from the validator as the `download` query v
 - **Actual call site.** `validateUpload()` is not wired into an upload form yet; T-029 owns the
   admin upload path and must call it before requesting an upload (review gate). T-017/T-020/T-029
   must also apply the `?download=` guidance.
+
+### Review verdicts (2026-10-18) — @reviewer (rev-1) + @architector (arc-1)
+
+Implementation `0208ee3`; fixed point `f912725`.
+
+- **@reviewer (two-axis): 0 findings on both axes.** All six acceptance criteria verified — anon reads a known public object and cannot upload/list; admin upload of allowed types succeeds while disallowed types are rejected by **both** bucket config and the validator; filenames sanitised (traversal, backslash paths, unicode control chars, collision-safe suffix); no SVG/HTML/JS path; download-only guidance present; size boundary (exact and +1 byte) tested. Explicit checks: the validator is pure (no Supabase import) with extension↔MIME consistency; `anon` cannot write to `storage.objects`; the public `SELECT` is bucket-scoped (a test-only private bucket stays invisible); SQL tests use `set local role` + `request.jwt.claims`, never the service-role key. **Close verdict: YES.**
+- **@architector: PASS.** Bucket split justified by the entity model with no premature signed-URL/transform complexity; public-read/admin-write separation correct with no public write path; active-content rejection airtight for V1 (three layers: bucket MIME + validator ext/MIME/consistency + download-only); all four raised uncertainties resolved — migration-as-truth correct per AGENTS.md rule 5, DOCX acceptable while D-12 is `open` (one-line rollback), per-bucket MIME split correct, admin write scope acceptable as documented. **No new decision records needed.**
+
+#### Final verification (orchestrator, on the committed tree)
+- `pnpm dlx supabase@2.121.0 db reset` → exit 0 (all three migrations apply).
+- `pnpm dlx supabase@2.121.0 test db` → exit 0: `Files=4, Tests=231 / Result: PASS`.
+- `pnpm test` → `24 files / 302 tests passed`.
+- `pnpm typecheck` → clean.
+
+#### Follow-ups
+- **T-029** owns the admin upload path and must call `validateUpload()` before upload; T-017/T-020/T-029 must apply the `?download=<safe-name>` guidance.
