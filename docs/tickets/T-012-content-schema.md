@@ -12,6 +12,7 @@ In:
 - `supabase/config.toml`, `supabase/migrations/<timestamp>_content_model.sql`, `supabase/seed.sql`.
 - Tables (with translation siblings): `site_pages`, `site_page_translations`, `projects`, `project_translations`, `team_members`, `team_member_translations`, `publications`, `publication_translations`, `publication_files`, `organization_documents`, `organization_document_translations`, `calendar_event_links`.
 - Lifecycle enum `content_status ('draft','published','archived')`, `created_at/updated_at` + trigger, `published_at`, ordering columns (`sort_order`), slug uniqueness **per locale**, locale enum `('en','pl','uk')`.
+- **Reviewed scope amendment (review round 1):** every translation table carries a `needs_review` flag as a D-16 (admin locale workflow) pre-load. Endorsed by @architector; the @reviewer scope-creep dissent is recorded in the Log.
 - `projects.featured_rank` (nullable, ordered), `projects.cover_path` (Storage path, not URL).
 - `calendar_event_links`: `calendar_id`, `google_event_id`, nullable `project_id` FK `ON DELETE SET NULL`, unique `(calendar_id, google_event_id)`, timestamps.
 - Indexes for published listing, featured ordering, event lookup.
@@ -132,3 +133,22 @@ pnpm test:db:idempotency                  # applies supabase/seed.sql again; ass
 - **T-029**: revisit the `publication_files` unique key if a real "two files per locale" need appears (architector F-01).
 - **T-030**: add `projects.sort_order` only if a manual editorial order is actually required (architector F-03).
 - **D-22**: finalise CLI provisioning; once the CLI is on `PATH`, wire `pnpm test:db:idempotency` into `scripts/ci-local.sh` Gate 6 (T-005's DB gate currently SKIPs without a CLI on PATH).
+
+### Review round 2 (2026-10-18) — re-check of the rework
+
+Verdicts: **@architector PASS** — all round-1 items resolved, model unchanged, no new decision record required. **@reviewer** — prior Standards findings **RESOLVED**; two items **PARTIALLY RESOLVED** (fixes below); one new Suggestion.
+
+| Round-1 item | Re-check result | Fix applied in round 2 |
+|---|---|---|
+| Standards Major — open signup | RESOLVED | — |
+| Standards Suggestion — `storage.s3_protocol` / `storage.vector` | RESOLVED | — |
+| Spec Major — seed-idempotency gate | PARTIALLY RESOLVED: proved only PK/row-count identity, so a non-key column change could still pass | **Digest upgraded to full row state** — md5 over `row_to_json` ordered by primary key, covering every column |
+| Spec Minor — `needs_review` scope creep | PARTIALLY RESOLVED: amendment lived only in the Log | **Added to the canonical `## Scope` section** (above) |
+| New Suggestion — container target ambiguous with multiple local stacks | — | **Container resolved by exact name `supabase_db_<project_id>`** read from `supabase/config.toml`; the gate now refuses to run rather than guess another stack |
+
+Also applied: `--reset` makes the gate one deterministic command, addressing the reviewer's "single gate command" preference.
+
+#### Review round 2 verification (orchestrator, on the final tree)
+- `node scripts/verify-seed-idempotency.mjs --reset` → exit 0: `PASS — re-applying supabase/seed.sql changed nothing (12 tables, 24 rows, full-row digests identical)`.
+- `pnpm dlx supabase@2.121.0 test db` → exit 0: `Files=1, Tests=41 / Result: PASS`.
+- `pnpm typecheck` → exit 0.

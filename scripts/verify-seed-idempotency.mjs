@@ -18,20 +18,29 @@
  *
  * WHAT IT DOES
  * ------------
- *  1. Asserts the local stack is up and the database is already seeded (guards against
- *     a vacuous pass on an empty database).
- *  2. Digests every content table (row count + a hash of the ordered primary keys).
- *  3. Applies `supabase/seed.sql` a second time through psql (stdin, so no mount or
+ *  1. Optionally runs `supabase db reset` first (`--reset`), so the gate is a single
+ *     deterministic command; otherwise it assumes the database already holds the seed.
+ *  2. Resolves the database container deterministically from `project_id` in
+ *     `supabase/config.toml` (`supabase_db_<project_id>`) — it never guesses among
+ *     several running stacks.
+ *  3. Asserts the database is already seeded (guards against a vacuous pass).
+ *  4. Digests the **full row state** of every content table: row count plus an md5 over
+ *     `row_to_json` of each row ordered by primary key. Any change to any column —
+ *     not only key or count changes — changes the digest.
+ *  5. Applies `supabase/seed.sql` a second time through psql (stdin, so no mount or
  *     host psql is required).
- *  4. Re-digests and requires the two digests to be identical.
+ *  6. Re-digests and requires the two digests to be identical.
  *
  * USAGE
  * -----
- *   pnpm dlx supabase@2.121.0 db reset     # application #1 (migration + seed)
- *   node scripts/verify-seed-idempotency.mjs   # application #2 must be a no-op
+ *   node scripts/verify-seed-idempotency.mjs --reset   # single command: reset + assert
+ *   # or, two-step against an already-reset database:
+ *   pnpm dlx supabase@2.121.0 db reset
+ *   pnpm test:db:idempotency
  *
- * Requires Docker and a running local Supabase stack. Exits non-zero on any failure;
- * a green run is never reported when the prerequisites are missing.
+ * `--reset` invokes the CLI as `${SUPABASE_CLI:-pnpm dlx supabase@2.121.0} db reset`.
+ * Requires Docker and a local Supabase stack. Exits non-zero on any failure; a green
+ * run is never reported when the prerequisites are missing.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -41,6 +50,7 @@ import { dirname, join } from 'node:path';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SEED_PATH = join(REPO_ROOT, 'supabase', 'seed.sql');
+const CONFIG_PATH = join(REPO_ROOT, 'supabase', 'config.toml');
 
 /** Every content table defined by the T-012 migration. All carry an `id` PK. */
 const CONTENT_TABLES = [
@@ -81,22 +91,34 @@ function run(command, args, options = {}) {
   return result;
 }
 
-/** The database container created by `supabase start` for this project. */
+/** `project_id` from supabase/config.toml — the CLI derives container names from it. */
+function readProjectId() {
+  if (!existsSync(CONFIG_PATH)) {
+    fail(`supabase project config not found at ${CONFIG_PATH}`);
+  }
+  const match = readFileSync(CONFIG_PATH, 'utf8').match(/^\s*project_id\s*=\s*"([^"]+)"/m);
+  if (!match) {
+    fail('could not read `project_id` from supabase/config.toml');
+  }
+  return match[1];
+}
+
+/**
+ * The database container for THIS project, resolved by exact name from `project_id`.
+ * Deliberately does not fall back to "first container matching supabase_db": a gate
+ * that might validate another running stack is worse than one that refuses to run.
+ */
 function findDatabaseContainer() {
-  const result = run('docker', [
-    'ps',
-    '--filter',
-    'name=supabase_db',
-    '--format',
-    '{{.Names}}',
-  ]);
+  const projectId = readProjectId();
+  const expected = `supabase_db_${projectId}`;
+  const result = run('docker', ['ps', '--filter', `name=^${expected}$`, '--format', '{{.Names}}']);
   if (result.status !== 0) {
     fail('`docker ps` failed — is Docker running?');
   }
   const name = result.stdout.split('\n').map((line) => line.trim()).filter(Boolean)[0];
-  if (!name) {
+  if (name !== expected) {
     fail(
-      'no local Supabase database container found.\n' +
+      `expected database container \`${expected}\` (from project_id "${projectId}") but it is not running.\n` +
         '  Start the stack first:  pnpm dlx supabase@2.121.0 start',
     );
   }
@@ -135,15 +157,16 @@ function psql(container, sql, { input } = {}) {
 
 /**
  * One row per content table: `name|row_count|digest`, where digest is an md5 over the
- * ordered primary keys. Any inserted, deleted or re-keyed row changes the digest.
+ * full JSON of every row ordered by primary key. This covers every column, so a change
+ * to a non-key column (or a reordering) is detected, not just key/count changes.
  */
 function digestQuery() {
   return (
     CONTENT_TABLES.map(
       (table) =>
         `select '${table}' as table_name, count(*)::text as row_count, ` +
-        `coalesce(md5(string_agg(id::text, ',' order by id::text)), '') as digest ` +
-        `from public.${table}`,
+        `coalesce(md5(string_agg(row_to_json(t)::text, ',' order by t.id::text)), '') as digest ` +
+        `from public.${table} t`,
     ).join('\nunion all\n') + '\norder by 1'
   );
 }
@@ -159,11 +182,27 @@ function digest(container) {
   return map;
 }
 
+function resetDatabase() {
+  const cli = process.env.SUPABASE_CLI || 'pnpm dlx supabase@2.121.0';
+  console.log(`seed-idempotency: \`${cli} db reset\` (application #1)…`);
+  const result = spawnSync(`${cli} db reset`, { shell: true, stdio: 'inherit', cwd: REPO_ROOT });
+  if (result.status !== 0) {
+    fail(`\`${cli} db reset\` failed (exit ${result.status}).`);
+  }
+}
+
 function main() {
+  const shouldReset = process.argv.slice(2).includes('--reset');
+
   if (!existsSync(SEED_PATH)) {
     fail(`seed file not found at ${SEED_PATH}`);
   }
   const seedSql = readFileSync(SEED_PATH, 'utf8');
+
+  if (shouldReset) {
+    resetDatabase();
+  }
+
   const container = findDatabaseContainer();
   console.log(`seed-idempotency: database container ${container}`);
 
@@ -183,7 +222,7 @@ function main() {
   console.log('seed-idempotency: applying supabase/seed.sql a second time…');
   psql(container, null, { input: seedSql });
 
-  // 3. The database must be byte-for-byte unchanged.
+  // 3. The database must be identical, column for column.
   const after = digest(container);
   const diffs = [];
   for (const table of CONTENT_TABLES) {
@@ -204,7 +243,7 @@ function main() {
 
   console.log(
     `✔ seed-idempotency: PASS — re-applying supabase/seed.sql changed nothing ` +
-      `(${CONTENT_TABLES.length} tables, ${total} rows verified)`,
+      `(${CONTENT_TABLES.length} tables, ${total} rows, full-row digests identical)`,
   );
 }
 
