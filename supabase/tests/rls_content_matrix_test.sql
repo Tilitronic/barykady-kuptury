@@ -109,7 +109,7 @@ insert into public.calendar_event_links (id, calendar_id, google_event_id, proje
   ('a6000000-0000-4000-8000-000000000003', 'rls-calendar@example.org', 'rls-event-linked-draft',
    'a2000000-0000-4000-8000-000000000002');
 
-select plan(145);
+select plan(150);
 
 -- ===========================================================================
 -- Root content tables (12 assertions each)
@@ -159,6 +159,7 @@ reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
+select is((select count(*) from public.projects where id = 'a2000000-0000-4000-8000-000000000001'), 1::bigint, 'non-admin authenticated reads a published project');
 select throws_ok($sql$ insert into public.projects (id, status) values ('a2000000-0000-4000-8000-0000000000f2', 'draft') $sql$, '42501', NULL, 'non-admin insert denied on projects');
 with u as (update public.projects set status = 'archived' where id = 'a2000000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no projects rows');
@@ -319,6 +320,7 @@ reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
+select is((select count(*) from public.project_translations where id = 'a2100000-0000-4000-8000-000000000001'), 1::bigint, 'non-admin authenticated reads a translation of a published project');
 select throws_ok($sql$ insert into public.project_translations (id, project_id, locale, slug, title) values ('a2100000-0000-4000-8000-0000000000f2', 'a2000000-0000-4000-8000-000000000001', 'pl', 'rls-nonadmin-project-translation', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on project_translations');
 with u as (update public.project_translations set needs_review = true where id = 'a2100000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no project_translations rows');
@@ -412,6 +414,7 @@ reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
+select is((select count(*) from public.publication_files where id = 'a4200000-0000-4000-8000-000000000001'), 1::bigint, 'non-admin authenticated reads a file of a published publication');
 select throws_ok($sql$ insert into public.publication_files (id, publication_id, locale, storage_path) values ('a4200000-0000-4000-8000-0000000000f2', 'a4000000-0000-4000-8000-000000000001', 'pl', 'fixtures/rls/nonadmin-file.pdf') $sql$, '42501', NULL, 'non-admin insert denied on publication_files');
 with u as (update public.publication_files set label = 'Nonadmin update' where id = 'a4200000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no publication_files rows');
@@ -443,6 +446,7 @@ reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
+select is((select count(*) from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000001'), 1::bigint, 'non-admin authenticated reads a translation of a published organization_document');
 select throws_ok($sql$ insert into public.organization_document_translations (id, document_id, locale, slug, title) values ('a5100000-0000-4000-8000-0000000000f2', 'a5000000-0000-4000-8000-000000000001', 'pl', 'rls-nonadmin-document-translation', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on organization_document_translations');
 with u as (update public.organization_document_translations set needs_review = true where id = 'a5100000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no organization_document_translations rows');
@@ -479,6 +483,7 @@ reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
+select is((select count(*) from public.calendar_event_links where id = 'a6000000-0000-4000-8000-000000000002'), 1::bigint, 'non-admin authenticated reads a mapping to a published project');
 select throws_ok($sql$ insert into public.calendar_event_links (id, calendar_id, google_event_id) values ('a6000000-0000-4000-8000-0000000000f2', 'rls-calendar@example.org', 'rls-nonadmin-event') $sql$, '42501', NULL, 'non-admin insert denied on calendar_event_links');
 with u as (update public.calendar_event_links set project_id = null where id = 'a6000000-0000-4000-8000-000000000002' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no calendar_event_links rows');
