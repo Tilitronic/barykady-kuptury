@@ -14,7 +14,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-008 | BrandLogo component | 2 | done | @reviewer (rev-2) + @designer (des-2) | 08e5b45 | 2026-10-18 |
 | T-009 | Locale routing, detection, persistence | 2 | done | @reviewer (rev-2) | fd5cb85 | 2026-10-18 |
 | T-010 | Theme preference system | 2 | done | @reviewer (rev-1) | 9c36396 | 2026-10-18 |
-| T-011 | Public shell: header, nav, footer, a11y | 2 | todo | — | — | — |
+| T-011 | Public shell: header, nav, footer, a11y | 2 | done | @reviewer (rev-2) + @designer (des-2) + orchestrator a11y spot-check | f4edb78 | 2026-10-18 |
 | T-012 | Content schema migrations | 3 | todo | — | — | — |
 | T-013 | RLS policies & admin claim | 3 | todo | — | — | — |
 | T-014 | Storage buckets & upload policy | 3 | todo | — | — | — |
@@ -46,3 +46,4 @@ Updated by the orchestrator at every state change. `done` requires an independen
 |---|---|---|---|---|
 | 1 | 2026-10-17 | 2026-10-17 (T-001…T-005 all done; restart + lane probe verified) | `HANDOFF-S1-2026-10-17.md` | push pending (main ahead 4) |
 | 2 | 2026-10-17 | 2026-10-18 (T-006 + T-009 done & reviewed; T-007/T-008/T-010/T-011 parked) | `HANDOFF-S2-2026-10-18.md` | push pending (main ahead 3) |
+| 3 | 2026-10-18 | 2026-10-18 (T-007 + T-008 + T-010 + T-011 done & reviewed; Session 2 parked range cleared) | `HANDOFF-S3-2026-10-18.md` | push pending (main ahead 12) |
