@@ -16,7 +16,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-010 | Theme preference system | 2 | done | @reviewer (rev-1) | 9c36396 | 2026-10-18 |
 | T-011 | Public shell: header, nav, footer, a11y | 2 | done | @reviewer (rev-2) + @designer (des-2) + orchestrator a11y spot-check | f4edb78 | 2026-10-18 |
 | T-012 | Content schema migrations | 3 | done | @reviewer (rev-1) + @architector (arc-1) | 5116568 | 2026-10-18 |
-| T-013 | RLS policies & admin claim | 3 | todo | — | — | — |
+| T-013 | RLS policies & admin claim | 3 | done | @reviewer (rev-1) + @architector (arc-1) | 85c4d8e | 2026-10-18 |
 | T-014 | Storage buckets & upload policy | 3 | todo | — | — | — |
 | T-015 | Generated types & feature data access | 3 | todo | — | — | — |
 | T-016 | About: organization content | 4 | todo | — | — | — |

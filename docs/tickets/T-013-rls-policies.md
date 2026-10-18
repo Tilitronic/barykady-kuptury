@@ -1,7 +1,7 @@
 # T-013 — RLS policies & admin claim
 
-**Session:** 3 · **Lane:** data/security · **Owner:** @coder · **Status:** todo
-**Reviewers:** @architector + @reviewer
+**Session:** 3 · **Lane:** data/security · **Owner:** @coder · **Status:** done
+**Reviewers:** @architector (arc-1: PASS) + @reviewer (rev-1: 0 findings, close verdict YES)
 **Depends on:** T-012 · **Blocks:** T-015, T-019, T-020, T-026…T-031, T-035
 
 ## Outcome
@@ -31,13 +31,13 @@ Out: Storage policies (T-014), app-side guards (T-026).
 4. REFACTOR: shared SQL helper for the "published visible" predicate to avoid drift between tables.
 
 ## Acceptance criteria
-- [ ] Every content table has explicit policies for select/insert/update/delete (no implicit allow).
-- [ ] Anonymous draft access returns zero rows for every translation and file table.
-- [ ] Anonymous insert/update/delete rejected on every table.
-- [ ] Authenticated non-admin rejected on every mutation.
-- [ ] Admin CRUD succeeds for each entity.
-- [ ] `is_admin()` cannot be influenced by user-editable metadata.
-- [ ] Tests prove denial by result and by error, not by route/UI behaviour.
+- [x] Every content table has explicit policies for select/insert/update/delete (no implicit allow).
+- [x] Anonymous draft access returns zero rows for every translation and file table.
+- [x] Anonymous insert/update/delete rejected on every table.
+- [x] Authenticated non-admin rejected on every mutation.
+- [x] Admin CRUD succeeds for each entity.
+- [x] `is_admin()` cannot be influenced by user-editable metadata.
+- [x] Tests prove denial by result and by error, not by route/UI behaviour.
 
 ## Verification
 ```
@@ -129,3 +129,19 @@ the draft-linked mapping is hidden). An `authenticated` identity carrying
 - The actual admin *provisioning* (setting `app_metadata.role` for a real account) remains out of
   scope (D-08); this ticket only defines the enforcement contract and proves it with simulated
   claims.
+
+### Review verdicts (2026-10-18) — @architector (arc-1) + @reviewer (rev-1)
+
+Implementation `ac64b04`; hardening `85c4d8e`. Fixed point for review: `8d4c81d`.
+
+- **@reviewer (two-axis): 0 findings on both axes.** All seven acceptance criteria verified individually — explicit policies per table × operation; anon draft reads = 0 across every translation/file table; anon writes rejected with `42501`; non-admin mutations denied by result **and** error; admin CRUD per entity; `user_metadata.role='admin'` does not grant admin; tests are SQL, not route/UI. Explicit checks passed: no join-widening, no anon write access (policies **and** grants), shared `is_published()` predicate (no drift), tests use `set local role` + `request.jwt.claims` and never the service-role key, tests are fail-able. **Close verdict: YES.**
+- **@architector: PASS.** `is_admin()` is the single D-17 enforcement point (invoker rights, pinned `search_path`); `is_published()` sound and drift-free; the stricter `calendar_event_links` public read is **required** by architecture §4 (the ticket wording was imprecise) and a public event still renders when its link is hidden; the grants posture (revoke writes from `anon`, leave `authenticated` at defaults because admin writes need the privileges and RLS is the authorization boundary) is correct. **No new decision records needed.**
+
+#### Applied hardening (reviewer's non-blocking suggestion)
+Added five "authenticated non-admin reads a published row" assertions (`rls_content_matrix_test.sql`, one per table family) so a future narrowing of a public `SELECT` policy to `to anon` only cannot regress silently.
+
+#### Final verification (orchestrator, on the closed tree)
+- `pnpm dlx supabase@2.121.0 db reset` → exit 0.
+- `pnpm dlx supabase@2.121.0 test db` → exit 0: `Files=3, Tests=207 / Result: PASS` (schema 41 + helpers 16 + matrix 150).
+- `pnpm typecheck` → exit 0.
+- `git diff ac64b04..85c4d8e` touches only the matrix test file — no policy/migration drift.
