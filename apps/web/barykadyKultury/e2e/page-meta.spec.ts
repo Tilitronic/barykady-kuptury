@@ -35,8 +35,8 @@ const TITLE_CASES: TitleCase[] = [
   { path: "/uk/contact", title: "Контакти" }
 ];
 
-async function descriptionOf(page: Page): Promise<string | null> {
-  return page.locator('meta[name="description"]').getAttribute("content");
+function description(page: Page) {
+  return page.locator('meta[name="description"]');
 }
 
 test.describe("page metadata", () => {
@@ -54,16 +54,24 @@ test.describe("page metadata", () => {
   });
 
   test("the description follows the route and locale", async ({ page }) => {
+    // The router guard applies metadata asynchronously, so these assertions
+    // auto-wait (Playwright retries `toHaveAttribute`) rather than reading the
+    // tag once after `goto` — the previous one-shot read raced the guard.
     await page.goto("/en/contact");
-    expect(await descriptionOf(page)).toBe(
+    await expect(description(page)).toHaveAttribute(
+      "content",
       "Contact information for Barykady Kultury."
     );
 
     await page.goto("/pl/contact");
-    expect(await descriptionOf(page)).toBe("Dane kontaktowe Barykad Kultury.");
+    await expect(description(page)).toHaveAttribute(
+      "content",
+      "Dane kontaktowe Barykad Kultury."
+    );
 
     await page.goto("/uk/contact");
-    expect(await descriptionOf(page)).toBe(
+    await expect(description(page)).toHaveAttribute(
+      "content",
       "Контактна інформація Barykady Kultury."
     );
   });
