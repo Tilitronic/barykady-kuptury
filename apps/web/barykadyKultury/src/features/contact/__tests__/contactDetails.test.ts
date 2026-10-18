@@ -1,18 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { organization, type ContactDetails } from "@/config/organization";
-import {
-  hasContactDetails,
-  resolveContactDetails
-} from "@/features/contact/contactDetails";
+import { hasContactDetails } from "@/features/contact/contactDetails";
 
 /**
  * Spec axis: docs/tickets/T-021-contact-page.md — config matrix and the D-04
  * truthfulness guard.
  *
- * `resolveContactDetails` is the pure merge used by the page; the E2E fixture
- * seam (see `contactDetails.ts`) feeds it an override, and the shipped
- * organization config must stay empty until the NGO supplies verified values.
+ * The shipped organization config must stay empty until the NGO supplies
+ * verified values, and the page only renders a contact block when at least one
+ * channel carries content.
  */
 
 const EMPTY: ContactDetails = {
@@ -21,25 +18,6 @@ const EMPTY: ContactDetails = {
   address: "",
   officeHours: ""
 };
-
-describe("resolveContactDetails", () => {
-  it("returns the base unchanged when there is no override", () => {
-    expect(resolveContactDetails(EMPTY)).toEqual(EMPTY);
-  });
-
-  it("applies only the supplied override fields", () => {
-    expect(resolveContactDetails(EMPTY, { email: "a@b.org" })).toEqual({
-      ...EMPTY,
-      email: "a@b.org"
-    });
-  });
-
-  it("lets an explicit empty override clear a base value", () => {
-    const base: ContactDetails = { ...EMPTY, phone: "123" };
-
-    expect(resolveContactDetails(base, { phone: "" }).phone).toBe("");
-  });
-});
 
 describe("hasContactDetails", () => {
   it("is false for the empty defaults", () => {

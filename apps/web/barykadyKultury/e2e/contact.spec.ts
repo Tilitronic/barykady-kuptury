@@ -8,20 +8,12 @@ import { test } from "./support/network-guard";
  *
  * No verified contact data exists yet (D-04 open), so the shipped state is the
  * translated "not published yet" message with in-page routes — nothing
- * fabricated, no form (D-09). The fixture-driven journey injects a clearly
- * marked development fixture through the E2E-only `window.__BK_CONTACT__` seam
- * (enabled for this build by `VITE_CONTACT_FIXTURE` in playwright.config.ts) to
- * prove the configured-rendering branch in a real browser. No real service is
+ * fabricated, no form (D-09). The configured-rendering branch (mailto:/tel:
+ * links) is proven at component level in
+ * `src/components/contact/__tests__/ContactChannels.test.ts`; these journeys
+ * cover the state the application actually ships today. No real service is
  * contacted (docs/TESTING.md §2).
  */
-
-/** Clearly marked development fixture — never real organization data. */
-const CONTACT_FIXTURE = {
-  email: "kontakt@example.org",
-  phone: "+48 61 000 00 00",
-  address: "ul. Przykładowa 1, 00-000 Poznań",
-  officeHours: "Mon–Fri 10:00–16:00"
-};
 
 /** The page must pass axe with zero critical *and* zero serious findings. */
 async function expectNoBlockingViolations(page: Page): Promise<void> {
@@ -78,39 +70,5 @@ test.describe("contact page", () => {
     await expect(
       page.getByText("Контактні дані ще не опубліковано.")
     ).toBeVisible();
-  });
-
-  test("renders a configured email and phone as working links", async ({
-    page
-  }) => {
-    await page.addInitScript(details => {
-      (window as unknown as { __BK_CONTACT__?: unknown }).__BK_CONTACT__ =
-        details;
-    }, CONTACT_FIXTURE);
-
-    await page.goto("/en/contact");
-
-    const emailLink = page.getByRole("link", {
-      name: CONTACT_FIXTURE.email
-    });
-    await expect(emailLink).toBeVisible();
-    await expect(emailLink).toHaveAttribute(
-      "href",
-      `mailto:${CONTACT_FIXTURE.email}?subject=${encodeURIComponent(
-        "Message from the website"
-      )}`
-    );
-
-    const phoneLink = page.getByRole("link", {
-      name: CONTACT_FIXTURE.phone
-    });
-    await expect(phoneLink).toHaveAttribute("href", "tel:+48610000000");
-
-    await expect(page.getByText(CONTACT_FIXTURE.address)).toBeVisible();
-    await expect(page.getByText(CONTACT_FIXTURE.officeHours)).toBeVisible();
-
-    await expect(page.locator("form")).toHaveCount(0);
-
-    await expectNoBlockingViolations(page);
   });
 });

@@ -43,11 +43,7 @@ import { useI18n } from "vue-i18n";
 
 import ContactChannels from "@/components/contact/ContactChannels.vue";
 import { organization } from "@/config/organization";
-import {
-  hasContactDetails,
-  readContactOverride,
-  resolveContactDetails
-} from "@/features/contact/contactDetails";
+import { hasContactDetails } from "@/features/contact/contactDetails";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
@@ -58,9 +54,6 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
  * with routes to About and Support; no fake form and no invented details ship
  * (docs/PRODUCT_REQUIREMENTS.md §4, docs/architecture.md §7, decisions D-04 and
  * D-09). PublicLayout provides the shell — do NOT add AppShell here.
- *
- * The optional `readContactOverride()` is the E2E-only fixture seam; it is
- * inert in every build that does not opt in (see contactDetails.ts).
  */
 const { t } = useI18n();
 const route = useRoute();
@@ -70,11 +63,8 @@ const currentLocale = computed<Locale>(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-const details = computed(() =>
-  resolveContactDetails(organization.contact, readContactOverride())
-);
-
-const hasChannels = computed(() => hasContactDetails(details.value));
+const details = organization.contact;
+const hasChannels = hasContactDetails(details);
 </script>
 
 <style scoped>

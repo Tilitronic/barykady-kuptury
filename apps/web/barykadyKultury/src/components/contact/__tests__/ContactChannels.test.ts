@@ -65,12 +65,30 @@ describe("ContactChannels", () => {
     expect(link.text()).toBe("+48 61 000 00 00");
   });
 
+  it("renders address and office hours as plain text, not links", () => {
+    const wrapper = render(FULL);
+
+    // Only the email and phone are actionable; address/hours are text.
+    expect(wrapper.findAll("a")).toHaveLength(2);
+    expect(wrapper.find('a[href^="mailto:"]').exists()).toBe(true);
+    expect(wrapper.find('a[href^="tel:"]').exists()).toBe(true);
+  });
+
   it("omits every channel that is not configured", () => {
     const wrapper = render({ ...EMPTY, email: "kontakt@example.org" });
 
     expect(wrapper.findAll("dt").map(term => term.text())).toEqual(["Email"]);
     expect(wrapper.find('a[href^="tel:"]').exists()).toBe(false);
     expect(wrapper.text()).not.toContain("Office hours");
+  });
+
+  it("renders an address-only config without inventing contact links", () => {
+    const wrapper = render({ ...EMPTY, address: "ul. Przykładowa 1" });
+
+    expect(wrapper.findAll("dt").map(term => term.text())).toEqual(["Address"]);
+    expect(wrapper.find('a[href^="mailto:"]').exists()).toBe(false);
+    expect(wrapper.find('a[href^="tel:"]').exists()).toBe(false);
+    expect(wrapper.text()).toContain("ul. Przykładowa 1");
   });
 
   it("renders nothing at all when no channel is configured", () => {

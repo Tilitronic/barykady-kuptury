@@ -49,15 +49,7 @@ export default defineConfig({
     // fixtures and never talk to a real project (docs/TESTING.md §2).
     env: {
       VITE_SUPABASE_URL: APP_ORIGIN,
-      VITE_SUPABASE_PUBLISHABLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e2e",
-      // T-021: opt the E2E build into the contact fixture seam so
-      // `contact.spec.ts` can prove a configured email/phone renders as a
-      // working mailto:/tel: link. The seam only activates when a spec injects
-      // `window.__BK_CONTACT__`; otherwise the real (empty) config renders.
-      // The value is non-numeric on purpose (see env.d.ts): Quasar types
-      // numeric-looking env values as `number`, which would break the string
-      // comparison in `contactDetails.ts`.
-      VITE_CONTACT_FIXTURE: "enabled"
+      VITE_SUPABASE_PUBLISHABLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e2e"
     }
   }
 });

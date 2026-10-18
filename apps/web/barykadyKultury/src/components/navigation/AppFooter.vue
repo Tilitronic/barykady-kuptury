@@ -40,7 +40,7 @@
       <address v-if="hasContactData" class="app-footer__contact">
         <a
           v-if="organization.contact.email"
-          :href="`mailto:${organization.contact.email}`"
+          :href="mailtoHref(organization.contact.email)"
           class="app-footer__contact-link focus-ring"
         >
           {{ organization.contact.email }}
@@ -93,6 +93,7 @@ import SocialLinks from "@/components/navigation/SocialLinks.vue";
 import { organization } from "@/config/organization";
 import { mainNavItems, type NavItem } from "@/config/navigation";
 import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
+import { mailtoHref } from "@/shared/links";
 
 /**
  * T-011 — AppFooter
