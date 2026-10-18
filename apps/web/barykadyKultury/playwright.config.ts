@@ -42,6 +42,14 @@ export default defineConfig({
     reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
     timeout: 180_000,
     stdout: "pipe",
-    stderr: "pipe"
+    stderr: "pipe",
+    // Provide dummy Supabase credentials so the production build initializes the
+    // browser client. The URL points at the Playwright-managed app origin so
+    // requests are same-origin; E2E specs intercept /rest/v1/* with deterministic
+    // fixtures and never talk to a real project (docs/TESTING.md §2).
+    env: {
+      VITE_SUPABASE_URL: APP_ORIGIN,
+      VITE_SUPABASE_PUBLISHABLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e2e"
+    }
   }
 });

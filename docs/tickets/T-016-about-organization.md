@@ -50,4 +50,48 @@ pnpm typecheck && pnpm lint:check
 - @designer: hierarchy and rhythm; scarlet not overused; mobile reading order.
 
 ## Log
-- (author) start:
+- (author) start: 2026-10-18
+- RED: `AboutPage.test.ts` failed as expected — page still rendered placeholder
+  ("Information about us is being prepared.") instead of mission content.
+- GREEN: implemented `useSitePage` composable, `LocalizedRichText.vue`,
+  `src/shared/content/richText.ts`, and data-driven `about.vue`.
+- RED: empty-state test failed initially because placeholder was still shown;
+  implemented explicit `loading`/`empty`/`unavailable` states.
+- Added `loading` to the shared `ContentResult` union (T-015 result model) so
+  pages can switch on a single discriminated shape.
+- Extended `SitePageContent` + select + `mapSitePage` with `needsReview` and
+  covered it in `api.test.ts` for the T-031 admin hook.
+- Replaced fictional `site_pages` seed block with verified mission/history/
+  values/aims content; PL/UK translations have title+slug only, `body NULL`,
+  `needs_review = true`.
+- E2E seam: set `VITE_SUPABASE_URL` to `APP_ORIGIN` in `playwright.config.ts`
+  so production-build requests are same-origin and `mockSupabaseRest` can
+  intercept them without CORS blocking.
+- Verification:
+  - `pnpm test`: 31 files / 350 tests passed (was 29 files / 331 tests).
+  - `pnpm test:e2e`: 40 passed (was 36).
+  - `pnpm typecheck`: pass.
+  - `pnpm lint:check`: pass.
+  - `pnpm build`: pass.
+  - `pnpm dlx supabase@2.121.0 db reset`: pass.
+  - `pnpm dlx supabase@2.121.0 test db`: pass (231 tests).
+  - `pnpm test:db:idempotency`: pass (12 tables, 25 rows).
+- Review-fix pass (2026-10-18):
+  - Added heading-hierarchy component test (one h1, h2 order Mission→History→Values→Aims).
+  - Added `lang` prop to `LocalizedRichText.vue`; fallback prose is marked `lang="en"`.
+  - E2E now asserts h2 order, active sub-nav `aria-current="page"`, and runs `checkA11y` on success and fallback journeys.
+  - Moved sub-navigation before body copy; increased tap target to min 2.75rem height.
+  - Fixed Polish fallback grammar to "po angielsku"; verified Ukrainian wording.
+  - External `target="_blank"` links now append a visually-hidden "opens in a new tab" suffix.
+  - Added branded `:focus-visible` ring, `overflow-wrap: break-word`, and `max-width: 65ch` to title/state/rich-text.
+  - Reduced E2E fixture drift by asserting only key verified excerpts.
+  - Re-verification:
+    - `pnpm test`: 31 files / 353 tests passed.
+    - `pnpm test:e2e`: 40 passed.
+    - `pnpm typecheck`: pass.
+    - `pnpm lint:check`: pass.
+    - `pnpm build`: pass.
+    - `pnpm dlx supabase@2.121.0 db reset`: pass.
+    - `pnpm dlx supabase@2.121.0 test db`: pass (231 tests).
+    - `pnpm test:db:idempotency`: pass (12 tables, 25 rows).
+- Regression fix (2026-10-18): localized the external-link "opens in a new tab" SR suffix via new `content.opensInNewTab` key in en/pl/uk, added `newTabLabel`/`labelLang` props to `LocalizedRichText`, and marked the suffix `<span>` with the matching `lang` attribute. Updated `richText.test.ts` to prove non-English labels are used and no hardcoded English remains. Re-verified: `pnpm test` 31 files / 355 tests; `pnpm typecheck`; `pnpm lint:check`; `pnpm build`; `pnpm test:e2e` 40 passed.

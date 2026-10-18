@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { defineBoot } from "#q-app";
 
 import { resolveSupabaseSetup } from "@/features/content/supabaseConfig";
+import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import type { Database } from "@/types/database.types";
 
 /**
@@ -44,8 +45,8 @@ if (setup.kind === "unavailable") {
   console.warn(setup.message);
 }
 
-export default defineBoot(() => {
-  // The client is created when this module is evaluated, before the app mounts.
-  // The boot body is intentionally empty: creating the client is the side
-  // effect, and a development misconfiguration has already thrown above.
+export default defineBoot(({ app }) => {
+  // Provide the client to the component tree so pages can inject it instead of
+  // importing this boot file (which would be hard to test).
+  app.provide(SUPABASE_CLIENT_KEY, supabase);
 });

@@ -9,26 +9,26 @@ import { mountWithPlugins } from "@/test-utils/mount";
  * the locale-specific placeholder copy from the catalogues.
  */
 describe("home page", () => {
-  it("renders the organization name as the page heading", () => {
-    const wrapper = mountWithPlugins(HomePage);
+  it("renders the organization name as the page heading", async () => {
+    const wrapper = await mountWithPlugins(HomePage);
 
     expect(wrapper.get("h1").text()).toBe("Barykady Kultury");
   });
 
-  it("renders the English placeholder copy by default", () => {
-    const wrapper = mountWithPlugins(HomePage);
+  it("renders the English placeholder copy by default", async () => {
+    const wrapper = await mountWithPlugins(HomePage);
 
     expect(wrapper.get("p").text()).toBe("Website content is being prepared.");
   });
 
-  it("renders the Polish placeholder copy for the pl locale", () => {
-    const wrapper = mountWithPlugins(HomePage, { locale: "pl" });
+  it("renders the Polish placeholder copy for the pl locale", async () => {
+    const wrapper = await mountWithPlugins(HomePage, { locale: "pl" });
 
     expect(wrapper.get("p").text()).toBe("Treść strony jest w przygotowaniu.");
   });
 
-  it("renders the Ukrainian placeholder copy for the uk locale", () => {
-    const wrapper = mountWithPlugins(HomePage, { locale: "uk" });
+  it("renders the Ukrainian placeholder copy for the uk locale", async () => {
+    const wrapper = await mountWithPlugins(HomePage, { locale: "uk" });
 
     expect(wrapper.get("p").text()).toBe("Вміст сайту готується.");
   });

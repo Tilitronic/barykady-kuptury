@@ -36,6 +36,7 @@ export interface SitePageContent {
   readonly body: string | null;
   readonly metaDescription: string | null;
   readonly isFallback: boolean;
+  readonly needsReview: boolean;
   readonly updatedAt: string;
 }
 
@@ -46,7 +47,7 @@ export const SITE_PAGE_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof SitePageTranslationRow)[];
 
 const SITE_PAGE_SELECT =
-  "id, page_key, status, updated_at, site_page_translations(locale, slug, title, body, meta_description)";
+  "id, page_key, status, updated_at, site_page_translations(locale, slug, title, body, meta_description, needs_review)";
 
 /** Maps one joined row to a domain model, or `null` without usable text. */
 export function mapSitePage(
@@ -72,6 +73,7 @@ export function mapSitePage(
     body: translation.body,
     metaDescription: translation.meta_description,
     isFallback: selected.isFallback,
+    needsReview: translation.needs_review,
     updatedAt: row.updated_at
   };
 }

@@ -87,6 +87,14 @@ const pl: MessageSchema = {
     title: "Nie znaleziono strony",
     description: "Żądana strona nie została znaleziona.",
     message: "Żądana strona nie została znaleziona."
+  },
+  content: {
+    loading: "Ładowanie…",
+    empty: "Ta strona nie jest dostępna.",
+    unavailable: "Ta treść jest tymczasowo niedostępna.",
+    fallbackNote: "Ta treść jest dostępna wyłącznie po {language}.",
+    fallbackLanguage: "angielsku",
+    opensInNewTab: "otwiera się w nowej karcie"
   }
 };
 

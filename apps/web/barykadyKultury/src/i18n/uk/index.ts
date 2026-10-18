@@ -87,6 +87,14 @@ const uk: MessageSchema = {
     title: "Сторінку не знайдено",
     description: "Запитану сторінку не знайдено.",
     message: "Запитану сторінку не знайдено."
+  },
+  content: {
+    loading: "Завантаження…",
+    empty: "Ця сторінка недоступна.",
+    unavailable: "Цей вміст тимчасово недоступний.",
+    fallbackNote: "Цей вміст доступний лише {language} мовою.",
+    fallbackLanguage: "англійською",
+    opensInNewTab: "відкривається в новій вкладці"
   }
 };
 

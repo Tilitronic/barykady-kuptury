@@ -13,8 +13,9 @@
  * state.
  */
 
-/** A read outcome: usable rows, a real empty result, or an unavailable backend. */
+/** A read outcome: loading, usable rows, a real empty result, or an unavailable backend. */
 export type ContentResult<T> =
+  | { readonly kind: "loading" }
   | { readonly kind: "ok"; readonly items: readonly T[] }
   | { readonly kind: "empty" }
   | { readonly kind: "unavailable" };

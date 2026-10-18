@@ -100,6 +100,14 @@ const en = {
     title: "Page not found",
     description: "The page you requested could not be found.",
     message: "The page you requested could not be found."
+  },
+  content: {
+    loading: "Loading…",
+    empty: "This page is not available.",
+    unavailable: "This content is temporarily unavailable.",
+    fallbackNote: "This content is only available in {language}.",
+    fallbackLanguage: "English",
+    opensInNewTab: "opens in a new tab"
   }
 };
 

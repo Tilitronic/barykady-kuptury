@@ -1,29 +1,31 @@
 -- T-012 seed fixtures.
 --
--- Every value here is a clearly fictional sample. There is no real person,
--- organization fact, credential, URL or document. These fixtures exist to
--- exercise the schema (docs/TESTING.md §6) and are replaced by verified
--- content in later tickets (T-016/T-017/T-018/T-020).
+-- The site_pages block below contains verified organization facts only
+-- (T-016). Other tables hold clearly fictional sample fixtures to exercise the
+-- schema (docs/TESTING.md §6) and are replaced by verified content in later
+-- tickets (T-017/T-018/T-020).
 --
 -- Idempotent: fixed UUIDs + ON CONFLICT DO NOTHING, so re-running never
 -- duplicates rows. Seeds execute as the migration superuser and bypass RLS.
 
 -- ---------------------------------------------------------------------------
--- Site page: complete EN, PL present but flagged for review, UK missing
+-- Site page: verified EN content; PL/UK titles only, flagged for review
 -- ---------------------------------------------------------------------------
 
 insert into public.site_pages (id, page_key, status, sort_order, published_at)
 values ('00000000-0000-4000-8000-000000000101', 'about', 'published', 1, '2026-01-05T12:00:00Z')
 on conflict (id) do nothing;
 
-insert into public.site_page_translations (id, page_id, locale, slug, title, body, needs_review)
+insert into public.site_page_translations (id, page_id, locale, slug, title, body, meta_description, needs_review)
 values
   ('00000000-0000-4000-8000-000000000102', '00000000-0000-4000-8000-000000000101', 'en',
-   'sample-about', 'Sample About Page (Fictional)',
-   'Fictional fixture text for local development only. This is not approved organization content.', false),
+   'about', 'About us',
+   E'## Mission\n\nTo expand Ukrainian culture beyond borders and give it the space it deserves.\n\n## History\n\nThe association was founded by Daria Yakovleva in Poznań.\n\n## Values\n\n- Identity\n- Education\n- Support\n- Community\n\n## Aims\n\nThe aims of the Association are:\n\n- Cultural diplomacy: acting as a "cultural bridge" between Ukrainians, Poles, and the international community.\n- Non-formal, educational and upbringing activities: popularizing knowledge, developing soft and civic skills, as well as raising youth awareness of democratic political processes.\n- Development of critical thinking and countering propaganda and disinformation.\n- Human rights protection, promoting gender equality, protecting women''s rights and the dignity of migrants and refugees.\n- Integration and support: activities for national and ethnic minorities, supporting the adaptation processes of Ukrainians and other foreigners in Poland.\n- National heritage and historical memory: protection of cultural assets and the restoration and cultivation of historical memory, with particular emphasis on the care of Ukrainian graves and memorial sites in Poland.\n- Environmental protection: initiating and supporting research on the impact of the Russian war on the ecology.\n- Promotion and organization of volunteering, as well as charitable activities.\n- Promotion and popularization of Ukrainian culture in Poland and worldwide.\n- Initiating public actions, assemblies, and protests in defense of human rights and democratic values.',
+   'About the Barykady Kultury association.', false),
   ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000101', 'pl',
-   'przykladowa-o-nas', 'Przykladowa strona o nas (fikcyjna)',
-   'Fikcyjny tekst na potrzeby lokalnego rozwoju. To nie jest zatwierdzona tresc organizacji.', true)
+   'o-nas', 'O nas', null, null, true),
+  ('00000000-0000-4000-8000-000000000104', '00000000-0000-4000-8000-000000000101', 'uk',
+   'pro-nas', 'Про нас', null, null, true)
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------

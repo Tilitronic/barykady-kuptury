@@ -13,7 +13,8 @@ const EN_TRANSLATION = {
   slug: "about",
   title: "About us",
   body: "Body (EN)",
-  meta_description: "About the association"
+  meta_description: "About the association",
+  needs_review: false
 };
 
 function pageRow(overrides: Record<string, unknown> = {}) {
@@ -58,6 +59,7 @@ describe("fetchPublishedPage", () => {
     expect(page!.title).toBe("About us");
     expect(page!.metaDescription).toBe("About the association");
     expect(page!.isFallback).toBe(false);
+    expect(page!.needsReview).toBe(false);
     expect(Object.keys(page!)).not.toContain("page_key");
   });
 
@@ -73,5 +75,23 @@ describe("fetchPublishedPage", () => {
     expect(await fetchPublishedPage(null, "about", "en")).toEqual({
       kind: "unavailable"
     });
+  });
+
+  it("maps needs_review to the domain model for admin-aware consumers", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        site_pages: [
+          pageRow({
+            site_page_translations: [{ ...EN_TRANSLATION, needs_review: true }]
+          })
+        ]
+      }
+    });
+
+    const result = await fetchPublishedPage(fake.client, "about", "en");
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+
+    expect(result.items[0]!.needsReview).toBe(true);
   });
 });
