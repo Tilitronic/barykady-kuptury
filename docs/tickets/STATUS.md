@@ -23,7 +23,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-017 | About: documents (in-app regulation reader) | 4 | done | @reviewer (rev-1) + @designer (des-1) | 17a1063 | 2026-10-18 |
 | T-018 | About: team | 4 | done | @reviewer (rev-1, rev-2) + @designer (des-1) | 166a104 | 2026-10-18 |
 | T-019 | Projects: listing, detail, draft protection | 4 | done | @reviewer (rev-1, rev-2) + @designer (des-1) | 882bfad | 2026-10-18 |
-| T-020 | Publications: listing, detail, files | 4 | todo | — | — | — |
+| T-020 | Publications: listing, detail, files | 4 | done | @reviewer (rev-1) + @designer (des-1) | 33f4db0 | 2026-10-18 |
 | T-021 | Contact page | 4 | done | @reviewer (rev-1, rev-2) | 5def43d | 2026-10-18 |
 | T-022 | Support page | 4 | todo | — | — | — |
 | T-023 | Calendar adapter function | 5 | todo | — | — | — |

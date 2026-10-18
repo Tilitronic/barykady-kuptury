@@ -37,20 +37,12 @@
     </div>
     <template v-else-if="publication">
       <!--
-        Fallback note: a fallback selection always substitutes the visible
-        title (PUBLICATION_REQUIRED_FIELDS), so `isFallback` alone is the
-        right condition (DESIGN_SYSTEM.md §6, T-018 review rule).
+        No fallback note here: strict (locale, slug) resolution means the
+        rendered row is always the requested locale's own translation, so
+        `isFallback` is unreachable on this page. Visible fallback surfacing
+        lives on the listing card, where the resolver can substitute English
+        (T-020 review, Standards Suggestion — the dead branch was removed).
       -->
-      <p
-        v-if="publication.isFallback"
-        class="publication-detail__fallback"
-        role="note"
-      >
-        {{
-          t("content.fallbackNote", { language: t("content.fallbackLanguage") })
-        }}
-      </p>
-
       <p v-if="publication.abstract" class="publication-detail__abstract">
         {{ publication.abstract }}
       </p>
@@ -165,15 +157,6 @@ const formattedDate = computed(() => {
 
 .publication-detail__state {
   color: var(--color-text-muted);
-}
-
-.publication-detail__fallback {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  border-inline-start: 3px solid var(--color-accent);
-  background-color: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
 }
 
 .publication-detail__abstract {

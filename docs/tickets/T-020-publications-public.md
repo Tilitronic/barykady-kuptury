@@ -1,6 +1,6 @@
 # T-020 — Publications: listing, detail, files
 
-**Session:** 4 · **Lane:** feature/publications · **Owner:** @designer · **Status:** todo
+**Session:** 4 · **Lane:** feature/publications · **Owner:** @designer · **Status:** done
 **Reviewers:** @reviewer + @designer
 **Depends on:** T-014, T-015 · **Blocks:** T-025, T-029, T-032
 
@@ -32,13 +32,13 @@ Out: editing/upload (T-029), citation export, search.
 5. REFACTOR: reuse the file-link component from T-017.
 
 ## Acceptance criteria
-- [ ] Each file version labelled with language, type and size.
-- [ ] External URL variant opens safely with `rel="noopener noreferrer"`.
-- [ ] No action rendered when there is nothing to download/open.
-- [ ] Missing optional metadata renders nothing.
-- [ ] Downloads work on mobile viewport in E2E.
-- [ ] Empty/error states translated.
-- [ ] No hard-coded user-facing strings.
+- [x] Each file version labelled with language, type and size.
+- [x] External URL variant opens safely with `rel="noopener noreferrer"`.
+- [x] No action rendered when there is nothing to download/open.
+- [x] Missing optional metadata renders nothing.
+- [x] Downloads work on mobile viewport in E2E.
+- [x] Empty/error states translated.
+- [x] No hard-coded user-facing strings.
 
 ## Verification
 ```
@@ -53,3 +53,5 @@ pnpm test:e2e --grep "publications"
 ## Log
 - (author) start:
 - (designer) impl 2026-10-18: listing `publications.vue` + `PublicationCard.vue` + detail `publication-detail.vue` + `PublicationFiles.vue` + route `publications/:slug` (`publication-detail`, `meta.pageMeta` = publications keys); hooks `usePublications`/`usePublication` mirror `useProjects` and own the file-URL seam. **Bucket choice (documented, row has no bucket column):** publication files are downloads → `public-documents` (T-014 splits the two public buckets by purpose: PDF/DOCX there, images in `public-media`); each URL carries `?download=<safe-name>` per the T-014 migration's download guidance (Content-Disposition: attachment; the name is sanitized to `[a-z0-9._-]` from the stored path, never author text). **Slug-rule interpretation:** T-019 precedent applied verbatim — `findPublicationBySlug` is STRICT on (requestedLocale, slug) and rejects non-published roots; draft/foreign/unknown slugs render the translated 404 content (`notFound.title/message`), and listing cards standing in from English link under the **owning locale prefix** (`detailPath`), so no dead links and no silent cross-locale resolution. **Shared media seam (rule of three):** the third seam trigger fired — extracted `src/features/files/publicObjectUrl.ts` (tested); `cover.ts` and `portrait.ts` are now thin bucket-owning wrappers delegating to it (their existing tests stay green, behavior identical). **TDD step 5 correction:** the ticket assumed a reusable file-link component from T-017 — none exists (T-017 rendered in-app regulation text; file documents were deferred to T-029), so `PublicationFiles.vue` is created fresh as a presentational component (URLs arrive resolved in the view model). **Fallback reachability:** with `PUBLICATION_REQUIRED_FIELDS = [title]` + the DB non-blank title constraint, a strict (locale, slug) match is always "complete", so the detail's `isFallback` note is unreachable for valid data — kept as data-driven markup per the ticket's scope line ("isFallback surfaced as a subtle note"), with visible fallback coverage on the listing card (tested in pl/uk). The detail test asserts the complementary rule instead: an existing title-only uk row renders uk text only, never a silent English mix-in. Availability indicator: files win over external URL; neither ⇒ no indicator, no action. Missing abstract/authors/date/language render nothing. `publications.placeholder` removed (unused after rewrite); `empty`/`detail.back`/`detail.filesHeading`/`availability.*`/`external` added in en/pl/uk (parity green). Pagination deferred (same T-019 call). Tests: files-helpers(10)/api(+8)/fileUrl(3)/usePublications(6)/PublicationCard(7)/PublicationFiles(6)/listing(6)/detail(8) unit — RED (8 import failures + 13 assertion failures) → GREEN; `e2e/publications.spec.ts` 6 journeys incl. anonymous PDF download 200 + `application/pdf` via `mockSupabaseStorage` (offline fixture body), mobile 375 px download without overflow, external `rel="noopener noreferrer"`, draft-404 no-leak, keyboard Enter on a download link, axe 0 critical + 0 serious on listing/detail/external/404.
+- (reviewer) rev-1 2026-10-18: **Spec: 0 findings. Standards: 1 Suggestion** — the detail page's `isFallback` note is unreachable (`PUBLICATION_REQUIRED_FIELDS = [title]` + strict `(locale, slug)` resolution guarantee the rendered row is the requested locale's own translation), flagged as Speculative Generality.
+- (orchestrator) rev-1 resolution 2026-10-18: took the reviewer's option (a) — **removed the unreachable fallback branch** from `publication-detail.vue` (markup + `.publication-detail__fallback` CSS) and the now-vacuous assertion in `publication-detail.test.ts`; a comment records why. Visible fallback surfacing remains where it is reachable — the listing card (`PublicationCard.vue`); `content.fallbackNote` is still used by the card and other features. `pnpm test` **56 files / 522 tests**; `pnpm typecheck` clean; `pnpm lint:check` clean (190 files); `pnpm build` PASS; `pnpm test:e2e --workers=1` **61 passed**. **Status: done.**

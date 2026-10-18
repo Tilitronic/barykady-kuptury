@@ -210,7 +210,6 @@ describe("publication detail", () => {
     expect(wrapper.get("h1").text()).toBe("Зразкова публікація");
     expect(wrapper.text()).not.toContain("Abstract (EN)");
     expect(wrapper.find(".publication-detail__abstract").exists()).toBe(false);
-    expect(wrapper.find(".publication-detail__fallback").exists()).toBe(false);
   });
 
   it("renders the 404 content — not the publication — when an English slug is used on a Polish URL", async () => {
