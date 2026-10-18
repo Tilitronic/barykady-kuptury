@@ -47,3 +47,4 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | 1 | 2026-10-17 | 2026-10-17 (T-001…T-005 all done; restart + lane probe verified) | `HANDOFF-S1-2026-10-17.md` | push pending (main ahead 4) |
 | 2 | 2026-10-17 | 2026-10-18 (T-006 + T-009 done & reviewed; T-007/T-008/T-010/T-011 parked) | `HANDOFF-S2-2026-10-18.md` | push pending (main ahead 3) |
 | 3 | 2026-10-18 | 2026-10-18 (T-007 + T-008 + T-010 + T-011 done & reviewed; Session 2 parked range cleared; + favicon, route-title fix, §10 designer-model change) | `HANDOFF-S3-2026-10-18.md` | push pending (main ahead 18) |
+| 4 | 2026-10-18 | 2026-10-18 (data-layer block T-012 + T-013 + T-014 + T-015 done & reviewed against a local Supabase stack; + §10 qwen3.7-plus → qwen3.8-flash retarget) | `HANDOFF-S4-2026-10-18.md` | pending (restart OpenCode for the model change; push pending — main ahead 31) |
