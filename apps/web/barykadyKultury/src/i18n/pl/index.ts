@@ -56,7 +56,7 @@ const pl: MessageSchema = {
   aboutTeam: {
     title: "Zespół",
     description: "Zespół Barykad Kultury.",
-    placeholder: "Informacje o zespole są w przygotowaniu."
+    empty: "Brak opublikowanych członków zespołu."
   },
   aboutDocuments: {
     title: "Dokumenty",

@@ -56,7 +56,7 @@ const uk: MessageSchema = {
   aboutTeam: {
     title: "Команда",
     description: "Команда Barykady Kultury.",
-    placeholder: "Інформація про команду готується."
+    empty: "Наразі немає опублікованих членів команди."
   },
   aboutDocuments: {
     title: "Документи",

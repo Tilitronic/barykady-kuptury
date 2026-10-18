@@ -109,7 +109,21 @@ export function createFakeSupabase(
 ): FakeSupabase {
   const calls: FakeQueryCall[] = [];
   const from = (table: string) => new FakeQueryBuilder(table, options, calls);
-  const client = { from } as unknown as SupabaseClient<Database>;
+
+  // Read-side storage surface used by T-018: `getPublicUrl` is synchronous URL
+  // derivation in the real client, so the fake only mirrors its shape with a
+  // fixed fake origin — no I/O, never a real bucket.
+  const storage = {
+    from: (bucket: string) => ({
+      getPublicUrl: (path: string) => ({
+        data: {
+          publicUrl: `https://fake.supabase.test/storage/v1/object/public/${bucket}/${path}`
+        }
+      })
+    })
+  };
+
+  const client = { from, storage } as unknown as SupabaseClient<Database>;
 
   return { client, calls };
 }

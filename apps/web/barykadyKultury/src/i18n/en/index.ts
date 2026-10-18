@@ -69,7 +69,8 @@ const en = {
   aboutTeam: {
     title: "Team",
     description: "The Barykady Kultury team.",
-    placeholder: "Team information is being prepared."
+    /** Listing state while no member is published (T-018). */
+    empty: "No team members are published yet."
   },
   aboutDocuments: {
     title: "Documents",
