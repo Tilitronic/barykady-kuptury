@@ -11,7 +11,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-005 | CI quality gates | 1 | done | @reviewer (rev-1) | c3d751e | 2026-10-17 |
 | T-006 | Brand tokens & Quasar mapping | 2 | done | @reviewer (rev-1) + @architector (arc-1) | a7a8c5c | 2026-10-18 |
 | T-007 | Typography: self-hosted Inter + scale | 2 | done | @reviewer (rev-2) + @designer (des-2) | 622d7a7 | 2026-10-18 |
-| T-008 | BrandLogo component | 2 | todo | — | — | — |
+| T-008 | BrandLogo component | 2 | done | @reviewer (rev-2) + @designer (des-2) | 08e5b45 | 2026-10-18 |
 | T-009 | Locale routing, detection, persistence | 2 | done | @reviewer (rev-2) | fd5cb85 | 2026-10-18 |
 | T-010 | Theme preference system | 2 | done | @reviewer (rev-1) | 9c36396 | 2026-10-18 |
 | T-011 | Public shell: header, nav, footer, a11y | 2 | todo | — | — | — |
