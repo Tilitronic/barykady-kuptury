@@ -1,7 +1,7 @@
 # T-012 — Content schema migrations
 
-**Session:** 3 · **Lane:** data/architecture · **Owner:** @coder · **Status:** todo
-**Reviewers:** @architector + @reviewer
+**Session:** 3 · **Lane:** data/architecture · **Owner:** @coder · **Status:** done
+**Reviewers:** @architector (arc-1: PASS-WITH-FINDINGS r1 → PASS r2) + @reviewer (rev-1: 2S+2Sp r1 → close verdict r3)
 **Depends on:** T-001, D-08 · **Blocks:** T-013…T-031
 
 ## Outcome
@@ -31,14 +31,14 @@ Out: RLS policies (T-013), Storage buckets (T-014), app queries (T-015).
 3. REFACTOR: split migrations by concern only if a single file becomes unreadable; keep one migration per logical change after V1.
 
 ## Acceptance criteria
-- [ ] `supabase db reset` succeeds from scratch and applies seed idempotently.
-- [ ] Duplicate `(project_id, locale)` slug insert is rejected.
-- [ ] Deleting a project sets `calendar_event_links.project_id` to NULL and keeps the row.
-- [ ] Cannot associate one Google event twice (unique constraint proven).
-- [ ] All translation tables cascade on parent delete; no orphan rows possible.
-- [ ] `updated_at` advances on update (trigger proven by test).
-- [ ] Fixtures contain only fictional content and no personal data.
-- [ ] No RLS is disabled anywhere (policies land in T-013, tables start closed).
+- [x] `supabase db reset` succeeds from scratch and applies seed idempotently. *(proven by `scripts/verify-seed-idempotency.mjs` — full-row digests identical after a second application)*
+- [x] Duplicate `(project_id, locale)` slug insert is rejected. *(pgTAP `schema_test.sql`)*
+- [x] Deleting a project sets `calendar_event_links.project_id` to NULL and keeps the row. *(pgTAP `schema_test.sql`)*
+- [x] Cannot associate one Google event twice (unique constraint proven). *(pgTAP `schema_test.sql`)*
+- [x] All translation tables cascade on parent delete; no orphan rows possible. *(pgTAP `schema_test.sql`)*
+- [x] `updated_at` advances on update (trigger proven by test). *(pgTAP `schema_test.sql`)*
+- [x] Fixtures contain only fictional content and no personal data. *(@reviewer verified)*
+- [x] No RLS is disabled anywhere (policies land in T-013, tables start closed). *(RLS enabled on all 12 tables with zero policies; D-21)*
 
 ## Verification
 ```
