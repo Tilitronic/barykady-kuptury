@@ -26,8 +26,8 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-020 | Publications: listing, detail, files | 4 | done | @reviewer (rev-1) + @designer (des-1) | 33f4db0 | 2026-10-18 |
 | T-021 | Contact page | 4 | done | @reviewer (rev-1, rev-2) | 5def43d | 2026-10-18 |
 | T-022 | Support page | 4 | done | @reviewer (rev-1) + @designer (des-1) | ba2510b | 2026-10-18 |
-| T-023 | Calendar adapter function | 5 | todo | — | — | — |
-| T-024 | Events page | 5 | todo | — | — | — |
+| T-023 | Calendar adapter function | 7 | done | @reviewer (rev-1) + @architector (arc-1) | e2c3168 | 2026-10-19 |
+| T-024 | Events page | 7 | in-progress | — | — | — |
 | T-025 | Homepage composition | 5 | todo | — | — | — |
 | T-026 | Admin auth & layout | 6 | todo | — | — | — |
 | T-027 | Admin projects CRUD | 6 | todo | — | — | — |
