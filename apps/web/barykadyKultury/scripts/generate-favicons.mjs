@@ -1,60 +1,56 @@
 #!/usr/bin/env node
 /**
- * T-034 (partial) — Brand favicon generator  (hardened v2)
- * =========================================================
- * Derives all public favicon assets from the brand mark (logo_red_small.svg),
- * using headless Chromium (via Playwright, already a devDependency) for all
- * rasterisation. No native image-processing binaries are required.
+ * T-034 (partial) — Brand favicon generator  (v3: dedicated letter-B mark)
+ * =========================================================================
+ * All public favicon assets are derived from ONE self-contained source file:
+ *
+ *   src/assets/brand/favicon_mark.svg
+ *
+ * The mark is a bold, filled letter "B" (SVG path outlines, no <text>, no
+ * font dependency) on a solid SCARLET block — the user-approved redesign of
+ * the v2 barricade-emblem favicon, which did not read at 16 px. Headless
+ * Chromium (Playwright, already a devDependency) handles all rasterisation,
+ * so no native image-processing binaries are required.
  *
  * Usage (from app directory):
  *   node scripts/generate-favicons.mjs
  *
  * What it produces:
- *   public/favicon.svg                  — tight-viewBox brand mark SVG (v2)
+ *   public/favicon.svg                  — VERBATIM copy of favicon_mark.svg
  *   public/icons/favicon-16x16.png
  *   public/icons/favicon-32x32.png
  *   public/icons/favicon-96x96.png
  *   public/icons/favicon-128x128.png
- *   public/icons/apple-icon-180x180.png
+ *   public/icons/apple-icon-180x180.png — opaque (the SCARLET rect is the
+ *                                          full-bleed background)
  *   public/favicon.ico                  — single 32×32 PNG-in-ICO container
  *
- * ── Hardening applied in v2 ────────────────────────────────────────────────
+ * ── Why v3 replaced the v2 derivation ──────────────────────────────────────
  *
- * Fix 1 — SVG intrinsic size (Fix1):
- *   The SVG now carries explicit width/height (512×512) alongside the viewBox.
- *   Without these some browsers (Firefox, older Safari) treat the SVG as
- *   "no intrinsic size" and decline to use it, falling through silently to the
- *   PNGs — or worse, showing nothing at all. The <link> in index.html now also
- *   carries sizes="any" (the standard signal that an SVG scales to any size).
+ * v2 measured the emblem bbox inside logo_red_small.svg at generation time
+ * and re-emitted its path with swapped fills. That made the output depend on
+ * (a) the emblem's path geometry and (b) a live getBBox() measurement — and
+ * the resulting abstract barricade shape is unreadable at 16×16. v3 moves the
+ * single source of truth into a committed, hand-authored SVG: the generator
+ * copies it verbatim (fully deterministic — byte-identical output on every
+ * run and platform) and only rasterises from it.
  *
- * Fix 2 — Visibility (Fix2, derived-inverse):
- *   Changed from GRAY93 background + SCARLET emblem to SCARLET background +
- *   GRAY93 emblem. A solid-red square is immediately identifiable on light tab
- *   strips (Chrome ~#F1F3F4, contrast ≈ 5.27:1) and remains visible on dark
- *   ones. Both brand colours (#c60001 / #ededed) are still present in the SVG
- *   so existing test assertions continue to pass.
+ * Brand colours kept in the emitted SVG markup (asserted by
+ * test/unit/favicon.test.ts):
+ *   #c60001 (SCARLET background) and #ededed (GRAY93 glyph) — D-13 palette,
+ *   DESIGN_SYSTEM.md §1. GRAY93-on-SCARLET is the same inverted pairing v2
+ *   used; the solid red block reads on both light and dark browser chrome.
  *
- *   Brandbook compliance (DESIGN_SYSTEM.md §1, D-13):
- *   - "Use the red or black variant on a solid background" — the GRAY93 B here
- *     is the emblem on a SCARLET surface; the surface is solid and the pairing
- *     contrasts (GRAY93 on SCARLET ≈ 5.27:1).
- *   - "Never place the red logo on scarlet" — this prohibition covers the SCARLET
- *     logo (red-filled emblem) placed on a scarlet background. Here the emblem
- *     fill is GRAY93, not scarlet — the rule is not triggered.
- *   - Documented as a derived inverse: same path data as the supplied
- *     logo_red_small.svg emblem, fill swapped to GRAY93. Follows the same
- *     derivation precedent as logotype_*_web.svg (tight-viewBox path-data
- *     derivatives recorded in DESIGN_SYSTEM.md §1).
+ * Fix 1 — SVG intrinsic size (kept):
+ *   The mark carries explicit width/height (512×512) alongside the viewBox
+ *   so browsers that require an intrinsic size use the SVG; the <link> in
+ *   index.html carries sizes="any".
  *
- * Fix 3 — Cache-busting (Fix3):
+ * Fix 3 — Cache-busting (kept):
  *   index.html icon hrefs carry ?v=<N>. Bump N by 1 each time icons are
- *   regenerated and deployed. The version query string forces browsers holding
- *   the old favicon out of their per-origin favicon cache without requiring a
- *   URL-path change. Static servers and Netlify both route on the path portion
- *   only, so the query string is transparent to the file-serving layer.
- *   Current version: v=2.
+ *   regenerated and deployed. This redesign bumped v=2 → v=3.
  *
- * Regenerate whenever the brand mark SVG is updated:
+ * Regenerate whenever favicon_mark.svg is updated:
  *   pnpm --dir apps/web/barykadyKultury exec node scripts/generate-favicons.mjs
  */
 
@@ -71,98 +67,74 @@ const PUBLIC_DIR = join(APP_ROOT, "public");
 const ICONS_DIR = join(PUBLIC_DIR, "icons");
 
 /**
- * Brand colours — D-13, DESIGN_SYSTEM.md §1.
- *
- * Derived-inverse pairing for the favicon (Fix2):
- *   BG_COLOR     = SCARLET — the solid block that reads on any chrome colour
- *   EMBLEM_COLOR = GRAY93  — the B silhouette on the scarlet surface
- *
- * Both values are kept in the SVG markup so the brand-colour test assertions
- * (which check for the presence of both hex values) continue to pass.
+ * Brand colours — D-13, DESIGN_SYSTEM.md §1. Used only for the raster page
+ * background (seam-free edges under Chromium's antialiasing); the mark file
+ * itself carries the authoritative fills.
  */
 const SCARLET = "#c60001";
-const GRAY93 = "#ededed";
-const BG_COLOR = SCARLET; // Fix2: high-visibility SCARLET block
-const EMBLEM_COLOR = GRAY93; // Fix2: GRAY93 B silhouette
 
-/**
- * Explicit intrinsic size emitted on the <svg> element (Fix1).
- * 512 is the largest common favicon raster target; any square value ≥ 32
- * works — the browser scales it. Without explicit width/height some browsers
- * treat the SVG as having "no intrinsic size" and skip it.
- */
-const SVG_INTRINSIC = 512;
-
-/**
- * Padding added around the measured emblem bbox (as a fraction of the larger
- * dimension) so the mark never bleeds to the very edge of the icon square.
- * 8 % per side matches the --logo-clear-space token convention.
- */
-const PADDING_FRACTION = 0.08;
+/** The single source of truth, copied verbatim to public/favicon.svg. */
+const MARK_PATH = join(BRAND_DIR, "favicon_mark.svg");
 
 async function main() {
+  const mark = readFileSync(MARK_PATH, "utf8");
+
+  // Sanity gate: the emitted SVG must keep both brand hexes (test/unit/
+  // favicon.test.ts asserts them), the intrinsic-size attributes (Fix1) and
+  // a pure-path glyph. Fail loudly instead of writing an asset that breaks
+  // the contract.
+  const checks = [
+    {
+      pattern: /#c60001/,
+      expected: true,
+      message: "must contain SCARLET #c60001"
+    },
+    {
+      pattern: /#ededed/,
+      expected: true,
+      message: "must contain GRAY93 #ededed"
+    },
+    {
+      pattern: /\bwidth="512"/,
+      expected: true,
+      message: 'must carry width="512" (Fix1)'
+    },
+    {
+      pattern: /\bheight="512"/,
+      expected: true,
+      message: 'must carry height="512" (Fix1)'
+    },
+    {
+      pattern: /<path[^>]*fill="#ededed"/s,
+      expected: true,
+      message: "must draw the B as a <path> with a fill attribute"
+    },
+    {
+      pattern: /<text/,
+      expected: false,
+      message: "must NOT use <text> (font dependency)"
+    }
+  ];
+  for (const { pattern, expected, message } of checks) {
+    if (pattern.test(mark) !== expected) {
+      throw new Error(
+        `favicon_mark.svg ${message}: src/assets/brand/favicon_mark.svg`
+      );
+    }
+  }
+
+  // Deterministic verbatim copy: regenerating never changes the bytes.
+  writeFileSync(join(PUBLIC_DIR, "favicon.svg"), mark, "utf8");
+  console.log(
+    "Written: public/favicon.svg (verbatim copy of favicon_mark.svg)"
+  );
+
   const browser = await chromium.launch();
 
   try {
     const page = await browser.newPage();
 
-    // ── 1. Measure the emblem's tight bounding box ─────────────────────────
-    const sourceSvgText = readFileSync(
-      join(BRAND_DIR, "logo_red_small.svg"),
-      "utf8"
-    );
-
-    await page.setContent(`<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<style>html,body{margin:0;padding:0;}</style>
-</head><body>${sourceSvgText}</body></html>`);
-
-    const emblemBbox = await page.evaluate(() => {
-      const svg = document.getElementById("Layer_1");
-      if (!svg) throw new Error("SVG#Layer_1 not found");
-      const emblemPath = svg.querySelector("path");
-      if (!emblemPath) throw new Error("Emblem path not found");
-      const b = emblemPath.getBBox();
-      return { x: b.x, y: b.y, width: b.width, height: b.height };
-    });
-
-    console.log(
-      `Emblem bbox: x=${emblemBbox.x.toFixed(2)} y=${emblemBbox.y.toFixed(2)}` +
-        ` w=${emblemBbox.width.toFixed(2)} h=${emblemBbox.height.toFixed(2)}`
-    );
-
-    const emblemPathD = await page.evaluate(() => {
-      const svg = document.getElementById("Layer_1");
-      return svg.querySelector("path").getAttribute("d");
-    });
-
-    // ── 2. Compute a square tight viewBox with padding ─────────────────────
-    const maxDim = Math.max(emblemBbox.width, emblemBbox.height);
-    const pad = maxDim * PADDING_FRACTION;
-    const squareSide = maxDim + 2 * pad;
-    const cx = emblemBbox.x + emblemBbox.width / 2;
-    const cy = emblemBbox.y + emblemBbox.height / 2;
-    const vx = cx - squareSide / 2;
-    const vy = cy - squareSide / 2;
-
-    const viewBox = [vx, vy, squareSide, squareSide]
-      .map(n => Math.round(n * 100) / 100)
-      .join(" ");
-
-    console.log(`Tight viewBox: "${viewBox}"`);
-
-    // ── 3. Write public/favicon.svg ────────────────────────────────────────
-    const faviconSvg = buildFaviconSvg(
-      viewBox,
-      vx,
-      vy,
-      squareSide,
-      emblemPathD
-    );
-    writeFileSync(join(PUBLIC_DIR, "favicon.svg"), faviconSvg, "utf8");
-    console.log("Written: public/favicon.svg");
-
-    // ── 4. Rasterise at each required size ────────────────────────────────
+    // ── Rasterise at each required size ────────────────────────────────────
     const targets = [
       { size: 16, name: "favicon-16x16.png" },
       { size: 32, name: "favicon-32x32.png" },
@@ -171,17 +143,19 @@ async function main() {
       { size: 180, name: "apple-icon-180x180.png" }
     ];
 
+    const inlineSvg = mark.replace(/<\?xml[^>]*\?>\n?/, "");
+
     for (const { size, name } of targets) {
       await page.setViewportSize({ width: size, height: size });
 
       await page.setContent(`<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
-  html,body{margin:0;padding:0;width:${size}px;height:${size}px;overflow:hidden;background:${BG_COLOR};}
+  html,body{margin:0;padding:0;width:${size}px;height:${size}px;overflow:hidden;background:${SCARLET};}
   svg{display:block;width:${size}px;height:${size}px;}
 </style>
 </head><body>
-${faviconSvg.replace(/<\?xml[^>]*\?>\n?/, "")}
+${inlineSvg}
 </body></html>`);
 
       const png = await page.screenshot({
@@ -193,54 +167,18 @@ ${faviconSvg.replace(/<\?xml[^>]*\?>\n?/, "")}
       console.log(`Written: public/icons/${name} (${png.byteLength} bytes)`);
     }
 
-    // ── 5. Pack favicon.ico (32×32 PNG-in-ICO) ────────────────────────────
+    // ── Pack favicon.ico (32×32 PNG-in-ICO) ────────────────────────────────
     const png32 = readFileSync(join(ICONS_DIR, "favicon-32x32.png"));
     const ico = buildIco(png32);
     writeFileSync(join(PUBLIC_DIR, "favicon.ico"), ico);
     console.log(`Written: public/favicon.ico (${ico.byteLength} bytes)`);
 
-    console.log("\nDone. All favicon assets regenerated.");
+    console.log(
+      "\nDone. All favicon assets regenerated from favicon_mark.svg."
+    );
   } finally {
     await browser.close();
   }
-}
-
-/**
- * Returns the complete favicon.svg source string (hardened v2).
- *
- * Changes vs v1:
- *   - Carries explicit width/height (SVG_INTRINSIC × SVG_INTRINSIC) for
- *     cross-browser intrinsic-size compatibility (Fix1).
- *   - Background = SCARLET, emblem = GRAY93 (derived-inverse, Fix2).
- */
-function buildFaviconSvg(viewBox, vx, vy, side, pathD) {
-  const r = n => Math.round(n * 100) / 100;
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Barykady Kultury — favicon mark (v2, hardened)
-  Source: logo_red_small.svg (emblem path only; wordmark omitted at tab size)
-  Design: SCARLET ${SCARLET} background · GRAY93 ${GRAY93} B silhouette (derived inverse)
-  Regenerate: node scripts/generate-favicons.mjs
-  D-13: brandbook palette. See generator header for derivation rationale.
--->
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="${viewBox}"
-  width="${SVG_INTRINSIC}"
-  height="${SVG_INTRINSIC}"
-  role="img"
-  aria-label="Barykady Kultury"
->
-  <rect
-    x="${r(vx)}"
-    y="${r(vy)}"
-    width="${r(side)}"
-    height="${r(side)}"
-    fill="${BG_COLOR}"
-  />
-  <path fill="${EMBLEM_COLOR}" d="${pathD}" />
-</svg>
-`;
 }
 
 /**

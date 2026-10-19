@@ -144,9 +144,10 @@ test.describe("shell — mobile navigation (viewport 390×844)", () => {
  * via the mobile drawer — not clipped by an ancestor's overflow property.
  *
  * The controls live in the drawer (not the header bar) at this viewport so
- * the assertion opens the drawer, then checks the theme button is visible.
+ * the assertion opens the drawer, then checks the theme switch is visible.
  * The theme E2E at desktop width is unaffected: the controls are in the
- * inline panel at ≥ 768 px (no drawer needed).
+ * inline panel at ≥ 1280 px — the drawer breakpoint band (≤ 1279 px) is
+ * covered by the overlap-regression suite below.
  */
 test.describe("shell — 320 px regression", () => {
   test.use({ viewport: { width: 320, height: 568 } });
@@ -175,33 +176,101 @@ test.describe("shell — 320 px regression", () => {
     }
   });
 
-  test("theme toggle is fully visible in the drawer (en)", async ({ page }) => {
+  test("theme switch is fully visible in the drawer (en)", async ({ page }) => {
     await page.goto("/en");
     await page.getByTestId("menu-trigger").click();
 
-    // The theme toggle is in the drawer; toBeVisible() confirms it is not
-    // hidden or clipped by the panel's overflow (overflow-y: auto).
-    await expect(
-      page.getByRole("button", { name: "Toggle dark theme" })
-    ).toBeVisible();
+    // The theme switch is in the drawer; toBeVisible() confirms it is
+    // not hidden or clipped by the panel's overflow (overflow-y: auto).
+    await expect(page.getByRole("switch", { name: "Dark mode" })).toBeVisible();
   });
 
-  test("theme toggle is accessible in all three locales", async ({ page }) => {
+  test("theme switch is accessible in all three locales", async ({ page }) => {
+    // Visible label text == accessible name (WCAG 2.5.3), per catalogue.
     const cases = [
-      { locale: "en", name: "Toggle dark theme" },
-      { locale: "pl", name: "Przełącz tryb ciemny" },
-      { locale: "uk", name: "Перемкнути темну тему" }
+      { locale: "en", name: "Dark mode" },
+      { locale: "pl", name: "Tryb ciemny" },
+      { locale: "uk", name: "Темний режим" }
     ] as const;
 
     for (const { locale, name } of cases) {
       await page.goto(`/${locale}`);
       await page.getByTestId("menu-trigger").click();
       await expect(
-        page.getByRole("button", { name }),
-        `${locale}: theme toggle not visible`
+        page.getByRole("switch", { name }),
+        `${locale}: theme switch not visible`
       ).toBeVisible();
       // Close before next iteration
       await page.getByTestId("menu-trigger").click();
+    }
+  });
+});
+
+/**
+ * brand-fixes v3.1/v3.2 — nav/controls overlap regression.
+ *
+ * Measured defect (headless DOM probe): the nowrap nav list overflowed its
+ * min-width:0 flex box into the theme/language controls across ~768–1240 px
+ * while header.scrollWidth stayed flat — the 320 px overflow tests could not
+ * see it. v3.1 raised the drawer breakpoint to 1279 px. v3.2 re-probe then
+ * showed the inline band still collided at 1280 for pl (+2 px) and uk
+ * (+26 px) because only EN was measured; a 1280–1439 px compression band
+ * now shaves 64 px of pure whitespace so every locale clears the controls
+ * with ≥ 16 px (asserted below; expected ≈ 38 px for uk).
+ */
+test.describe("shell — nav/controls overlap regression", () => {
+  test("drawer band (1000 px): nav collapses, no inline collision", async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 1000, height: 720 });
+
+    for (const locale of ["en", "pl", "uk"] as const) {
+      await page.goto(`/${locale}`);
+
+      // Bar shows brand + hamburger; the nav lives in the closed drawer.
+      await expect(page.getByTestId("menu-trigger")).toBeVisible();
+      await expect(page.getByTestId("main-nav")).toBeHidden();
+
+      // Opening the drawer makes every destination reachable and readable.
+      await page.getByTestId("menu-trigger").click();
+      await expect(
+        page.getByTestId("main-nav").locator("a[href*='/contact']")
+      ).toBeVisible();
+      await expect(
+        page.getByTestId("main-nav").locator("a[href*='/publications']")
+      ).toBeVisible();
+
+      // Close before the next locale.
+      await page.getByTestId("menu-trigger").click();
+    }
+  });
+
+  test("desktop band (1280 px): every locale keeps 16 px clear of the controls", async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+
+    for (const locale of ["en", "pl", "uk"] as const) {
+      await page.goto(`/${locale}`);
+      await expect(page.getByTestId("menu-trigger")).toBeHidden();
+
+      const lastLink = page.getByTestId("main-nav").locator("li:last-child a");
+      await expect(lastLink).toBeVisible();
+
+      const linkBox = await lastLink.boundingBox();
+      const controlsBox = await page
+        .locator(".app-header__controls")
+        .boundingBox();
+      expect(linkBox, `${locale}: last nav link has no box`).not.toBeNull();
+      expect(controlsBox, `${locale}: controls have no box`).not.toBeNull();
+      // Clearance, not just non-overlap: uk measured +26 px of collision at
+      // 1280 before the v3.2 compression band, pl was borderline (+2). The
+      // requirement is ≥ 16 px between the last link and the controls.
+      const clearance = controlsBox!.x - (linkBox!.x + linkBox!.width);
+      expect(
+        clearance,
+        `${locale}: nav/controls clearance below 16 px at 1280 px`
+      ).toBeGreaterThanOrEqual(16);
     }
   });
 });

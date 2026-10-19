@@ -82,7 +82,9 @@ test.describe("theme preference", () => {
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     expect(await backgroundToken(page)).toBe(LIGHT_BACKGROUND);
 
-    await page.getByRole("button", { name: "Toggle dark theme" }).click();
+    // The theme control is a labelled ON/OFF switch — turning "Dark mode"
+    // on pins the dark override.
+    await page.getByRole("switch", { name: "Dark mode" }).click();
 
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expect(page.locator("body")).toHaveClass(/body--dark/);

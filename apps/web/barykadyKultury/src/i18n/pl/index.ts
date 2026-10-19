@@ -36,7 +36,7 @@ const pl: MessageSchema = {
     socialNav: "Media społecznościowe"
   },
   theme: {
-    toggleLabel: "Przełącz tryb ciemny"
+    darkMode: "Tryb ciemny"
   },
   home: {
     title: "Barykady Kultury",

@@ -1,13 +1,26 @@
 <template>
   <header class="app-header" role="banner">
-    <!-- Brand logo links back to the locale home (DESIGN_SYSTEM.md §1 clear-space). -->
+    <!--
+      Brand logo links back to the locale home (DESIGN_SYSTEM.md §1 clear-space).
+
+      `kind="logotype"` is the documented explicit override of the brandbook
+      context rule (header → mark): the user requirement is the justification —
+      the bare mark was too small and its text unreadable, so the header now
+      shows the full mark + wordmark lockup. The link keeps its aria-label and
+      the image stays decorative (name comes from the link, not duplicated).
+    -->
     <a
       :href="`/${currentLocale}`"
       class="app-header__brand focus-ring"
       :aria-label="t('brand.logoLabel')"
       @click.prevent="router.push(`/${currentLocale}`)"
     >
-      <BrandLogo context="header" size="md" :decorative="true" />
+      <BrandLogo
+        context="header"
+        kind="logotype"
+        size="md"
+        :decorative="true"
+      />
     </a>
 
     <!--
@@ -51,21 +64,26 @@
       </nav>
 
       <!--
-        Controls: language switcher + theme toggle.
+        Controls: labelled dark-mode switch + language flag/code picker.
 
-        Desktop: displayed inline in the header bar after the nav links.
-        Mobile:  inside the drawer — the full accessible name of every control
-                 is preserved (no truncation), so the theme E2E name assertion
-                 ("Toggle dark theme") still passes at desktop width unchanged.
+        Order is deliberate (user requirement, unchanged by the switch
+        redesign): the language picker sits in the right corner of the
+        header and the theme control comes immediately before it. Desktop:
+        inline at the right edge of the panel. Mobile: same order stacked in
+        the drawer, the language legend visible and chips wrapping instead
+        of truncating — nothing is clipped at 320 px because the drawer is
+        full-viewport width.
 
-        The choice to move rather than shorten was made to avoid WCAG 2.5.3
-        "Label in Name" conflicts: the Polish/Ukrainian action labels
-        ("Przełącz tryb ciemny" / "Перемкнути темну тему") share no common
-        substring with a natural short-form word in those languages.
+        The theme control is a single labelled switch (accessible name ==
+        visible "Dark mode" text); the language cluster is a native fieldset
+        radiogroup whose `<legend>` names the group (visually hidden ≥ 1280
+        px to protect the header width budget, visible in the drawer). Every
+        control's visible text is contained in its accessible name
+        (WCAG 2.5.3).
       -->
       <div class="app-header__controls">
-        <LanguageSwitcher />
         <ThemeToggle />
+        <LanguageSwitcher />
       </div>
     </div>
 
@@ -101,21 +119,29 @@ import { mainNavItems, type NavItem } from "@/config/navigation";
 import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
 
 /**
- * T-011 — AppHeader (rev-2)
+ * T-011 — AppHeader (rev-2) + brand-fixes v3.1
  *
- * Desktop: top navigation bar with all six destinations, language and theme
- * controls and the brand logo.
+ * Desktop (≥ 1280 px): top navigation bar with all six destinations, the
+ * theme + language controls at the right and the full brand LOGOTYPE (mark +
+ * wordmark) at the left — the user requirement to make the wordmark readable
+ * overrides the brandbook header→mark default via BrandLogo's explicit
+ * `kind` escape hatch.
  *
- * Mobile: compact bar (logo + hamburger only). Nav links AND controls live
- * inside a shared panel that opens as a fixed drawer on click.
+ * Drawer band (≤ 1279 px, raised from ≤ 767 px because the inline layout
+ * measures ≈ 1237 px minimum and would otherwise let the nowrap nav list
+ * overflow invisibly into the controls): compact bar (logotype + hamburger
+ * only). Nav links AND controls live inside a shared panel that opens as a
+ * fixed drawer on click, stacked and fully readable.
  *
  * Escape closes the panel from any focused element inside it (nav link,
- * language select, or theme button) and returns focus to the trigger
+ * language radio, or theme switch) and returns focus to the trigger
  * (DESIGN_SYSTEM.md §4, §6 — no hover dependency, explicit open/close state).
  *
- * Moving the controls into the drawer (vs. a compact label) was chosen to:
- *  - Avoid WCAG 2.5.3 "Label in Name" violations across PL/UK locales.
- *  - Keep the ThemeToggle accessible name intact for the theme E2E test.
+ * Moving the controls into the drawer (vs. a compact header strip) was chosen
+ * to:
+ *  - Keep every control's full accessible name intact (WCAG 2.5.3) in all
+ *    three locales without truncation.
+ *  - Keep the theme-switch/language-radio names stable for the E2E tests.
  *  - Eliminate the 320 px overflow at its root without CSS workarounds.
  */
 
@@ -156,8 +182,8 @@ function closeMenu(): void {
  * Handle keyboard events on the panel element.
  * Escape closes the menu and returns focus — no focus trap required (T-011
  * spec: "focus trap not required but focus must return to trigger").
- * Catches events from any focused child: nav links, language select, theme
- * button.
+ * Catches events from any focused child: nav links, language radios, the
+ * theme switch.
  */
 function handleNavKeydown(event: KeyboardEvent): void {
   if (event.key === "Escape") {
@@ -242,13 +268,15 @@ function isActivePage(item: NavItem): boolean {
   gap: 0;
   list-style: none;
   margin: 0;
-  padding: 0 0.5rem;
+  /* 0.5rem → 0.25rem: returns ~8 px to the width budget the logotype
+     brand needs (T-034 follow-up). Mobile drawer overrides this below. */
+  padding: 0 0.25rem;
 }
 
 .app-header__nav-link {
   display: inline-flex;
   align-items: center;
-  padding: 0 0.875rem;
+  padding: 0 0.625rem; /* was 0.875rem — see nav-list budget note */
   height: 3.75rem;
   font-size: var(--font-size-body);
   font-weight: 500;
@@ -278,8 +306,52 @@ function isActivePage(item: NavItem): boolean {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding-left: 0.75rem;
+  padding-left: 0.5rem; /* was 0.75rem — width budget for the logotype */
   flex: 0 0 auto;
+}
+
+/*
+  Width budget (measured in the built app, brand-fixes v3.1/v3.2):
+  brand md logotype ≈ 178 px + nav content + controls + bar padding 40 px.
+  The 768–1279 px band cannot render brand + 6 nowrap destinations +
+  controls without overlap (the old nav-list overflowed its min-width:0 box
+  invisibly into the controls — scrollWidth never grew, so the overflow tests
+  missed it). The drawer breakpoint is raised to cover that band: below
+  1280 px the nav + controls collapse into the hamburger drawer; at ≥ 1280 px
+  everything fits inline. No brand size step-down is needed any more — the
+  drawer band shows only brand + hamburger (≈ 270 px), so the md logotype
+  renders at every viewport.
+*/
+
+/*
+  Inline compression for 1280–1439 px (brand-fixes v3.2): re-measured at the
+  Playwright-default 1280×720 viewport, the worst locale (uk) needs
+  brand 178 + nav 591 + controls 497 + padding 40 ≈ 1306 px — 26 px over
+  budget (pl +2, en fits). Shave 64 px of PURE whitespace so every locale
+  clears the controls with ≥ 16 px at 1280:
+    - 6 nav links:  horizontal padding 0.625rem → 0.375rem      (−48 px)
+    - nav list:     0.25rem → 0                                  (−8 px)
+    - controls:     cluster gap 0.5rem → 0.25rem                 (−4 px)
+    - controls:     padding-left 0.5rem → 0.25rem                (−4 px)
+  No text, icon, chip metric or brand size changes — the md logotype stays
+  at ≥ 1280 px (the point of this series). Resulting clearance at 1280:
+  en ≈ 107 px, pl ≈ 62 px, uk ≈ 38 px. At ≥ 1440 px the comfortable paddings
+  return (uk total 1306 leaves 134 px). Link boxes remain ≥ 24×24 CSS px, so
+  WCAG 2.5.8 target size holds without inter-target spacing.
+*/
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .app-header__nav-list {
+    padding: 0;
+  }
+
+  .app-header__nav-link {
+    padding: 0 0.375rem;
+  }
+
+  .app-header__controls {
+    gap: 0.25rem;
+    padding-left: 0.25rem;
+  }
 }
 
 /* ── Mobile hamburger ────────────────────────────────────────────────────── */
@@ -318,24 +390,36 @@ function isActivePage(item: NavItem): boolean {
   border: 0;
 }
 
-/* ── Mobile breakpoint ───────────────────────────────────────────────────── */
+/* ── Drawer breakpoint (raised 767 → 1279 px, brand-fixes v3.1) ─────────── */
 
-@media (max-width: 767px) {
+@media (max-width: 1279px) {
   /*
-    Header bar on mobile: logo | 1fr gap | hamburger only.
+    Header bar in the drawer band: logo | 1fr gap | hamburger only.
     The panel is removed from the grid flow (position: fixed when open).
-    At 320 px: logo(~64 px) + hamburger(44 px) + padding(40 px) ≈ 148 px —
-    well within the 320 px viewport with no risk of horizontal overflow.
+    At 320 px: md logotype(~181 px incl. clear space) + hamburger(44 px +
+    8 px margin) + padding(40 px) ≈ 273 px — inside the 320 px viewport,
+    so the header-overflow E2E assertion (scrollWidth ≤ clientWidth) holds
+    with ~47 px to spare. At 768–1279 px the same bar leaves the nav and
+    the theme/language controls inside the full-width drawer, where every
+    destination renders stacked and readable (DESIGN_SYSTEM.md §4).
   */
   .app-header {
     grid-template-columns: auto 1fr auto;
   }
 
-  /* Panel hidden by default on mobile */
+  /* Panel hidden by default in the drawer band */
   .app-header__panel {
     display: none;
     position: fixed;
-    inset: 3.75rem 0 0 0;
+    /*
+      4rem = the real bar height in this band: the md logotype cell is
+      48 px + 2 × 0.5rem clear space = 64 px (taller than the 3.75 rem
+      min-height). Anchoring the drawer at 64 px removes the 4–5 px
+      content sliver the old 3.75rem inset left between bar and drawer;
+      the drawer's 1 px overlap of the header border is hidden behind its
+      own z-index (200 > 100).
+    */
+    inset: 4rem 0 0 0;
     z-index: 200;
     flex-direction: column;
     align-items: stretch;
@@ -376,7 +460,7 @@ function isActivePage(item: NavItem): boolean {
     background: var(--color-surface);
   }
 
-  /* Controls sit below the nav list in the mobile drawer */
+  /* Controls sit below the nav list in the drawer */
   .app-header__controls {
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--color-border);
@@ -385,7 +469,7 @@ function isActivePage(item: NavItem): boolean {
     padding-left: 1.5rem;
   }
 
-  /* Show hamburger on mobile */
+  /* Show hamburger across the drawer band */
   .app-header__menu-btn {
     display: inline-flex;
   }

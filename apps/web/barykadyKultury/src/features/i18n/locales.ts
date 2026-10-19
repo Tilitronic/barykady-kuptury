@@ -34,14 +34,44 @@ export const LOCALE_DIRECTIONS: Record<Locale, "ltr" | "rtl"> = {
 };
 
 /**
- * Endonyms shown in the language selector. Autonyms are intentionally not
- * translated: a language is always listed in its own language so a user who
- * does not read the current locale can still find theirs.
+ * Endonyms (each language's own name). Used by the documents-reader language
+ * tabs and as the screen-reader part of the header picker's labels. Autonyms
+ * are intentionally not translated: a language is always listed in its own
+ * language so a user who does not read the current locale can still find
+ * theirs.
  */
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",
   pl: "Polski",
   uk: "Українська"
+};
+
+/**
+ * Short codes rendered next to the flags in the header language picker.
+ *
+ * These are *display* strings only. The app's locale identifier for Ukrainian
+ * stays `uk` everywhere it is machine-read (URL segment, storage, catalogues,
+ * `document.lang`) because `uk` is its BCP 47 code; the visible abbreviation
+ * follows the country-code convention the user recognises on a flag (🇺🇦 → UA).
+ * Renaming the `Locale` union to "match" the badge would break routing — do
+ * not do it.
+ */
+export const LOCALE_DISPLAY_CODE: Record<Locale, string> = {
+  en: "EN",
+  pl: "PL",
+  uk: "UA"
+};
+
+/**
+ * Decorative flag glyphs for the language picker (paired with
+ * {@link LOCALE_DISPLAY_CODE}). Rendered `aria-hidden` — the accessible name
+ * comes from the autonym + display code, not from the emoji, because regional
+ * indicator sequences are read inconsistently across screen readers.
+ */
+export const LOCALE_FLAGS: Record<Locale, string> = {
+  en: "\u{1F1EC}\u{1F1E7}", // 🇬🇧
+  pl: "\u{1F1F5}\u{1F1F1}", // 🇵🇱
+  uk: "\u{1F1FA}\u{1F1E6}" // 🇺🇦
 };
 
 /** Narrows an untrusted value (URL param, storage, browser hint) to a locale. */

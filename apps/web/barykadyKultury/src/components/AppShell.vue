@@ -4,8 +4,9 @@
       {{ t("common.skipToContent") }}
     </a>
     <header class="app-shell__header">
-      <LanguageSwitcher />
+      <!-- Right-corner order matches AppHeader: theme before language. -->
       <ThemeToggle />
+      <LanguageSwitcher />
     </header>
     <main id="main-content" class="app-shell__main">
       <slot />
