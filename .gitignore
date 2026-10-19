@@ -29,3 +29,9 @@ playwright-report/
 
 # Supplied source material — real NGO documents; local only, never committed
 NGOinfoSources/
+
+# Deepwork state (untracked)
+.slim/deepwork/
+
+# Generated demo assets (deterministic, rebuilt by scripts/demo/setup-demo.ts)
+.demo/
