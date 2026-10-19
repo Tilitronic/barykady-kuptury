@@ -121,3 +121,20 @@ pnpm test:db:idempotency
 ## Log
 
 - (author) start:
+- (session 8) Implemented: `supabase/seed.demo.sql` + deterministic PNG/PDF
+  assets + Storage upload + demo users; Bun calendar mock reusing the T-023
+  handler; dev-only Quasar proxy; `pnpm demo` / `demo:reset` / `demo:stop` /
+  `demo:check` / `demo:calendar`; `docs/DEMO_ENVIRONMENT.md`.
+- (session 8, review) `@architector` (arc-1) APPROVE WITH FIXES → PID identity
+  now requires the command marker **and** expected cwd and fails closed; CORS
+  allow-methods aligned with GET/HEAD/OPTIONS; setup refuses a non-loopback
+  API URL; `docs/architecture.md` §9 records the T-037 local-demo topology and
+  the scoped Bun exception. `@reviewer` (rev-1) APPROVE WITH FIXES → removed
+  the base-row delete that broke base-seed idempotency in the demo state (the
+  gate now passes with demo data present); `.ignore` removed.
+- (session 8, verification) `pnpm test` 776, `pnpm test:e2e --workers=1` 90,
+  `pnpm typecheck`, `pnpm lint:check`, `pnpm build`, `supabase test db` 239,
+  `pnpm demo:reset` + `demo:check` (pages en/pl/uk, six calendar scenarios,
+  asset 200, viewer-denial/auth boundary), and `pnpm test:db:idempotency`
+  with demo data. Workstation note: port 9000 is held by the `poetry-dev`
+  container; use `DEMO_DEV_PORT=9200` (documented in STATUS.md).

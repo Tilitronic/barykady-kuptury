@@ -54,3 +54,23 @@ supabase test db
 
 ## Log
 - (author) start:
+- (session 8) Implemented against the local demo users instead of a hosted
+  project: single `app_metadata.role === "admin"` parser, session store, guard
+  matrix (anon → sign-in with destination preserved, non-admin → terminal
+  denial, admin → allowed), `AdminLayout`, accessible sign-in, denied and
+  dashboard pages, en/pl/uk catalogue, 320 px and keyboard coverage.
+- (session 8, review) `@designer` (des-2) APPROVE WITH FIXES → nav gated to
+  admin sessions, ticket IDs removed from user copy, admin LanguageSwitcher,
+  neutral sign-in announcement, focus moved to `#admin-main`, heading token,
+  `aria-busy` parity, 320 px E2E, email field hygiene.
+- (session 8, review) `@reviewer` (rev-1) BLOCK on the missing RLS mutation
+  proof. Resolved without duplicating T-013: the SQL proof already exists in
+  `supabase/tests/rls_content_matrix_test.sql` (“non-admin insert denied on
+  projects”, “non-admin update affects no projects rows”; 239 pgTAP tests
+  pass), and `pnpm demo:check` now proves the same boundary with the real
+  demo users: viewer insert → 401/403, viewer update → 0 rows, row unchanged,
+  admin reads the draft row. The guard remains UX-only.
+- (session 8, verification) focused admin/auth suite 204 tests; 11 admin
+  E2E journeys (including both 320 px cases); full unit 776 / E2E 90 /
+  typecheck / lint / build green. Deliberate omission unchanged: no
+  registration, no password reset (needs an email-provider decision).
