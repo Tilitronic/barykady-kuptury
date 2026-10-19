@@ -222,6 +222,66 @@ const en = {
       archived: "Archived"
     }
   },
+  /**
+   * Admin shell (T-026). Invited administrators only — there is no
+   * registration and no self-service password reset in V1 (deliberate
+   * omissions recorded in docs/tickets/T-026-admin-auth.md; accounts are
+   * provisioned through trusted Supabase administration,
+   * docs/PRODUCT_REQUIREMENTS.md §6).
+   */
+  admin: {
+    title: "Admin",
+    description: "Administrator area of the Barykady Kultury website.",
+    /** Badge next to the brand mark — text, never color alone. */
+    badge: "Admin",
+    navLabel: "Admin navigation",
+    dashboard: "Dashboard",
+    backToSite: "Back to public site",
+    signOut: "Sign out",
+    signIn: {
+      title: "Sign in",
+      description: "Administrator sign-in for the Barykady Kultury website.",
+      heading: "Administrator sign in",
+      intro:
+        "Access is limited to invited administrators. Accounts are created by the organisation — there is no self-registration.",
+      emailLabel: "Email",
+      passwordLabel: "Password",
+      submit: "Sign in",
+      /** Submission state announced in the live region (WCAG 4.1.3). */
+      submitting: "Signing in…",
+      /**
+       * Neutral on purpose: the destination after sign-in can be any admin
+       * path (the preserved redirect), so the announcement must not promise
+       * the dashboard specifically.
+       */
+      success: "Signed in. Opening…",
+      errors: {
+        emailRequired: "Enter your email address.",
+        emailInvalid: "Enter a valid email address.",
+        passwordRequired: "Enter your password.",
+        invalidCredentials: "The email or password is incorrect.",
+        unavailable: "Sign-in is not configured for this site yet.",
+        unexpected: "Sign-in failed. Please try again."
+      }
+    },
+    dashboardPage: {
+      title: "Admin dashboard",
+      description: "Overview of the Barykady Kultury administration area.",
+      heading: "Dashboard",
+      welcome: "Signed in as {email}.",
+      placeholderHeading: "What will appear here",
+      placeholder:
+        "Project, page, team, publication and event management tools are on the way — each will appear here as it is ready."
+    },
+    denied: {
+      title: "Not authorized",
+      description: "Admin access is not granted for the signed-in account.",
+      heading: "Not authorized",
+      message:
+        "You are signed in, but this account does not have administrator access. Ask the organisation to invite you as an administrator, or sign in with a different account.",
+      switchAccount: "Sign in with a different account"
+    }
+  },
   notFound: {
     title: "Page not found",
     description: "The page you requested could not be found.",

@@ -154,6 +154,7 @@ const THIRD_EVENT: CalendarEvent = {
 async function gotoHome(
   page: Page,
   options: {
+    sitePages?: unknown[];
     projects?: unknown[];
     calendarStatus?: number;
     events?: CalendarEvent[];
@@ -161,7 +162,7 @@ async function gotoHome(
 ): Promise<void> {
   await mockSupabaseRest(page, {
     responses: {
-      site_pages: HOME_PAGE_FIXTURE,
+      site_pages: options.sitePages ?? HOME_PAGE_FIXTURE,
       projects: options.projects ?? FEATURED_PROJECTS_FIXTURE,
       calendar_event_links: []
     }
@@ -249,6 +250,42 @@ test.describe("homepage", () => {
 
     // The CTA is unconfigured in this build: nothing is invented.
     await expect(page.locator(".home__cta")).toHaveCount(0);
+
+    await expectNoSeriousViolations(page);
+  });
+
+  test("renders the localized lede directly under the h1", async ({ page }) => {
+    await gotoHome(page);
+
+    const lede = page.locator(".home__lede");
+    await expect(lede).toBeVisible();
+    // M3 (T-025 review): the description already present in every catalogue
+    // is the homepage lede — no invented copy. The key stays under i18n.
+    await expect(lede).toHaveText(
+      "Official website of the Barykady Kultury association."
+    );
+  });
+
+  test("an empty mission shows the pending copy and keeps every other section", async ({
+    page
+  }) => {
+    await gotoHome(page, { sitePages: [] });
+
+    const mission = page.locator(".home-mission");
+    // M2: "This page is not available." is wrong here — the page exists, the
+    // story is pending. The mission section owns its own empty state.
+    await expect(mission.locator(".home__state")).toHaveText(
+      "Our story is being prepared — check back soon."
+    );
+    await expect(mission).not.toContainText("This page is not available.");
+    await expect(mission).not.toContainText(MISSION_BODY);
+
+    // The remaining independent sections are unaffected.
+    await expect(page.locator(".project-card")).toHaveCount(2);
+    await expect(page.locator(".event-card")).toHaveCount(3);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Barykady Kultury"
+    );
 
     await expectNoSeriousViolations(page);
   });

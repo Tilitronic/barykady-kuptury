@@ -58,7 +58,7 @@
         rel="noopener noreferrer"
       >
         {{ t(cta.labelKey) }}
-        <span class="home__cta-new-tab">{{ t("content.opensInNewTab") }}</span>
+        <span class="sr-only">{{ t("content.opensInNewTab") }}</span>
       </a>
     </SectionShell>
 
@@ -73,7 +73,7 @@
         class="home__loading"
         role="status"
       >
-        <span class="home__sr-only">{{ t("content.loading") }}</span>
+        <span class="sr-only">{{ t("content.loading") }}</span>
         <!-- m1: same card-shaped skeleton as the Events page (title, date,
              location, description, action), SECTION_CAP rows. -->
         <div aria-hidden="true">
@@ -123,13 +123,18 @@
         class="home__loading"
         role="status"
       >
-        <span class="home__sr-only">{{ t("content.loading") }}</span>
-        <div aria-hidden="true">
-          <div v-for="n in SECTION_CAP" :key="n" class="home__skeleton-card">
+        <span class="sr-only">{{ t("content.loading") }}</span>
+        <!-- The real card leads with an optional 16:9 cover. The skeleton
+             reserves exactly that box (same aspect ratio + radius) so the
+             swap to content does not shift the grid, and reuses `.home__grid`
+             so the placeholder columns match the final card columns. -->
+        <ul class="home__grid" aria-hidden="true">
+          <li v-for="n in SECTION_CAP" :key="n" class="home__skeleton-card">
+            <q-skeleton class="home__skeleton-cover" />
             <q-skeleton height="1.75rem" width="min(20rem, 80%)" />
             <q-skeleton height="2.5rem" width="min(30rem, 100%)" />
-          </div>
-        </div>
+          </li>
+        </ul>
       </div>
       <p
         v-else-if="projectsResult.kind === 'empty'"
@@ -321,6 +326,23 @@ function projectPath(project: ProjectSummaryView): string {
   margin-bottom: 1.5rem;
 }
 
+/* In the grid the row gap provides the separation; the event skeleton's
+   stacked-card margin would otherwise add height to each row. */
+.home__grid .home__skeleton-card {
+  margin-bottom: 0;
+}
+
+/*
+ * The card cover is width: 100% + aspect-ratio 16/9 (ProjectCard.vue); the
+ * skeleton repeats the same box and 0.5rem radius so the reservation is an
+ * exact match in both the stacked and the grid layouts.
+ */
+.home__skeleton-cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.5rem;
+}
+
 /*
  * D6 wiring from the Events page, kept consistent here: the project's
  * skeleton tokens replace Quasar's hard-coded grays in both themes.
@@ -336,18 +358,6 @@ function projectPath(project: ProjectSummaryView): string {
     var(--color-skeleton-shine),
     transparent
   );
-}
-
-.home__sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 /* m6: single readable column, capped so cards do not stretch airily on
@@ -389,18 +399,6 @@ function projectPath(project: ProjectSummaryView): string {
 
 .home__cta--primary:hover {
   text-decoration: underline;
-}
-
-.home__cta-new-tab {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .home-explore__list {

@@ -6,6 +6,13 @@ import {
   createWebHistory
 } from "vue-router";
 
+import { supabase } from "@/boot/supabase";
+import { createAdminGuard } from "@/features/auth/adminGuard";
+import {
+  configureAuth,
+  whenAuthReady,
+  type AuthApi
+} from "@/features/auth/authStore";
 import { getBrowserLanguages } from "@/features/i18n/browserLocale";
 import { i18n } from "@/features/i18n/i18nInstance";
 import { createLocaleGuard } from "@/features/i18n/localeGuard";
@@ -53,6 +60,18 @@ export default defineRouter((/* { store, ssrContext } */) => {
       translate: key => i18n.global.t(key)
     })
   );
+
+  // T-026 admin guard. The auth store is bound to the real client here — the
+  // single place where boot wiring meets routing — and the guard awaits
+  // session restore, so a hard refresh of a deep admin URL resolves "loading"
+  // before any admin chrome renders. This is UX gating only; Supabase RLS is
+  // the authorization boundary (docs/architecture.md §6, D-17).
+  //
+  // The narrow cast bridges gotrue-js's union-typed responses to the store's
+  // structural `AuthApi` seam (the four methods the store actually calls;
+  // the contract is pinned by authStore.test.ts).
+  configureAuth(supabase ? (supabase.auth as unknown as AuthApi) : null);
+  Router.beforeEach(createAdminGuard({ getAuthState: whenAuthReady }));
 
   return Router;
 });

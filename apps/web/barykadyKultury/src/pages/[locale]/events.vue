@@ -8,7 +8,7 @@
       state blocks below are plain (the skeleton list is aria-hidden), so a
       screen reader hears each outcome exactly once.
     -->
-    <p class="events-page__sr-only events-page__live" role="status">
+    <p class="sr-only events-page__live" role="status">
       {{ liveMessage }}
     </p>
 
@@ -191,18 +191,6 @@ function projectPath(event: EventView): string | null {
   max-width: 65ch;
   margin: 0;
   color: var(--color-text-muted);
-}
-
-.events-page__sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 /**

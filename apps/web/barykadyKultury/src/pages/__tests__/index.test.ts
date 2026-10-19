@@ -439,6 +439,33 @@ describe("featured projects section", () => {
     );
   });
 
+  it("models the 16:9 cover in the projects loading skeleton", async () => {
+    // The real card reserves a 16:9 cover; the skeleton must reserve the same
+    // space so the swap to content causes no vertical jump (T-037 carry-over).
+    let release: ((r: Response) => void) | undefined;
+    stubFetch(() => new Promise<Response>(resolve => (release = resolve)));
+
+    const fake = createFakeSupabase({
+      tables: { site_pages: [HOME_PAGE_ROW], projects: [] }
+    });
+    const wrapper = await mountWithPlugins(HomePage, {
+      plugins: [Quasar],
+      supabase: fake.client,
+      initialRoute: "/en",
+      routes: ROUTES
+    });
+
+    const cover = wrapper.get(".home-projects .home__skeleton-cover");
+    expect(cover.classes()).toContain("q-skeleton");
+    // One placeholder per skeleton card (SECTION_CAP = 3).
+    expect(
+      wrapper.findAll(".home-projects .home__skeleton-cover")
+    ).toHaveLength(3);
+
+    release!(okBody([]));
+    await flush();
+  });
+
   it("renders the translated empty state when no project is published", async () => {
     stubFetch(okBody([]));
     const { wrapper } = await mountHome({

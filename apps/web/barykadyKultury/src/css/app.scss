@@ -3,3 +3,29 @@
 @import "./tokens.css";
 // T-007: Import Inter Variable font-face declarations + fluid type scale tokens.
 @import "./typography.css";
+
+/*
+ * Screen-reader-only utility — the single source of truth (T-037 carry-over).
+ *
+ * Visually hides content while keeping it in the accessibility tree: the
+ * 1px/clip technique is deliberate (never `display: none` or
+ * `visibility: hidden`, which remove the node from assistive technology) and
+ * the 1px box cannot trigger horizontal overflow at 320 px. Consumers:
+ * LanguageSwitcher's accessible names, AppHeader's menu-button label, the
+ * homepage loading regions + new-tab hint, and the Events live region
+ * (DESIGN_SYSTEM.md §6 — accessible names without visible duplication).
+ *
+ * Keep this declaration block identical to the previous per-component copies
+ * so the consolidation stays pixel- and semantics-identical.
+ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

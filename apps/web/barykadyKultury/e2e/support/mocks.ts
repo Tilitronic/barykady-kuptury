@@ -31,6 +31,9 @@ const SUPABASE_REST_GLOB = "**/rest/v1/**";
 /** Matches Supabase Storage public object reads (`/storage/v1/object/...`). */
 const SUPABASE_STORAGE_GLOB = "**/storage/v1/object/**";
 
+/** Matches Supabase Auth (GoTrue) traffic: token grant, health, logout. */
+const SUPABASE_AUTH_GLOB = "**/auth/v1/**";
+
 /**
  * Smallest deterministic PDF body (T-020): real enough for a content-type
  * assertion, no binary asset to maintain, never fetched from a live bucket.
@@ -142,6 +145,136 @@ export async function mockSupabaseStorage(
       status,
       contentType,
       body
+    });
+  });
+}
+
+/* ── Auth (T-026) ─────────────────────────────────────────────────────────── */
+
+/**
+ * Shape of a mock GoTrue user payload. `app_metadata` stays an open record so
+ * fixtures can vary the D-17 claim (`role: "admin"` vs absent) without
+ * literal-type friction.
+ */
+export interface E2EAuthUser {
+  id: string;
+  aud: string;
+  role: string;
+  email: string;
+  phone: string;
+  app_metadata: Record<string, unknown>;
+  user_metadata: Record<string, unknown>;
+  identities: null;
+  created_at: string;
+  updated_at: string;
+  last_sign_in_at: string;
+}
+
+/**
+ * Fixture users mirroring the lane-A demo provisioning (`admin@demo.local`
+ * with the canonical D-17 claim, `viewer@demo.local` without it). These are
+ * E2E-only mock payloads — the real demo users are created by
+ * `supabase/seed.demo.sql` and used exclusively for manual verification.
+ */
+export const ADMIN_AUTH_USER: E2EAuthUser = {
+  id: "00000000-0000-4000-8000-000000000001",
+  aud: "authenticated",
+  role: "authenticated",
+  email: "admin@demo.local",
+  phone: "",
+  app_metadata: { provider: "email", providers: ["email"], role: "admin" },
+  user_metadata: { email: "admin@demo.local" },
+  identities: null,
+  created_at: "2026-01-01T00:00:00.000Z",
+  updated_at: "2026-01-01T00:00:00.000Z",
+  last_sign_in_at: "2026-01-01T00:00:00.000Z"
+};
+
+export const VIEWER_AUTH_USER: E2EAuthUser = {
+  ...ADMIN_AUTH_USER,
+  id: "00000000-0000-4000-8000-000000000002",
+  email: "viewer@demo.local",
+  // The whole point of the fixture: a signed-in user with NO admin claim.
+  app_metadata: { provider: "email", providers: ["email"] },
+  user_metadata: { email: "viewer@demo.local" }
+};
+
+export interface MockSupabaseAuthOptions {
+  /**
+   * User granted by a successful password sign-in. Defaults to the admin
+   * fixture; pass `VIEWER_AUTH_USER` for the denial journey.
+   */
+  user?: E2EAuthUser;
+  /** Reject every credential grant with GoTrue's 400 invalid_credentials. */
+  rejectCredentials?: boolean;
+}
+
+/**
+ * Intercepts Supabase Auth (GoTrue) traffic so admin-auth journeys exercise
+ * the real `supabase-js` client — token persistence, storage restore, logout
+ * — against deterministic fixtures instead of a live project
+ * (docs/TESTING.md §2). The E2E build points `VITE_SUPABASE_URL` at the app
+ * origin, so all auth requests are same-origin and match these globs.
+ */
+export async function mockSupabaseAuth(
+  page: Page,
+  options: MockSupabaseAuthOptions = {}
+): Promise<void> {
+  const { user = ADMIN_AUTH_USER, rejectCredentials = false } = options;
+
+  await page.route(SUPABASE_AUTH_GLOB, async (route: Route) => {
+    const { pathname } = new URL(route.request().url());
+
+    // supabase-js probes /auth/v1/health once per client init.
+    if (pathname.endsWith("/health")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ version: "e2e", name: "GoTrue" })
+      });
+      return;
+    }
+
+    if (pathname.endsWith("/token")) {
+      if (rejectCredentials) {
+        await route.fulfill({
+          status: 400,
+          contentType: "application/json",
+          body: JSON.stringify({
+            code: "invalid_credentials",
+            error_code: "invalid_credentials",
+            error_description: "Invalid login credentials",
+            msg: "Invalid login credentials"
+          })
+        });
+        return;
+      }
+      // 10 h validity: far enough out that no auto-refresh fires mid-test.
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          access_token: `e2e-access-token-${user.email}`,
+          token_type: "bearer",
+          expires_in: 36_000,
+          expires_at: Math.floor(Date.now() / 1000) + 36_000,
+          refresh_token: "e2e-refresh-token",
+          user
+        })
+      });
+      return;
+    }
+
+    if (pathname.endsWith("/logout")) {
+      await route.fulfill({ status: 204 });
+      return;
+    }
+
+    // Any other auth endpoint (user, factors, ...) — inert success envelope.
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({})
     });
   });
 }

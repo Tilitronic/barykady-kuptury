@@ -129,6 +129,27 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/AdminDashboardPage': RouteRecordInfo<
+      '/admin/AdminDashboardPage',
+      '/admin/AdminDashboardPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminDeniedPage': RouteRecordInfo<
+      '/admin/AdminDeniedPage',
+      '/admin/AdminDeniedPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminSignInPage': RouteRecordInfo<
+      '/admin/AdminSignInPage',
+      '/admin/AdminSignInPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -249,6 +270,30 @@ declare module 'vue-router/auto-routes' {
     'src/pages/404.vue': {
       routes:
         | '/404'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminDashboardPage.vue': {
+      routes:
+        | '/admin/AdminDashboardPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminDeniedPage.vue': {
+      routes:
+        | '/admin/AdminDeniedPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminSignInPage.vue': {
+      routes:
+        | '/admin/AdminSignInPage'
       views:
         | never
       pathParamNames:

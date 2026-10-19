@@ -91,7 +91,22 @@ export default defineConfig(ctx => {
     devServer: {
       // vueDevtools: true,
       // https: true,
-      open: true // opens browser window automatically
+      // Auto-open is off on purpose: Quasar/Vite asks the OS for the default
+      // browser, which on this WSL workstation is regular Firefox, not the
+      // Developer Edition used for editing. Open http://localhost:9000 there,
+      // or export BROWSER=firefox-developer-edition before `pnpm dev` if the
+      // launcher resolves that binary.
+      open: false,
+
+      // T-037 Lane B: DEV-ONLY proxy to the Bun calendar mock. The SPA keeps
+      // calling the production path, so client code and Netlify wiring are
+      // unchanged; production builds never read this block. The target honors
+      // the mock's port override so `pnpm demo` stays consistent.
+      proxy: {
+        "/.netlify/functions/calendar-events": {
+          target: `http://127.0.0.1:${process.env.CALENDAR_MOCK_PORT || "8787"}`
+        }
+      }
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework

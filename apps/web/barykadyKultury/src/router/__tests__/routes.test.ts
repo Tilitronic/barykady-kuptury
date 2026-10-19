@@ -42,3 +42,43 @@ describe("locale route table", () => {
     expect(router.currentRoute.value.path).toBe("/pl");
   });
 });
+
+/**
+ * T-026 — the admin URL contract. The static `admin` segment must out-score
+ * the locale layout's catch-all child, so admin URLs can never be swallowed
+ * by the public 404, and the three shell routes resolve to their own records.
+ */
+describe("admin route table (T-026)", () => {
+  it.each([
+    ["/en/admin", "admin-dashboard"],
+    ["/pl/admin/sign-in", "admin-sign-in"],
+    ["/uk/admin/access-denied", "admin-denied"]
+  ])("resolves %s to %s", (path, name) => {
+    const resolved = createTestRouter().resolve(path);
+
+    expect(resolved.name).toBe(name);
+  });
+
+  it("marks only the dashboard as requiring the admin claim", () => {
+    const router = createTestRouter();
+
+    expect(router.resolve("/en/admin").meta.requiresAdmin).toBe(true);
+    // Sign-in and denial are reachable without the claim: they carry no
+    // `requiresAdmin` flag (undefined — the guard only tests `=== true`).
+    expect(
+      router.resolve("/en/admin/sign-in").meta.requiresAdmin
+    ).toBeUndefined();
+    expect(
+      router.resolve("/en/admin/access-denied").meta.requiresAdmin
+    ).toBeUndefined();
+  });
+
+  it("keeps unknown admin sub-paths on the public 404 surface", () => {
+    // Deliberate V1 boundary: the admin area ships no admin-scoped catch-all,
+    // so a typo under /admin renders the locale not-found page inside the
+    // public shell rather than admin chrome around an empty view.
+    expect(createTestRouter().resolve("/en/admin/nope").name).toBe(
+      "locale-not-found"
+    );
+  });
+});

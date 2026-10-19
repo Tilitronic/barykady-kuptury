@@ -189,6 +189,7 @@ Donation actions should link to verified NGO-provided destinations. The website 
 - Server-only variables include calendar API credentials/configuration and, if the optional message form is enabled, email-provider credentials.
 - CI must not require production credentials. Mock external providers and use isolated local/test services.
 - Add database migrations and a documented backup/export process; a free-tier hosted database is not itself a complete backup strategy.
+- Local demo topology (T-037, `docs/DEMO_ENVIRONMENT.md`): the demo backend is the **real local Supabase stack** (Docker + project-pinned CLI), not a clone of PostgREST/Auth/Storage. `supabase/seed.demo.sql`, generated assets and the `admin@demo.local` / `viewer@demo.local` users are explicit-only, local-only and never part of the production build or the default `db reset` seed. Bun is allowed **only** for local demo tooling (the `scripts/demo/*` orchestration and `mock/calendar/server.ts`); it is not an app runtime, package manager or production server. The Quasar dev server proxies `/.netlify/functions/calendar-events` to the Bun mock in development only; production keeps the Netlify function + Google Calendar adapter wiring unchanged. Secrets: the service-role key is read in memory from `supabase status`, never written to `.env.local` (only the browser-safe publishable key is), and the demo scripts refuse a non-loopback API URL.
 
 ## 10. Deliberately deferred
 

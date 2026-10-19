@@ -155,6 +155,58 @@ const pl: MessageSchema = {
       archived: "Zarchiwizowany"
     }
   },
+  /** Panel administracyjny (T-026) — wyłącznie dla zaproszonych administratorów. */
+  admin: {
+    title: "Panel administratora",
+    description:
+      "Strefa administratora strony stowarzyszenia Barykady Kultury.",
+    badge: "Admin",
+    navLabel: "Nawigacja administratora",
+    dashboard: "Pulpit",
+    backToSite: "Powrót do serwisu publicznego",
+    signOut: "Wyloguj się",
+    signIn: {
+      title: "Logowanie",
+      description:
+        "Logowanie administratora strony stowarzyszenia Barykady Kultury.",
+      heading: "Logowanie administratora",
+      intro:
+        "Dostęp mają wyłącznie zaproszeni administratorzy. Konta tworzy organizacja — samodzielna rejestracja nie jest możliwa.",
+      emailLabel: "Adres e-mail",
+      passwordLabel: "Hasło",
+      submit: "Zaloguj się",
+      submitting: "Logowanie…",
+      /* Neutralne: celem logowania może być dowolna ścieżka administracji. */
+      success: "Zalogowano. Otwieranie…",
+      errors: {
+        emailRequired: "Podaj adres e-mail.",
+        emailInvalid: "Podaj poprawny adres e-mail.",
+        passwordRequired: "Podaj hasło.",
+        invalidCredentials: "Adres e-mail lub hasło są nieprawidłowe.",
+        unavailable:
+          "Logowanie nie jest jeszcze skonfigurowane na tej stronie.",
+        unexpected: "Logowanie nie powiodło się. Spróbuj ponownie."
+      }
+    },
+    dashboardPage: {
+      title: "Pulpit administratora",
+      description:
+        "Przegląd strefy administracyjnej stowarzyszenia Barykady Kultury.",
+      heading: "Pulpit",
+      welcome: "Zalogowano jako {email}.",
+      placeholderHeading: "Co tutaj się pojawi",
+      placeholder:
+        "Narzędzia zarządzania treścią — projektami, stronami, zespołem, publikacjami i wydarzeniami — pojawią się tutaj w miarę ich gotowości."
+    },
+    denied: {
+      title: "Brak autoryzacji",
+      description: "Zalogowane konto nie ma dostępu administracyjnego.",
+      heading: "Brak autoryzacji",
+      message:
+        "Jesteś zalogowany, ale to konto nie ma uprawnień administratora. Poproś organizację o zaproszenie Cię jako administratora albo zaloguj się na inne konto.",
+      switchAccount: "Zaloguj się na inne konto"
+    }
+  },
   notFound: {
     title: "Nie znaleziono strony",
     description: "Żądana strona nie została znaleziona.",

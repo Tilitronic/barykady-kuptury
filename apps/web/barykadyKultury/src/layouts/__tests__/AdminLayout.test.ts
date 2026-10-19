@@ -1,0 +1,162 @@
+import { mount } from "@vue/test-utils";
+import { createPinia } from "pinia";
+import { describe, expect, it, vi } from "vitest";
+import type { Session, User } from "@supabase/supabase-js";
+import { createMemoryHistory, createRouter } from "vue-router";
+
+import {
+  configureAuth,
+  whenAuthReady,
+  type AuthApi
+} from "@/features/auth/authStore";
+import { routes } from "@/router/routes";
+import { createTestI18n } from "@/test-utils/mount";
+
+import AdminLayout from "../AdminLayout.vue";
+
+/**
+ * T-026 — admin shell contract (DESIGN_SYSTEM.md §6).
+ *
+ * The layout is the chrome for every admin page: landmarks, a sign-out that
+ * clears the session and returns to the public home, and — critically — no
+ * links to admin features that do not exist yet (only the dashboard).
+ *
+ * Mounting the layout standalone would make its <RouterView> resolve route
+ * depth 0 and re-render the layout itself, so the test stubs RouterView: the
+ * child pages have their own component tests, and here only the shell is
+ * under examination.
+ */
+
+const adminUser = {
+  id: "11111111-1111-4111-8111-111111111111",
+  email: "admin@demo.local",
+  app_metadata: { role: "admin" }
+} as unknown as User;
+
+function fakeAuth(sessionUser: User | null): AuthApi {
+  return {
+    getSession: async () => ({
+      data: {
+        session: sessionUser
+          ? ({ user: sessionUser } as unknown as Session)
+          : null
+      },
+      error: null
+    }),
+    signInWithPassword: async () => ({
+      data: { session: null, user: null },
+      error: null
+    }),
+    signOut: async () => ({ error: null }),
+    onAuthStateChange: () => ({
+      data: { subscription: { unsubscribe: () => undefined } }
+    })
+  };
+}
+
+async function mountLayout(locale: "en" | "pl" | "uk" = "en") {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes
+  });
+  await router.push(`/${locale}/admin`);
+  await router.isReady();
+
+  const wrapper = mount(AdminLayout, {
+    global: {
+      plugins: [createPinia(), createTestI18n(locale), router],
+      stubs: { RouterView: true }
+    }
+  });
+  return Object.assign(wrapper, { router });
+}
+
+describe("landmarks and navigation", () => {
+  it("renders header, navigation and a single main landmark", async () => {
+    configureAuth(fakeAuth(adminUser));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    expect(wrapper.find("header[role='banner']").exists()).toBe(true);
+    const nav = wrapper.get("nav");
+    expect(nav.attributes("aria-label")).toBe("Admin navigation");
+    expect(wrapper.findAll("main")).toHaveLength(1);
+    expect(wrapper.get("main").attributes("id")).toBe("admin-main");
+  });
+
+  it("links only the dashboard — no nav entries for unbuilt features", async () => {
+    configureAuth(fakeAuth(adminUser));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    const links = wrapper
+      .findAll("nav a")
+      .map(link => link.text())
+      .filter(Boolean);
+    expect(links).toEqual(["Dashboard"]);
+  });
+
+  it("hides the dashboard nav from sessions that cannot reach it", async () => {
+    // Review des-2: the nav's only link is guard-protected, so rendering it
+    // on the sign-in/denial pages would be a dead affordance.
+    configureAuth(fakeAuth(null));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    expect(wrapper.find("nav").exists()).toBe(false);
+  });
+
+  it("keeps the skip link as the first focusable element", async () => {
+    configureAuth(fakeAuth(adminUser));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    const focusables = wrapper
+      .findAll("a[href], button, input, [tabindex]:not([tabindex='-1'])")
+      .map(node => node.attributes("class") ?? "");
+    expect(focusables[0]).toContain("skip-link");
+  });
+
+  it("names the logo link with the route out of the admin", async () => {
+    configureAuth(fakeAuth(adminUser));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    expect(wrapper.get("a[aria-label]").attributes("aria-label")).toBe(
+      "Back to public site"
+    );
+  });
+});
+
+describe("sign-out", () => {
+  it("is offered to an authenticated admin and clears session + home nav", async () => {
+    const signOutSpy = vi.fn(async () => ({ error: null }));
+    configureAuth({ ...fakeAuth(adminUser), signOut: signOutSpy });
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+    const button = wrapper.get("button.admin-layout__sign-out");
+    expect(button.text()).toBe("Sign out");
+
+    await button.trigger("click");
+    // The handler is async; let the sign-out + navigation promises settle.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(signOutSpy).toHaveBeenCalled();
+    expect(wrapper.router.currentRoute.value.path).toBe("/en");
+  });
+
+  it("is hidden for anonymous visitors (the sign-in page has no session to clear)", async () => {
+    configureAuth(fakeAuth(null));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    expect(wrapper.find("button.admin-layout__sign-out").exists()).toBe(false);
+  });
+});

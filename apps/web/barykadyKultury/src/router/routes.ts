@@ -5,6 +5,7 @@ import type { LocalePageMeta } from "@/features/i18n/pageMeta";
 import { resolveInitialLocale } from "@/features/i18n/resolveInitialLocale";
 
 import PublicLayout from "@/layouts/PublicLayout.vue";
+import AdminLayout from "@/layouts/AdminLayout.vue";
 import HomePage from "@/pages/[locale]/index.vue";
 import NotFoundPage from "@/pages/404.vue";
 import LocaleNotFoundPage from "@/pages/[locale]/not-found.vue";
@@ -19,6 +20,9 @@ import SupportPage from "@/pages/[locale]/support.vue";
 import EventsPage from "@/pages/[locale]/events.vue";
 import PublicationsPage from "@/pages/[locale]/publications.vue";
 import PublicationDetailPage from "@/pages/[locale]/publication-detail.vue";
+import AdminSignInPage from "@/pages/admin/AdminSignInPage.vue";
+import AdminDashboardPage from "@/pages/admin/AdminDashboardPage.vue";
+import AdminDeniedPage from "@/pages/admin/AdminDeniedPage.vue";
 
 declare module "vue-router" {
   interface RouteMeta {
@@ -31,6 +35,13 @@ declare module "vue-router" {
      * if a real page route is missing it or resolves to the not-found keys.
      */
     pageMeta?: LocalePageMeta;
+    /**
+     * T-026 — the route renders admin-only content and requires the canonical
+     * admin claim (`app_metadata.role === "admin"`, D-17). Read exclusively by
+     * `createAdminGuard`; it is a UX gate, never authorization
+     * (docs/PRODUCT_REQUIREMENTS.md §6 — RLS enforces independently).
+     */
+    requiresAdmin?: boolean;
   }
 }
 
@@ -228,6 +239,58 @@ export const routes: RouteRecordRaw[] = [
           pageMeta: {
             titleKey: "notFound.title",
             descriptionKey: "notFound.description"
+          }
+        }
+      }
+    ]
+  },
+
+  // ── Admin shell (T-026) ───────────────────────────────────────────────────
+  // Its own layout — PublicLayout's marketing header/footer must not leak into
+  // the operational surface, and vice versa. The static `admin` segment
+  // out-scores the locale layout's catch-all child, so `/en/admin/...` can
+  // never be swallowed by the public 404. Guard policy lives in
+  // `src/features/auth/adminGuard.ts`; these records only declare the shape.
+  {
+    path: `/${localeSegment}/admin`,
+    component: AdminLayout,
+    children: [
+      // Sign-in: reachable for anonymous and non-admins (switch-account
+      // path); admins are bounced to the dashboard by the guard.
+      {
+        path: "sign-in",
+        name: "admin-sign-in",
+        component: AdminSignInPage,
+        meta: {
+          pageMeta: {
+            titleKey: "admin.signIn.title",
+            descriptionKey: "admin.signIn.description"
+          }
+        }
+      },
+      // Terminal state for authenticated non-admins — no redirect loop.
+      {
+        path: "access-denied",
+        name: "admin-denied",
+        component: AdminDeniedPage,
+        meta: {
+          pageMeta: {
+            titleKey: "admin.denied.title",
+            descriptionKey: "admin.denied.description"
+          }
+        }
+      },
+      // The only protected route so far; feature panels (T-027…T-031) join
+      // this children list and inherit the guard through `requiresAdmin`.
+      {
+        path: "",
+        name: "admin-dashboard",
+        component: AdminDashboardPage,
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.dashboardPage.title",
+            descriptionKey: "admin.dashboardPage.description"
           }
         }
       }
