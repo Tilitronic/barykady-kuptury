@@ -41,47 +41,48 @@
     />
 
     <!--
-      Favicons — brand mark v3 (bold filled "B" letterform on a SCARLET
-      block: GRAY93 path glyph, no font dependency). Source of truth:
+      Favicons — brand mark v4 (the REAL brand emblem: SCARLET "B" with
+      white interior "BARYKADY KULTURY" lettering, path data byte-identical
+      to the supplied logo_red_small.svg). Source of truth:
       src/assets/brand/favicon_mark.svg, copied verbatim to favicon.svg by
       scripts/generate-favicons.mjs (which also rasterises the PNG fallbacks
-      and favicon.ico). SVG is the primary icon; PNGs are fallbacks;
-      apple-touch-icon is opaque.
+      and favicon.ico on a transparent canvas; apple-touch-icon is opaque
+      white). SVG is the primary icon; PNGs are fallbacks.
       Regenerate: node scripts/generate-favicons.mjs
       Cache-busting: bump ?v=N by 1 each time icons are regenerated and
-      deployed (v2 -> v3 with this redesign).
+      deployed (v3 -> v4 with the real-emblem correction).
       Fix1: sizes="any" on the SVG link signals scalable size to all browsers.
     -->
-    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=3" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg?v=4" />
     <link
       rel="icon"
       type="image/png"
       sizes="128x128"
-      href="icons/favicon-128x128.png?v=3"
+      href="icons/favicon-128x128.png?v=4"
     />
     <link
       rel="icon"
       type="image/png"
       sizes="96x96"
-      href="icons/favicon-96x96.png?v=3"
+      href="icons/favicon-96x96.png?v=4"
     />
     <link
       rel="icon"
       type="image/png"
       sizes="32x32"
-      href="icons/favicon-32x32.png?v=3"
+      href="icons/favicon-32x32.png?v=4"
     />
     <link
       rel="icon"
       type="image/png"
       sizes="16x16"
-      href="icons/favicon-16x16.png?v=3"
+      href="icons/favicon-16x16.png?v=4"
     />
-    <link rel="icon" type="image/x-icon" href="favicon.ico?v=3" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico?v=4" />
     <link
       rel="apple-touch-icon"
       sizes="180x180"
-      href="icons/apple-icon-180x180.png?v=3"
+      href="icons/apple-icon-180x180.png?v=4"
     />
   </head>
   <body>

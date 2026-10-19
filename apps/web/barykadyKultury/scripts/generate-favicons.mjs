@@ -1,45 +1,64 @@
 #!/usr/bin/env node
 /**
- * T-034 (partial) — Brand favicon generator  (v3: dedicated letter-B mark)
- * =========================================================================
+ * T-034 (partial) — Brand favicon generator  (v4: the REAL brand emblem)
+ * =======================================================================
  * All public favicon assets are derived from ONE self-contained source file:
  *
  *   src/assets/brand/favicon_mark.svg
  *
- * The mark is a bold, filled letter "B" (SVG path outlines, no <text>, no
- * font dependency) on a solid SCARLET block — the user-approved redesign of
- * the v2 barricade-emblem favicon, which did not read at 16 px. Headless
- * Chromium (Playwright, already a devDependency) handles all rasterisation,
- * so no native image-processing binaries are required.
+ * The mark is the actual brand emblem artwork — the SCARLET "B" with the
+ * white interior "BARYKADY KULTURY" lettering, path data byte-identical to
+ * the supplied NGOinfoSources/logo/SVG-20261017T122035Z-1-001/SVG/
+ * logo_red_small.svg (only favicon-necessary attributes and a derived tight
+ * square viewBox added; see the mark file's own header). This replaces the
+ * v3 hand-drawn letter "B", which the user rejected on 2026-10-19: the
+ * favicon must be the real brand icon. Headless Chromium (Playwright,
+ * already a devDependency) handles all rasterisation, so no native
+ * image-processing binaries are required.
  *
  * Usage (from app directory):
  *   node scripts/generate-favicons.mjs
  *
  * What it produces:
  *   public/favicon.svg                  — VERBATIM copy of favicon_mark.svg
- *   public/icons/favicon-16x16.png
- *   public/icons/favicon-32x32.png
- *   public/icons/favicon-96x96.png
- *   public/icons/favicon-128x128.png
- *   public/icons/apple-icon-180x180.png — opaque (the SCARLET rect is the
- *                                          full-bleed background)
+ *   public/icons/favicon-16x16.png      — TRANSPARENT background
+ *   public/icons/favicon-32x32.png      — TRANSPARENT background
+ *   public/icons/favicon-96x96.png      — TRANSPARENT background
+ *   public/icons/favicon-128x128.png    — TRANSPARENT background
+ *   public/icons/apple-icon-180x180.png — composited on WHITE (iOS flattens
+ *                                         transparency to black; white is
+ *                                         the documented deliberate
+ *                                         surface for the apple icon)
  *   public/favicon.ico                  — single 32×32 PNG-in-ICO container
+ *                                         (alpha preserved)
  *
- * ── Why v3 replaced the v2 derivation ──────────────────────────────────────
+ * ── Background semantics (fixed in v4) ─────────────────────────────────────
  *
- * v2 measured the emblem bbox inside logo_red_small.svg at generation time
- * and re-emitted its path with swapped fills. That made the output depend on
- * (a) the emblem's path geometry and (b) a live getBBox() measurement — and
- * the resulting abstract barricade shape is unreadable at 16×16. v3 moves the
- * single source of truth into a committed, hand-authored SVG: the generator
- * copies it verbatim (fully deterministic — byte-identical output on every
- * run and platform) and only rasterises from it.
+ * v3 painted a SCARLET page background under every raster because its mark
+ * was a full-bleed red block. The real emblem is NOT full-bleed (the tight
+ * square viewBox leaves transparent margins around the B), so a SCARLET
+ * page background would draw a red square behind the red emblem — wrong on
+ * light tabs (heavy block) and pointless on dark ones. v4 rasterises the
+ * favicon PNGs on a genuinely TRANSPARENT canvas: the SCARLET field of the
+ * icon is the emblem itself, so it reads on light AND dark browser chrome
+ * without an added surface. Only apple-touch-icon gets an opaque surface
+ * (white), because iOS requires one.
+ *
+ * ── Why v4 replaced the v3 derivation ──────────────────────────────────────
+ *
+ * v3 moved the single source of truth into a committed, hand-authored
+ * letter-"B" SVG because the old abstract emblem "did not read at 16 px".
+ * That premise was wrong: the supplied brandbook small-size variant
+ * (logo_red_small.svg) IS a bold B silhouette and reads clearly at 16-32 px
+ * (verified by rasterising it at 16/32/96/180 on light and dark surfaces).
+ * v4 keeps v3's deterministic architecture — the generator copies the
+ * committed mark VERBATIM (byte-identical output on every run) and only
+ * rasterises from it — but the mark now carries the real emblem geometry.
  *
  * Brand colours kept in the emitted SVG markup (asserted by
  * test/unit/favicon.test.ts):
- *   #c60001 (SCARLET background) and #ededed (GRAY93 glyph) — D-13 palette,
- *   DESIGN_SYSTEM.md §1. GRAY93-on-SCARLET is the same inverted pairing v2
- *   used; the solid red block reads on both light and dark browser chrome.
+ *   #c60001 (SCARLET emblem) and #fff (white interior lettering) — D-13
+ *   palette, DESIGN_SYSTEM.md §1, exactly as in the supplied source file.
  *
  * Fix 1 — SVG intrinsic size (kept):
  *   The mark carries explicit width/height (512×512) alongside the viewBox
@@ -48,7 +67,7 @@
  *
  * Fix 3 — Cache-busting (kept):
  *   index.html icon hrefs carry ?v=<N>. Bump N by 1 each time icons are
- *   regenerated and deployed. This redesign bumped v=2 → v=3.
+ *   regenerated and deployed. This change bumped v=3 → v=4.
  *
  * Regenerate whenever favicon_mark.svg is updated:
  *   pnpm --dir apps/web/barykadyKultury exec node scripts/generate-favicons.mjs
@@ -67,11 +86,13 @@ const PUBLIC_DIR = join(APP_ROOT, "public");
 const ICONS_DIR = join(PUBLIC_DIR, "icons");
 
 /**
- * Brand colours — D-13, DESIGN_SYSTEM.md §1. Used only for the raster page
- * background (seam-free edges under Chromium's antialiasing); the mark file
- * itself carries the authoritative fills.
+ * Brand colour used ONLY as the documented opaque surface for
+ * apple-touch-icon (iOS flattens transparency to black). The favicon PNGs
+ * and ICO rasterise on a transparent canvas — the SCARLET field of the icon
+ * is the emblem itself (see header). The mark file carries the
+ * authoritative fills (#c60001 + #fff, from the supplied brand SVG).
  */
-const SCARLET = "#c60001";
+const APPLE_SURFACE = "#ffffff";
 
 /** The single source of truth, copied verbatim to public/favicon.svg. */
 const MARK_PATH = join(BRAND_DIR, "favicon_mark.svg");
@@ -79,20 +100,33 @@ const MARK_PATH = join(BRAND_DIR, "favicon_mark.svg");
 async function main() {
   const mark = readFileSync(MARK_PATH, "utf8");
 
-  // Sanity gate: the emitted SVG must keep both brand hexes (test/unit/
-  // favicon.test.ts asserts them), the intrinsic-size attributes (Fix1) and
-  // a pure-path glyph. Fail loudly instead of writing an asset that breaks
-  // the contract.
+  // Sanity gate: the mark must still be the REAL brand emblem — the outer
+  // path signature taken verbatim from the supplied logo_red_small.svg, both
+  // brand hexes (SCARLET emblem + white interior), the derived tight square
+  // viewBox, the intrinsic-size attributes (Fix1) and no <text>. Fail
+  // loudly instead of writing an asset that breaks the contract
+  // (test/unit/favicon.test.ts asserts the same invariants).
   const checks = [
+    {
+      pattern: /d="M601\.66,419\.3c/,
+      expected: true,
+      message:
+        "must carry the real emblem's outer-path signature from logo_red_small.svg"
+    },
     {
       pattern: /#c60001/,
       expected: true,
       message: "must contain SCARLET #c60001"
     },
     {
-      pattern: /#ededed/,
+      pattern: /fill: #fff/,
       expected: true,
-      message: "must contain GRAY93 #ededed"
+      message: "must contain the white (#fff) interior lettering"
+    },
+    {
+      pattern: /viewBox="168\.92 160\.91 499\.31 499\.31"/,
+      expected: true,
+      message: "must carry the derived tight square viewBox"
     },
     {
       pattern: /\bwidth="512"/,
@@ -103,11 +137,6 @@ async function main() {
       pattern: /\bheight="512"/,
       expected: true,
       message: 'must carry height="512" (Fix1)'
-    },
-    {
-      pattern: /<path[^>]*fill="#ededed"/s,
-      expected: true,
-      message: "must draw the B as a <path> with a fill attribute"
     },
     {
       pattern: /<text/,
@@ -135,23 +164,27 @@ async function main() {
     const page = await browser.newPage();
 
     // ── Rasterise at each required size ────────────────────────────────────
+    // `surface: null` → genuinely transparent canvas (favicon PNGs/ICO);
+    // the emblem itself provides all colour, so the icon reads on light and
+    // dark browser chrome without an added block. Only the apple-touch-icon
+    // is composited on an opaque surface (white — see header).
     const targets = [
-      { size: 16, name: "favicon-16x16.png" },
-      { size: 32, name: "favicon-32x32.png" },
-      { size: 96, name: "favicon-96x96.png" },
-      { size: 128, name: "favicon-128x128.png" },
-      { size: 180, name: "apple-icon-180x180.png" }
+      { size: 16, name: "favicon-16x16.png", surface: null },
+      { size: 32, name: "favicon-32x32.png", surface: null },
+      { size: 96, name: "favicon-96x96.png", surface: null },
+      { size: 128, name: "favicon-128x128.png", surface: null },
+      { size: 180, name: "apple-icon-180x180.png", surface: APPLE_SURFACE }
     ];
 
     const inlineSvg = mark.replace(/<\?xml[^>]*\?>\n?/, "");
 
-    for (const { size, name } of targets) {
+    for (const { size, name, surface } of targets) {
       await page.setViewportSize({ width: size, height: size });
 
       await page.setContent(`<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
-  html,body{margin:0;padding:0;width:${size}px;height:${size}px;overflow:hidden;background:${SCARLET};}
+  html,body{margin:0;padding:0;width:${size}px;height:${size}px;overflow:hidden;${surface ? `background:${surface};` : ""}}
   svg{display:block;width:${size}px;height:${size}px;}
 </style>
 </head><body>
@@ -160,6 +193,7 @@ ${inlineSvg}
 
       const png = await page.screenshot({
         type: "png",
+        omitBackground: surface === null,
         clip: { x: 0, y: 0, width: size, height: size }
       });
 

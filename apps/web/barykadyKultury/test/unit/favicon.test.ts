@@ -4,23 +4,31 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * T-034 (partial) — Favicon brand check (v3: bold letter-B mark).
+ * T-034 (partial) — Favicon brand check (v4: the REAL brand emblem).
+ *
+ * User correction (2026-10-19): the favicon must be the actual supplied
+ * brand emblem artwork (logo_red_small.svg — SCARLET "B" with white
+ * interior "BARYKADY KULTURY" lettering), not the v3 hand-drawn letter "B".
  *
  * Verifies that:
  *  1. index.html links `favicon.svg?v=<N>` with the correct MIME type AND
  *     carries `sizes="any"` so scalable SVG favicons are reliably picked up
  *     by Firefox and Safari (Fix1).
- *  2. favicon.svg has explicit width/height attributes (Fix1 — intrinsic size).
- *  3. The mark is the approved v3 design: a solid SCARLET background with a
- *     bold GRAY93 letter "B" drawn as path outlines (no <text>, so no font
- *     dependency). Both brand colours must be present.
+ *  2. favicon.svg has explicit width/height attributes (Fix1 — intrinsic
+ *     size) and the derived tight square viewBox (emblem bbox + 2-unit
+ *     margin, centered — same precedent as the `_web` logotype files).
+ *  3. The mark is the REAL emblem: the outer-path signature is taken
+ *     verbatim from the supplied logo_red_small.svg, both brand colours
+ *     (#c60001 SCARLET emblem, #fff white interior) are present, and there
+ *     is no <text> element (no font dependency).
  *  4. public/favicon.svg is a VERBATIM copy of the committed source of truth
  *     src/assets/brand/favicon_mark.svg — the generator only rasterises; it
  *     never re-derives geometry (deterministic regeneration contract).
- *  5. All icon hrefs carry the ?v=<N> cache-busting query (Fix3; bumped to
- *     v=3 with this redesign) and the underlying files exist on disk when
+ *  5. All icon hrefs carry the ?v=4 cache-busting query (Fix3; bumped from
+ *     v=3 with this correction) and the underlying files exist on disk when
  *     the query string is stripped.
- *  6. The generated favicon.ico is a brand icon, not the 69 KB Quasar default.
+ *  6. The generated favicon.ico is a small, valid brand icon, not the 69 KB
+ *     Quasar default.
  *
  * These are file-system / static-asset checks run in Node (not happy-dom).
  */
@@ -29,6 +37,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // test/unit/ → test/ → apps/web/barykadyKultury/
 const APP_ROOT = join(__dirname, "..", "..");
 const PUBLIC_DIR = join(APP_ROOT, "public");
+
+/** Distinctive leading path data of the emblem's outer SCARLET path,
+ *  byte-identical to the supplied NGOinfoSources logo_red_small.svg. */
+const EMBLEM_PATH_SIGNATURE = 'd="M601.66,419.3c-1.59-2.37';
 
 function readPublic(relPath: string): Buffer {
   return readFileSync(join(PUBLIC_DIR, relPath));
@@ -42,7 +54,7 @@ function readIndexHtml(): string {
   return readFileSync(join(APP_ROOT, "index.html"), "utf8");
 }
 
-describe("favicon — brand mark (T-034 partial, v3 letter-B)", () => {
+describe("favicon — real brand emblem (T-034 partial, v4)", () => {
   // ── Fix 1: SVG link correctness ──────────────────────────────────────────
 
   it("index.html SVG icon link has type=image/svg+xml and sizes=any", () => {
@@ -59,31 +71,37 @@ describe("favicon — brand mark (T-034 partial, v3 letter-B)", () => {
     expect(svg).toMatch(/\bheight="512"/);
   });
 
-  // ── v3 design: SCARLET bg + bold GRAY93 letter B (path outlines) ─────────
+  // ── v4 design: the REAL supplied brand emblem ────────────────────────────
 
-  it("favicon.svg background is SCARLET (#c60001) — visible on light chrome", () => {
+  it("favicon.svg carries the real emblem's path data verbatim", () => {
     const svg = readPublicText("favicon.svg");
-    // The rect fill must be SCARLET so the icon is visible on light tab strips.
-    expect(svg).toMatch(/<rect[^>]*fill="#c60001"/);
+    // Leading outer-path data copied byte-for-byte from the supplied
+    // logo_red_small.svg — proves the real artwork, not redrawn geometry.
+    expect(svg).toContain(EMBLEM_PATH_SIGNATURE);
   });
 
-  it("favicon.svg glyph is the GRAY93 (#ededed) letter B on the SCARLET block", () => {
+  it("favicon.svg uses the derived tight square viewBox (no rescaling)", () => {
     const svg = readPublicText("favicon.svg");
-    // The path fill must be GRAY93 (the bold B on the SCARLET surface).
-    expect(svg).toMatch(/<path[^>]*fill="#ededed"/);
+    // Measured emblem bbox + 2-unit margin, centered on a square canvas
+    // (see the mark file header; same precedent as the `_web` files).
+    expect(svg).toMatch(/viewBox="168\.92 160\.91 499\.31 499\.31"/);
   });
 
-  it("favicon.svg draws the B as font-independent path outlines", () => {
+  it("favicon.svg contains the brand SCARLET colour (emblem field)", () => {
     const svg = readPublicText("favicon.svg");
-    // evenodd counters (bowl holes) prove it is a real letterform path.
-    expect(svg).toMatch(/fill-rule="evenodd"/);
-    // A <text> element would silently depend on an installed/loaded font.
+    expect(svg).toContain("#c60001");
+  });
+
+  it("favicon.svg contains the white interior lettering colour", () => {
+    const svg = readPublicText("favicon.svg");
+    // logo_red_small.svg pairs #c60001 with #fff (the brandbook's
+    // small-size variant); both fills must survive the derivation.
+    expect(svg).toMatch(/fill:\s*#fff/);
+  });
+
+  it("favicon.svg is font-independent (path artwork, no <text>)", () => {
+    const svg = readPublicText("favicon.svg");
     expect(svg).not.toMatch(/<text[\s>]/);
-  });
-
-  it("favicon.svg uses a square 512-canvas viewBox", () => {
-    const svg = readPublicText("favicon.svg");
-    expect(svg).toMatch(/viewBox="0 0 512 512"/);
   });
 
   it("public/favicon.svg is a verbatim copy of src/assets/brand/favicon_mark.svg", () => {
@@ -96,23 +114,27 @@ describe("favicon — brand mark (T-034 partial, v3 letter-B)", () => {
     expect(readPublicText("favicon.svg")).toBe(mark);
   });
 
-  it("favicon.svg contains the brand SCARLET colour", () => {
-    const svg = readPublicText("favicon.svg");
-    expect(svg).toContain("#c60001");
-  });
-
-  it("favicon.svg contains the brand GRAY93 colour", () => {
-    const svg = readPublicText("favicon.svg");
-    // Both brand colours are present in the SVG markup (bg + emblem).
-    expect(svg).toContain("#ededed");
-  });
-
   it("favicon.svg does not contain the Quasar default blue", () => {
     const svg = readPublicText("favicon.svg");
     expect(svg).not.toContain("#1976d2");
   });
 
   // ── Fix 3: Cache-busting query string ────────────────────────────────────
+
+  it("every icon href carries the v=4 cache-busting query (Fix3)", () => {
+    const html = readIndexHtml();
+    const iconHrefs = [
+      ...html.matchAll(
+        /<link\s[^>]*rel="(?:icon|apple-touch-icon)"[^>]*href="([^"]+)"/g
+      )
+    ].map(m => m[1]!);
+    // svg + 4 PNGs + ico + apple-touch-icon
+    expect(iconHrefs.length).toBeGreaterThanOrEqual(7);
+    for (const href of iconHrefs) {
+      expect(href, `icon href not bumped to v=4: ${href}`).toMatch(/\?v=4$/);
+    }
+    expect(html).not.toMatch(/\?v=3"/);
+  });
 
   it("SVG icon href carries a version query string (cache-busting, Fix3)", () => {
     const html = readIndexHtml();
