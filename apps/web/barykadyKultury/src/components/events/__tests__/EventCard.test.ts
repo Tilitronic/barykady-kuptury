@@ -38,16 +38,26 @@ function eventView(overrides: Partial<EventView> = {}): EventView {
 
 async function mountCard(
   event: EventView,
-  options: { locale?: "en" | "pl" | "uk"; projectHref?: string | null } = {}
+  options: {
+    locale?: "en" | "pl" | "uk";
+    projectHref?: string | null;
+    headingLevel?: 2 | 3;
+  } = {}
 ) {
   const {
     locale = "en",
-    projectHref = `/${locale}/projects/${event.project?.slug ?? "x"}`
+    projectHref = `/${locale}/projects/${event.project?.slug ?? "x"}`,
+    headingLevel
   } = options;
 
   return mountWithPlugins(EventCard, {
     locale,
-    props: { event, locale, projectHref },
+    props: {
+      event,
+      locale,
+      projectHref,
+      ...(headingLevel ? { headingLevel } : {})
+    },
     initialRoute: `/${locale}/events`
   });
 }
@@ -59,6 +69,17 @@ describe("EventCard", () => {
     expect(wrapper.element.tagName).toBe("LI");
     expect(wrapper.findAll("h2")).toHaveLength(1);
     expect(wrapper.get(".event-card__title").text()).toBe("Sample timed event");
+  });
+
+  // M1 (T-025 review): the homepage nests cards under section h2s, so it
+  // asks for h3 titles; listing pages keep the default h2 outline.
+  it("renders the title as h3 when headingLevel is 3", async () => {
+    const wrapper = await mountCard(eventView(), { headingLevel: 3 });
+
+    expect(wrapper.findAll("h2")).toHaveLength(0);
+    const title = wrapper.get(".event-card__title");
+    expect(title.element.tagName).toBe("H3");
+    expect(title.text()).toBe("Sample timed event");
   });
 
   it("renders a timed event with date and local time inside <time datetime>", async () => {

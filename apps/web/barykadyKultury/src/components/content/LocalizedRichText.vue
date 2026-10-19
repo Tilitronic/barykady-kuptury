@@ -29,6 +29,16 @@ export default defineComponent({
     labelLang: {
       type: String,
       default: undefined
+    },
+    /**
+     * M1 (T-025): rendered heading levels shift by this offset (0 keeps the
+     * authored outline, 1 renders "## " as h3). Only the tag changes — the
+     * restricted-subset parser and its sanitization guarantees are shared
+     * and untouched.
+     */
+    headingOffset: {
+      type: Number,
+      default: 0
     }
   },
   setup(props) {
@@ -38,7 +48,8 @@ export default defineComponent({
         { class: "localized-rich-text", lang: props.lang },
         renderRichText(props.content, {
           newTabLabel: props.newTabLabel,
-          labelLang: props.labelLang
+          labelLang: props.labelLang,
+          headingOffset: props.headingOffset
         })
       );
   }
@@ -52,7 +63,8 @@ export default defineComponent({
 }
 
 .localized-rich-text :deep(h2),
-.localized-rich-text :deep(h3) {
+.localized-rich-text :deep(h3),
+.localized-rich-text :deep(h4) {
   margin-block-start: 2rem;
   margin-block-end: 0.75rem;
   color: var(--color-text);
@@ -64,6 +76,11 @@ export default defineComponent({
 
 .localized-rich-text :deep(h3) {
   font-size: var(--font-size-h3);
+}
+
+/* Offset rendering (M1) can produce h4 from an authored "### ". */
+.localized-rich-text :deep(h4) {
+  font-size: var(--font-size-h4, var(--font-size-h3));
 }
 
 .localized-rich-text :deep(p),

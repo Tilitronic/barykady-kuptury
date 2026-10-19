@@ -60,6 +60,24 @@ describe("ProjectCard", () => {
     );
   });
 
+  // M1 (T-025 review): homepage cards sit under section h2s and ask for h3
+  // titles; the projects listing keeps the default h2 outline.
+  it("renders the title as h3 when headingLevel is 3", async () => {
+    const wrapper = await mountWithPlugins(ProjectCard, {
+      locale: "pl",
+      props: {
+        project: projectView(),
+        href: "/pl/projects/warsztat-spoleczny",
+        locale: "pl",
+        headingLevel: 3
+      },
+      initialRoute: "/pl/projects"
+    });
+
+    expect(wrapper.findAll("h2")).toHaveLength(0);
+    expect(wrapper.get(".project-card__title").element.tagName).toBe("H3");
+  });
+
   it("renders without a cover: no img element at all", async () => {
     const wrapper = await mountCard(projectView({ coverUrl: null }));
 

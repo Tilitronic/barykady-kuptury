@@ -58,7 +58,27 @@ const en = {
   home: {
     title: "Barykady Kultury",
     description: "Official website of the Barykady Kultury association.",
-    placeholder: "Website content is being prepared."
+    /** Homepage section headings (T-025; UI copy, not organizational text). */
+    sections: {
+      mission: "Our mission",
+      events: "Upcoming events",
+      projects: "Featured projects",
+      explore: "Explore"
+    },
+    allEvents: "All events",
+    allProjects: "All projects",
+    /**
+     * Home events section when the calendar holds nothing upcoming.
+     * Intentionally shorter than `events.empty` (no onward "check back"
+     * clause — the section's "All events" link carries the reader on);
+     * do not merge the two keys.
+     */
+    eventsEmpty: "No upcoming events right now.",
+    /**
+     * M2 (T-025 review): the mission is pending, the page is not missing —
+     * `content.empty` ("This page is not available.") is wrong here.
+     */
+    missionEmpty: "Our story is being prepared — check back soon."
   },
   contact: {
     title: "Contact",

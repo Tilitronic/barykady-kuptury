@@ -20,6 +20,12 @@ export interface MountOptions {
   locale?: Locale;
   /** Props for the component under test (presentational components). */
   props?: Record<string, unknown>;
+  /**
+   * Slot content for the component under test, as raw HTML strings
+   * (presentational components; T-025 SectionShell). Passed straight to
+   * @vue/test-utils.
+   */
+  slots?: Record<string, string>;
   /** Extra Vue plugins registered after Pinia, i18n and the router. */
   plugins?: Plugin[];
   /** Fake Supabase client provided to the component tree. Defaults to null. */
@@ -59,6 +65,7 @@ export async function mountWithPlugins(
   const {
     locale = "en",
     props = {},
+    slots,
     plugins = [],
     supabase = null,
     initialRoute = "/",
@@ -81,6 +88,9 @@ export async function mountWithPlugins(
 
   return mount(component, {
     props,
+    // VTU types `slots` as a required object shape; only pass it when the
+    // test actually provides slot content.
+    ...(slots ? { slots } : {}),
     global: {
       plugins: [
         createPinia(),

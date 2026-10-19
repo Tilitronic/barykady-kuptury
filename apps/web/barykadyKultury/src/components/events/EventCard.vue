@@ -1,6 +1,8 @@
 <template>
   <li class="event-card">
-    <h2 class="event-card__title">{{ event.title }}</h2>
+    <component :is="`h${headingLevel}`" class="event-card__title">
+      {{ event.title }}
+    </component>
 
     <p v-if="when" class="event-card__when">
       <span v-if="when.allDay" class="event-card__all-day">
@@ -94,12 +96,20 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
  * online flag, so a registration URL renders as registration — never as
  * "online".
  */
-const props = defineProps<{
-  event: EventView;
-  locale: Locale;
-  /** Precomputed project route (`null` → no project link). */
-  projectHref: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    event: EventView;
+    locale: Locale;
+    /** Precomputed project route (`null` → no project link). */
+    projectHref: string | null;
+    /**
+     * M1 (T-025 review): homepage cards sit under section h2s and pass 3;
+     * listing pages keep the default h2 outline.
+     */
+    headingLevel?: 2 | 3;
+  }>(),
+  { headingLevel: 2 }
+);
 
 const { t } = useI18n();
 

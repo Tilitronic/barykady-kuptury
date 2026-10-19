@@ -106,6 +106,7 @@ import { QSkeleton } from "quasar";
 import { useI18n } from "vue-i18n";
 
 import EventCard from "@/components/events/EventCard.vue";
+import { eventProjectPath } from "@/features/events/projectLink";
 import { useEvents, type EventView } from "@/features/events/useEvents";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
@@ -175,12 +176,8 @@ const liveMessage = computed(() => {
 const contactPath = computed(() => `/${currentLocale.value}/contact`);
 
 function projectPath(event: EventView): string | null {
-  if (!event.project) return null;
-
-  const owningLocale = event.project.isFallback
-    ? DEFAULT_LOCALE
-    : currentLocale.value;
-  return `/${owningLocale}/projects/${event.project.slug}`;
+  // Strict-slug rule lives in one place (shared with the homepage, T-025).
+  return eventProjectPath(event.project, currentLocale.value);
 }
 </script>
 

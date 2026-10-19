@@ -206,6 +206,15 @@ export interface RenderRichTextOptions {
   readonly newTabLabel?: string | undefined;
   /** Language of `newTabLabel`, applied to the visually-hidden suffix span. */
   readonly labelLang?: string | undefined;
+  /**
+   * M1 (T-025 review): shift rendered heading levels down the outline.
+   * The homepage nests authored content under its section h2s, so it passes
+   * `1` ("## " renders h3, "### " renders h4) while `about.vue` keeps `0`.
+   * This changes only the rendered ELEMENT tag of already-parsed, already-
+   * sanitized headings — parsing and the restricted-subset guarantees are
+   * untouched, and the result is clamped to h1..h6.
+   */
+  readonly headingOffset?: number | undefined;
 }
 
 function renderInline(
@@ -249,7 +258,10 @@ function renderBlock(
   options: RenderRichTextOptions = {}
 ): VNode {
   if (node.kind === "heading") {
-    return h(`h${node.level}`, {}, renderInline(node.children, options));
+    const offset = options.headingOffset ?? 0;
+    // Clamp to the valid HTML heading range; never emit h0/h7.
+    const level = Math.min(6, Math.max(1, node.level + offset));
+    return h(`h${level}`, {}, renderInline(node.children, options));
   }
 
   if (node.kind === "paragraph") {

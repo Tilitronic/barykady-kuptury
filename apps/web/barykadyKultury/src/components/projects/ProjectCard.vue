@@ -10,7 +10,9 @@
         width="640"
         height="360"
       />
-      <h2 class="project-card__title">{{ project.title }}</h2>
+      <component :is="`h${headingLevel}`" class="project-card__title">
+        {{ project.title }}
+      </component>
     </RouterLink>
 
     <p v-if="project.summary" class="project-card__summary">
@@ -52,11 +54,19 @@ import type { Locale } from "@/features/i18n/locales";
  * width/height plus the CSS aspect ratio keep the grid shift-free while the
  * image loads. Optional fields collapse; nothing is truncated.
  */
-const props = defineProps<{
-  project: ProjectSummaryView;
-  href: string;
-  locale: Locale;
-}>();
+const props = withDefaults(
+  defineProps<{
+    project: ProjectSummaryView;
+    href: string;
+    locale: Locale;
+    /**
+     * M1 (T-025 review): homepage cards sit under section h2s and pass 3;
+     * listing pages keep the default h2 outline.
+     */
+    headingLevel?: 2 | 3;
+  }>(),
+  { headingLevel: 2 }
+);
 
 const { t } = useI18n();
 

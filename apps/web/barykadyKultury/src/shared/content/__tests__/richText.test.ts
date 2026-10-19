@@ -150,6 +150,32 @@ describe("renderRichText", () => {
     expect(vnodes[1]?.type).toBe("p");
   });
 
+  // M1 (T-025 review): the homepage nests authored headings under its own
+  // section h2s. The offset shifts the rendered ELEMENT only — parsing and
+  // sanitization are untouched, so hostile input stays inert exactly as
+  // before. about.vue keeps the default (0).
+  it("shifts heading levels with headingOffset (h2→h3, h3→h4)", () => {
+    const vnodes = renderRichText("## Two\n### Three", { headingOffset: 1 });
+
+    expect(vnodes.map(vnode => vnode.type)).toEqual(["h3", "h4"]);
+  });
+
+  it("keeps default heading levels when the offset is 0 or absent", () => {
+    expect(renderRichText("## Two\n### Three").map(v => v.type)).toEqual([
+      "h2",
+      "h3"
+    ]);
+    expect(
+      renderRichText("## Two", { headingOffset: 0 }).map(v => v.type)
+    ).toEqual(["h2"]);
+  });
+
+  it("clamps shifted headings to h6 (never emits an invalid element)", () => {
+    const vnodes = renderRichText("## Two\n### Three", { headingOffset: 4 });
+
+    expect(vnodes.map(vnode => vnode.type)).toEqual(["h6", "h6"]);
+  });
+
   it("renders a bullet list with list items", () => {
     const vnodes = renderRichText("- A\n- B");
 

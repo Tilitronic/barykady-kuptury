@@ -41,7 +41,16 @@ const uk: MessageSchema = {
   home: {
     title: "Barykady Kultury",
     description: "Офіційний сайт організації Barykady Kultury.",
-    placeholder: "Вміст сайту готується."
+    sections: {
+      mission: "Наша місія",
+      events: "Найближчі події",
+      projects: "Вибрані проєкти",
+      explore: "Досліджуйте"
+    },
+    allEvents: "Усі події",
+    allProjects: "Усі проєкти",
+    eventsEmpty: "Наразі майбутніх подій немає.",
+    missionEmpty: "Готуємо розповідь про нас. Завітайте пізніше."
   },
   contact: {
     title: "Контакти",

@@ -41,7 +41,16 @@ const pl: MessageSchema = {
   home: {
     title: "Barykady Kultury",
     description: "Oficjalna strona stowarzyszenia Barykady Kultury.",
-    placeholder: "Treść strony jest w przygotowaniu."
+    sections: {
+      mission: "Nasza misja",
+      events: "Nadchodzące wydarzenia",
+      projects: "Wyróżnione projekty",
+      explore: "Odkrywaj"
+    },
+    allEvents: "Wszystkie wydarzenia",
+    allProjects: "Wszystkie projekty",
+    eventsEmpty: "Brak nadchodzących wydarzeń.",
+    missionEmpty: "Przygotowujemy informacje o nas. Zapraszamy wkrótce."
   },
   contact: {
     title: "Kontakt",
