@@ -1,9 +1,19 @@
+# T-023 / D-23: Netlify resolves every path in this file relative to `base`.
+# The repository root is the base so the root-level `netlify/functions` stays
+# inside base-path resolution (no `../../` traversal). The Quasar app build and
+# publish paths are therefore explicit. The install step is required because the
+# lockfile lives in the app workspace, not at the repository root.
 [build]
-  base = "apps/web/barykadyKultury"
-  command = "pnpm build"
-  publish = "dist/spa"
+  base = "."
+  command = "pnpm --dir apps/web/barykadyKultury install --frozen-lockfile && pnpm --dir apps/web/barykadyKultury build"
+  publish = "apps/web/barykadyKultury/dist/spa"
+
+[functions]
+  directory = "netlify/functions"
 
 # Client-side routing: every unknown path resolves to the SPA entry point.
+# Netlify evaluates functions before redirects, so the calendar function is not
+# shadowed by this catch-all.
 [[redirects]]
   from = "/*"
   to = "/index.html"

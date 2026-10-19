@@ -12,7 +12,9 @@
 import type { Page, Route } from "@playwright/test";
 
 import {
+  CALENDAR_EVENTS_CALENDAR_ID,
   CALENDAR_EVENTS_FIXTURE,
+  CALENDAR_EVENTS_GENERATED_AT,
   type CalendarEvent,
   type CalendarEventsResponse
 } from "../fixtures/calendar-events";
@@ -39,6 +41,10 @@ export const PDF_FIXTURE_BODY =
 export interface MockCalendarEventsOptions {
   /** Event list returned by the mock. Defaults to the shared fixture. */
   events?: CalendarEvent[];
+  /** Calendar scope returned by the mock. Defaults to the fixture calendar. */
+  calendarId?: string;
+  /** Override `generatedAt`. Defaults to the fixed fixture timestamp. */
+  generatedAt?: string;
   /** Override the HTTP status to exercise error states. */
   status?: number;
 }
@@ -51,9 +57,14 @@ export async function mockCalendarEvents(
   page: Page,
   options: MockCalendarEventsOptions = {}
 ): Promise<void> {
-  const { events = CALENDAR_EVENTS_FIXTURE, status = 200 } = options;
+  const {
+    events = CALENDAR_EVENTS_FIXTURE,
+    calendarId = CALENDAR_EVENTS_CALENDAR_ID,
+    generatedAt = CALENDAR_EVENTS_GENERATED_AT,
+    status = 200
+  } = options;
 
-  const body: CalendarEventsResponse = { events };
+  const body: CalendarEventsResponse = { calendarId, events, generatedAt };
 
   await page.route(CALENDAR_EVENTS_GLOB, async (route: Route) => {
     await route.fulfill({

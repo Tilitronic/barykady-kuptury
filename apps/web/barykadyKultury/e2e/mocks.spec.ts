@@ -1,7 +1,9 @@
 import { expect } from "@playwright/test";
 
 import {
+  CALENDAR_EVENTS_CALENDAR_ID,
   CALENDAR_EVENTS_FIXTURE,
+  CALENDAR_EVENTS_GENERATED_AT,
   type CalendarEventsResponse
 } from "./fixtures/calendar-events";
 import {
@@ -30,7 +32,9 @@ test.describe("external service mocks", () => {
     }, CALENDAR_EVENTS_PATH);
 
     expect(payload as CalendarEventsResponse).toEqual({
-      events: CALENDAR_EVENTS_FIXTURE
+      calendarId: CALENDAR_EVENTS_CALENDAR_ID,
+      events: CALENDAR_EVENTS_FIXTURE,
+      generatedAt: CALENDAR_EVENTS_GENERATED_AT
     });
   });
 

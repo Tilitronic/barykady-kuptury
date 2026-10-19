@@ -143,6 +143,9 @@ Function requirements:
 - Set an appropriate short cache policy to reduce repeated API requests while keeping the schedule reasonably fresh.
 - Fail with a controlled error response; do not leak credentials, raw exception traces, or API response secrets.
 - Use the event's supplied timezone where available; otherwise use the configured organization's timezone (initially `Europe/Warsaw`, confirm with the NGO).
+- Calendar adapter success payload is `{ calendarId, events, generatedAt }`.
+- `events[*].id` is the Google event identifier (`google_event_id`); the frontend joins mappings by `(calendarId, events[*].id)` against `calendar_event_links (calendar_id, google_event_id)`.
+- Missing server-side calendar configuration is a server failure: `500 { "error": "calendar_unavailable" }` with `Cache-Control: no-store`. Request-validation failures remain `400 { "error": "invalid_request" }`.
 
 V1 is read-only with respect to Google Calendar. Creating/editing Google events from the web admin and OAuth write scopes are explicitly deferred. Avoid relying solely on an iframe, because it cannot provide the required project relationship or a tailored homepage event list.
 
@@ -178,6 +181,7 @@ Donation actions should link to verified NGO-provided destinations. The website 
 ## 9. Deployment and configuration
 
 - Netlify serves the built Quasar SPA and the read-only Calendar function.
+- Netlify build base is the repository root; the Quasar app build/publish paths are explicit (`apps/web/barykadyKultury/...`) and the functions directory is `netlify/functions`.
 - The publish directory should match the actual Quasar build output (typically `apps/web/dist/spa` for SPA mode).
 - Configure history fallback for client-side routes.
 - Configure distinct environment variables for local development, previews, and production.
