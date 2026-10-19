@@ -28,7 +28,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-022 | Support page | 4 | done | @reviewer (rev-1) + @designer (des-1) | ba2510b | 2026-10-18 |
 | T-023 | Calendar adapter function | 7 | done | @reviewer (rev-1) + @architector (arc-1) | e2c3168 | 2026-10-19 |
 | T-024 | Events page | 7 | done | @reviewer (rev-2) + @designer (des-1/des-2) | a348aa3 | 2026-10-19 |
-| T-025 | Homepage composition | 7 | in-progress | — | — | — |
+| T-025 | Homepage composition | 7 | done | @reviewer (rev-3) + @designer (des-1/des-4) | d6dc4cf | 2026-10-19 |
 | T-026 | Admin auth & layout | 6 | todo | — | — | — |
 | T-027 | Admin projects CRUD | 6 | todo | — | — | — |
 | T-028 | Admin site pages & team CRUD | 6 | todo | — | — | — |
@@ -51,3 +51,4 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | 4 | 2026-10-18 | 2026-10-18 (data-layer block T-012 + T-013 + T-014 + T-015 done & reviewed against a local Supabase stack; + §10 qwen3.7-plus → qwen3.8-flash retarget) | `HANDOFF-S4-2026-10-18.md` | pending (restart OpenCode for the model change; push pending — main ahead 31) |
 | 5 | 2026-10-18 | 2026-10-18 (T-016 done & reviewed; T-017 implemented + spec-reviewed, design gate blocked on designer-model funding; D-12 resolved; + §10 designer model fix) | `HANDOFF-S5-2026-10-18.md` | pending (restart OpenCode for the designer model; push pending) |
 | 6 | 2026-10-18 | 2026-10-18 (T-017 design gate closed after restart; UI range T-018 + T-019 + T-020 + T-021 + T-022 done & reviewed with quick fixes applied; + shared media/file URL seam; + T-036 created) | `HANDOFF-S6-2026-10-18.md` | pending (push pending — main ahead; run `pnpm test:e2e --workers=1`) |
+| 7 | 2026-10-19 | 2026-10-19 (T-023 + T-024 + T-025 done & reviewed; + real brand-emblem favicon correction; D-23 Netlify base; favicon v=4) | `HANDOFF-S7-2026-10-19.md` | pending (push pending — main ahead; run `pnpm test:e2e --workers=1`) |
