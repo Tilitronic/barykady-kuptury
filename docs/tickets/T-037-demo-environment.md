@@ -138,3 +138,15 @@ pnpm test:db:idempotency
   asset 200, viewer-denial/auth boundary), and `pnpm test:db:idempotency`
   with demo data. Workstation note: port 9000 is held by the `poetry-dev`
   container; use `DEMO_DEV_PORT=9200` (documented in STATUS.md).
+- (session 8, post-close defect found by the user) The site returned 200 but the
+  browser stayed in loading states and the console reported “Supabase is not
+  configured”. Two causes, both fixed: (1) Quasar’s client env prefix defaults
+  to `QCLI_`, so the `VITE_*` values written to `.env.local` were filtered out
+  of the client bundle — `build.env.clientPrefix` now exposes `QCLI_` and
+  `VITE_`; (2) the meta CSP only allowed same-origin connections, so REST and
+  Storage calls to `http://127.0.0.1:54321` were blocked — dev now allows the
+  local Supabase origin and production allows `https://*.supabase.co` for
+  connect/img. Verified in a real browser: demo mission/events/projects render,
+  `admin@demo.local` reaches `/en/admin`, `viewer@demo.local` reaches
+  `/en/admin/access-denied`; 90 E2E and the build stay green. Use
+  `127.0.0.1`, not `localhost`, for the demo origin.

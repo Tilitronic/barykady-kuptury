@@ -147,6 +147,12 @@ DEMO_BASE_URL=http://127.0.0.1:9100 pnpm demo:check
 If you change the mock port, pass the same `CALENDAR_MOCK_PORT` to `pnpm demo`
 so the dev proxy targets it, and to a standalone `pnpm demo:calendar`.
 
+Open the demo through `http://127.0.0.1:<port>` rather than `localhost`: the dev
+server binds IPv4, while `localhost` may resolve to IPv6 on some WSL setups. If
+the page renders but stays in loading states and the console says “Supabase is
+not configured”, `.env.local` is missing or the dev server was started before
+it was written — re-run `pnpm demo` (it rewrites the file before starting Vite).
+
 ## Reset semantics
 
 ```sh

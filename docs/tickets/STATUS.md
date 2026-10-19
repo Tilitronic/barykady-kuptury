@@ -53,7 +53,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | 5 | 2026-10-18 | 2026-10-18 (T-016 done & reviewed; T-017 implemented + spec-reviewed, design gate blocked on designer-model funding; D-12 resolved; + §10 designer model fix) | `HANDOFF-S5-2026-10-18.md` | pending (restart OpenCode for the designer model; push pending) |
 | 6 | 2026-10-18 | 2026-10-18 (T-017 design gate closed after restart; UI range T-018 + T-019 + T-020 + T-021 + T-022 done & reviewed with quick fixes applied; + shared media/file URL seam; + T-036 created) | `HANDOFF-S6-2026-10-18.md` | pending (push pending — main ahead; run `pnpm test:e2e --workers=1`) |
 | 7 | 2026-10-19 | 2026-10-19 (T-023 + T-024 + T-025 done & reviewed; + real brand-emblem favicon correction; D-23 Netlify base; favicon v=4) | `HANDOFF-S7-2026-10-19.md` | pending (push pending — main ahead; run `pnpm test:e2e --workers=1`) |
-| 8 | 2026-10-19 | 2026-10-19 (T-037 + T-026 done & reviewed; local demo env, calendar mock, admin shell, carry-over fixes; review hardening: RLS boundary check, PID identity, architecture record) | `HANDOFF-S8-2026-10-19.md` | pending (push pending; user should run `pnpm demo` + `pnpm demo:check`) |
+| 8 | 2026-10-19 | 2026-10-19 (T-037 + T-026 done & reviewed; local demo env, calendar mock, admin shell, carry-over fixes; review hardening: RLS boundary check, PID identity, architecture record; post-close demo env/CSP defect fixed and browser-verified) | `HANDOFF-S8-2026-10-19.md` | pending (push pending; run `pnpm demo` with `DEMO_DEV_PORT=9200` + `pnpm demo:check`) |
 
 ## Next session (planned)
 

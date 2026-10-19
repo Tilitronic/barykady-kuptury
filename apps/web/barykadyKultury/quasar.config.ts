@@ -53,6 +53,15 @@ export default defineConfig(ctx => {
       vueRouterMode: "history", // locale-prefixed URLs; Netlify SPA redirect handles deep links
       // vueRouterBase,
 
+      // T-037 defect: Quasar's default client-env prefix is `QCLI_`, so the
+      // browser-safe `VITE_*` values written to `.env.local` (and the values
+      // Playwright sets for its build) were filtered out and `boot/supabase.ts`
+      // threw "Supabase is not configured". Keep Quasar's prefix and expose
+      // `VITE_` as well; only publicly-safe keys use it (architecture §6).
+      env: {
+        clientPrefix: ["QCLI_", "VITE_"]
+      },
+
       // publicPath: '/',
       // define: {},
       // defineEnv: {}
