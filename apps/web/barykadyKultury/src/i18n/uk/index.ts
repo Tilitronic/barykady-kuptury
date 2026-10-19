@@ -105,7 +105,17 @@ const uk: MessageSchema = {
   events: {
     title: "Події",
     description: "Майбутні події, організовані Barykady Kultury.",
-    placeholder: "Події готуються."
+    empty: "Наразі майбутніх подій немає. Загляньте до нас пізніше.",
+    calendarUnavailable: "Календар подій тимчасово недоступний.",
+    retry: "Спробувати ще раз",
+    contactFallback: "Зв'яжіться з нами щодо подій",
+    loaded: "Майбутні події: {count}.",
+    languageNote: "Подробиці події надає організатор оригінальною мовою.",
+    allDay: "Цілоденна",
+    register: "Зареєструватися",
+    registerFor: "на подію {title}",
+    rangeTo: "до",
+    projectLabel: "Пов'язаний проєкт:"
   },
   publications: {
     title: "Публікації",

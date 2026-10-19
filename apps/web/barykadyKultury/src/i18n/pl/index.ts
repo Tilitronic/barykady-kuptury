@@ -106,7 +106,17 @@ const pl: MessageSchema = {
   events: {
     title: "Wydarzenia",
     description: "Nadchodzące wydarzenia organizowane przez Barykady Kultury.",
-    placeholder: "Wydarzenia są w przygotowaniu."
+    empty: "Brak nadchodzących wydarzeń. Zapraszamy ponownie wkrótce.",
+    calendarUnavailable: "Kalendarz wydarzeń jest czasowo niedostępny.",
+    retry: "Spróbuj ponownie",
+    contactFallback: "Skontaktuj się z nami w sprawie wydarzeń",
+    loaded: "Nadchodzące wydarzenia: {count}.",
+    languageNote: "Szczegóły wydarzenia podaje organizator w języku oryginału.",
+    allDay: "Całodniowe",
+    register: "Zapisz się",
+    registerFor: "na {title}",
+    rangeTo: "do",
+    projectLabel: "Powiązany projekt:"
   },
   publications: {
     title: "Publikacje",

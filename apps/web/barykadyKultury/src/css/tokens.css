@@ -571,6 +571,18 @@
   [data-theme="dark"] {
     --motion-duration: 0ms;
   }
+
+  /*
+   * T-024 (finding B1): QSkeleton's shimmer is Quasar's own infinite keyframe
+   * animation (`q-skeleton--wave` etc.) plus a sweeping ::after — neither is
+   * governed by --motion-duration, so the media block above alone does not
+   * stop it. Kill both explicitly: a static placeholder block still reads as
+   * "content loading" without the looping motion (DESIGN_SYSTEM.md §6).
+   */
+  .q-skeleton,
+  .q-skeleton::after {
+    animation: none;
+  }
 }
 
 /* =========================================================================

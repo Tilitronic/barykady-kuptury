@@ -137,7 +137,30 @@ const en = {
   events: {
     title: "Events",
     description: "Upcoming events organized by Barykady Kultury.",
-    placeholder: "Events are being prepared."
+    /** Listing state when the calendar holds no upcoming events (T-024). */
+    empty: "No upcoming events right now — check back soon.",
+    /** Calendar adapter failure — the rest of the page stays usable. */
+    calendarUnavailable: "The event calendar is temporarily unavailable.",
+    retry: "Try again",
+    /** Fallback destination while the calendar is down (PRD §5). */
+    contactFallback: "Contact us about upcoming events",
+    /** SR-only live-region outcome (M1): success carries the result count. */
+    loaded: "Upcoming events shown: {count}.",
+    /**
+     * D-14 (open) default: calendar text is shown as-is because the wire has
+     * no language field; this note — once per list — explains why.
+     */
+    languageNote:
+      "Event details are provided by the organizer in their original language.",
+    /** All-day badge: text, never color alone (DESIGN_SYSTEM.md §6). */
+    allDay: "All-day",
+    /** Visible label; the SR-only suffix carries the event title. */
+    register: "Register",
+    registerFor: "for {title}",
+    /** SR-only date-range relation between the two <time> elements (D3). */
+    rangeTo: "to",
+    /** SR-only prefix of the project link (visible text is the project title). */
+    projectLabel: "Related project:"
   },
   publications: {
     title: "Publications",
