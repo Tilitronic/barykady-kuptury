@@ -23,6 +23,11 @@ const en = {
   },
   nav: {
     language: "Language",
+    /**
+     * Tooltip/hint on the language switcher trigger — states the action so
+     * it is obvious the control changes the language (hover, tap or Enter).
+     */
+    changeLanguage: "Change language",
     /** Mobile drawer controls (DESIGN_SYSTEM.md §4 — explicit open/close state). */
     openMenu: "Open navigation menu",
     closeMenu: "Close navigation menu",
