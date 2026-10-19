@@ -102,7 +102,7 @@ describe("LanguageSwitcher — hover disclosure", () => {
     expect(triggerButton(wrapper).attributes("title")).toBe("Zmień język");
   });
 
-  it("expands on pointer hover and collapses again on leave", async () => {
+  it("expands on pointer hover and collapses after the grace period on leave", async () => {
     const { wrapper } = await mountSwitcher("/pl/projects");
 
     await wrapper.trigger("mouseenter");
@@ -112,7 +112,28 @@ describe("LanguageSwitcher — hover disclosure", () => {
     }
 
     await wrapper.trigger("mouseleave");
+    // Grace period: the panel does NOT snap shut the instant the pointer
+    // leaves — the trigger→panel seam is crossed in exactly that window
+    // (hover-gap bug fix).
+    expect(triggerButton(wrapper).attributes("aria-expanded")).toBe("true");
+
+    // Past the 120 ms grace, with nothing re-entering, it collapses.
+    await new Promise(resolve => setTimeout(resolve, 150));
     expect(triggerButton(wrapper).attributes("aria-expanded")).toBe("false");
+  });
+
+  it("cancels the scheduled close when the pointer re-enters", async () => {
+    const { wrapper } = await mountSwitcher("/pl/projects");
+
+    await wrapper.trigger("mouseenter");
+    await wrapper.trigger("mouseleave");
+    await wrapper.trigger("mouseenter"); // travel back within the grace
+
+    await new Promise(resolve => setTimeout(resolve, 150));
+    expect(triggerButton(wrapper).attributes("aria-expanded")).toBe("true");
+    for (const option of optionButtons(wrapper)) {
+      expect(option.isVisible()).toBe(true);
+    }
   });
 
   it("expands on keyboard focus (Tab) without any click", async () => {
@@ -145,7 +166,7 @@ describe("LanguageSwitcher — hover disclosure", () => {
     expect(document.activeElement).toBe(triggerButton(wrapper).element);
   });
 
-  it("marks the current option with aria-current and a visible check", async () => {
+  it("marks the current option with aria-current only", async () => {
     const { wrapper } = await mountSwitcher("/pl/projects");
     await wrapper.trigger("mouseenter");
 
@@ -153,7 +174,6 @@ describe("LanguageSwitcher — hover disclosure", () => {
     expect(en?.attributes("aria-current")).toBeUndefined();
     expect(pl?.attributes("aria-current")).toBe("true");
     expect(uk?.attributes("aria-current")).toBeUndefined();
-    expect(pl?.text()).toContain("✓");
   });
 
   it("keeps autonym + code accessible names for every option", async () => {

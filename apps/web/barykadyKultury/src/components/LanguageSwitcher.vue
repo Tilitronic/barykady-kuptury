@@ -28,7 +28,7 @@
       aria-haspopup="true"
       aria-controls="bk-language-options"
       :title="t('nav.changeLanguage')"
-      @pointerdown="pointerOrigin = true"
+      @pointerdown="onPointerDown"
       @click="onTriggerClick"
     >
       <span class="language-switcher__label">{{ t("nav.language") }}</span>
@@ -48,8 +48,8 @@
     <!--
       Expanded panel: one button per locale (flag + code visible, autonym +
       code as the accessible name). Native buttons keep Tab/Enter/Space for
-      free; the current locale is marked with aria-current AND a visible ✓,
-      so state is never colour-only (DESIGN_SYSTEM.md §6).
+      free; the current locale is marked with aria-current and an accent
+      inset ring, so state is never colour-only (DESIGN_SYSTEM.md §6).
     -->
     <ul
       id="bk-language-options"
@@ -72,12 +72,6 @@
           <span class="language-switcher__code" aria-hidden="true">{{
             LOCALE_DISPLAY_CODE[locale]
           }}</span>
-          <span
-            v-if="locale === activeLocale"
-            class="language-switcher__check"
-            aria-hidden="true"
-            >✓</span
-          >
         </button>
       </li>
     </ul>
@@ -85,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
@@ -120,7 +114,10 @@ import { localeStore } from "@/features/i18n/localeStorage";
  *    and Space fire click with `detail === 0`; pointer clicks have
  *    `detail >= 1`; both simply toggle the pin.
  * Closing: Escape (all signals cleared, focus restored to the trigger),
- * focus leaving the component, or selecting an option.
+ * focus leaving the component, or selecting an option. Pointer-leave gets
+ * a 120 ms grace period (cancelled on re-entry) and the panel carries an
+ * invisible ::before bridge over the trigger→panel seam, so the mouse path
+ * is continuous (user-reported bug: the dead 4 px gap closed the menu).
  *
  * The options are plain buttons in a list (disclosure pattern, not a
  * menu/listbox), which keeps the keyboard contract to native Tab +
@@ -150,6 +147,30 @@ let pointerOrigin = false;
 let suppressFocusOpen = false;
 /** Where the pointer currently is — lets focusout close a stale hover. */
 let pointerInside = false;
+/**
+ * Pointer type of the last press ("mouse" | "touch" | "pen"). Mouse presses
+ * must NOT pin the panel open: hover already governs it, and pinning on a
+ * mouse click made the panel survive `mouseleave` (user-reported bug).
+ */
+let lastPointerType: string | null = null;
+
+/**
+ * Grace period before a pointer-leave actually collapses a hover-opened
+ * panel (user-reported bug: the pointer crossing the trigger→panel seam —
+ * especially diagonally, overshooting the invisible ::before bridge —
+ * fired mouseleave and killed the menu mid-travel). 120 ms is under the
+ * threshold that feels sluggish while covering a short excursion; any
+ * re-entry cancels it, and the timer re-checks state before closing.
+ */
+const HOVER_CLOSE_DELAY_MS = 120;
+let hoverCloseTimer: ReturnType<typeof setTimeout> | null = null;
+
+function cancelScheduledHoverClose(): void {
+  if (hoverCloseTimer !== null) {
+    clearTimeout(hoverCloseTimer);
+    hoverCloseTimer = null;
+  }
+}
 
 const open = computed(
   () => hoverOpen.value || focusOpen.value || pinnedOpen.value
@@ -160,23 +181,31 @@ const activeLocale = computed(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-function focusIsInside(): boolean {
-  const active = document.activeElement;
-  return !!active && !!rootEl.value?.contains(active);
-}
-
 function onHoverEnter(): void {
   pointerInside = true;
+  // Coming back within the grace period cancels the pending close.
+  cancelScheduledHoverClose();
   hoverOpen.value = true;
 }
 
 function onHoverLeave(): void {
   pointerInside = false;
-  // Keep the panel while keyboard focus is inside it.
-  if (focusIsInside()) {
+  // Only *keyboard* focus keeps a hover-opened panel alive. A mouse click
+  // also focuses the trigger; treating that as "focus holds it open" left
+  // the panel visible after the pointer had already left (reported bug).
+  if (focusOpen.value) {
     return;
   }
-  hoverOpen.value = false;
+  cancelScheduledHoverClose();
+  hoverCloseTimer = setTimeout(() => {
+    hoverCloseTimer = null;
+    // Re-check at fire time: the pointer may have returned through the
+    // bridge, or keyboard focus arrived — either keeps the panel open.
+    if (pointerInside || focusOpen.value) {
+      return;
+    }
+    hoverOpen.value = false;
+  }, HOVER_CLOSE_DELAY_MS);
 }
 
 function onFocusIn(): void {
@@ -206,7 +235,25 @@ function onFocusOut(event: FocusEvent): void {
   }
 }
 
-function onTriggerClick(): void {
+function onPointerDown(event: PointerEvent): void {
+  pointerOrigin = true;
+  // jsdom/older browsers may omit pointerType; default to mouse.
+  lastPointerType = event.pointerType || "mouse";
+}
+
+function onTriggerClick(event: MouseEvent): void {
+  const isKeyboard = event.detail === 0;
+  const isMouse = lastPointerType === "mouse" || lastPointerType === null;
+
+  // Mouse: hover already opened the panel and owns its lifetime, so a click
+  // must NOT pin it open — otherwise it survives `mouseleave` and stays
+  // visible after the pointer leaves (user-reported bug). Keyboard
+  // (Enter/Space) and touch/pen have no hover, so they pin/toggle instead.
+  if (!isKeyboard && isMouse) {
+    pointerOrigin = false;
+    return;
+  }
+
   pinnedOpen.value = !pinnedOpen.value;
   if (pinnedOpen.value) {
     // An explicit open should not be undone by the pointer leaving.
@@ -224,6 +271,7 @@ function onEscape(): void {
 }
 
 function closePanel(): void {
+  cancelScheduledHoverClose();
   hoverOpen.value = false;
   focusOpen.value = false;
   pinnedOpen.value = false;
@@ -250,6 +298,9 @@ function onSelect(next: Locale): void {
     hash: route.hash
   });
 }
+
+// A pending grace-period close must not survive the component.
+onBeforeUnmount(cancelScheduledHoverClose);
 </script>
 
 <style scoped>
@@ -343,6 +394,26 @@ function onSelect(next: Locale): void {
   box-shadow: var(--shadow-md);
 }
 
+/*
+  Invisible hover bridge across the 0.25 rem seam between trigger and
+  panel (user-reported bug fix). The strip belonged to no box under this
+  component, so moving straight from the trigger into the list fired
+  mouseleave on the root and the menu collapsed mid-travel. A transparent
+  pseudo-element of the PANEL — a descendant of the root — claims the gap,
+  so the pointer never leaves the root's subtree during the crossing
+  (mouseenter/mouseleave count descendants even when they sit outside the
+  parent's border box). No visual change: no background, no size beyond
+  the dead strip it fills.
+*/
+.language-switcher__options::before {
+  content: "";
+  position: absolute;
+  top: -0.25rem;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+}
+
 .language-switcher__option {
   display: flex;
   align-items: center;
@@ -359,30 +430,11 @@ function onSelect(next: Locale): void {
 }
 
 /*
-  Current locale: accent inset ring + a visible ✓ glyph — position, shape
-  and the aria-current attribute carry the state, not colour alone
-  (DESIGN_SYSTEM.md §6).
+  Current locale: accent inset ring, paired with the aria-current attribute
+  so state is carried by the attribute and a visible boundary, not colour
+  alone (DESIGN_SYSTEM.md §6).
 */
 .language-switcher__option[aria-current="true"] {
   box-shadow: inset 0 0 0 2px var(--color-accent);
-}
-
-.language-switcher__check {
-  margin-left: auto;
-  color: var(--color-accent);
-  font-weight: 700;
-}
-
-/* Screen-reader only helper (same pattern as AppHeader's `.sr-only`). */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 </style>
