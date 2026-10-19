@@ -17,6 +17,7 @@ const uk: MessageSchema = {
   },
   nav: {
     language: "Мова",
+    changeLanguage: "Змінити мову",
     openMenu: "Відкрити меню навігації",
     closeMenu: "Закрити меню навігації",
     mainNav: "Головна навігація",

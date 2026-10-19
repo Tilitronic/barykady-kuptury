@@ -155,7 +155,7 @@ test.describe("documents reader", () => {
     await gotoWithDocuments(page);
     await page.goto("/pl/about/documents/regulamin");
 
-    await page.getByRole("button", { name: "English" }).click();
+    await page.getByRole("button", { name: "English", exact: true }).click();
 
     await expect(page.getByText("EN-REGULATION body.")).toBeVisible();
     await expect(page.getByText("PL-REGULATION body.")).toHaveCount(0);
@@ -170,7 +170,7 @@ test.describe("documents reader", () => {
     await gotoWithDocuments(page);
     await page.goto("/pl/about/documents/regulamin");
 
-    await page.getByRole("button", { name: "English" }).focus();
+    await page.getByRole("button", { name: "English", exact: true }).focus();
     await page.keyboard.press("Enter");
 
     await expect(page.getByText("EN-REGULATION body.")).toBeVisible();
@@ -191,10 +191,14 @@ test.describe("documents reader", () => {
 
     // UK has no translation at all; PL has no body — both are non-selectable.
     await expect(
-      page.getByRole("button", { name: "Українська" })
+      page.getByRole("button", { name: "Українська", exact: true })
     ).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Polski" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "English" })).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: "Polski", exact: true })
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "English", exact: true })
+    ).toBeEnabled();
 
     await expectNoSeriousViolations(page);
   });

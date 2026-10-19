@@ -85,9 +85,11 @@ test.describe("locale routing", () => {
   }) => {
     await page.goto("/pl/projects?src=e2e");
 
-    // The language picker is a radio group of flag+code chips; the
-    // accessible name is the autonym + display code (value stays `uk`).
-    await page.getByRole("radio", { name: "Українська UA" }).click();
+    // The language switcher is a hover/tap disclosure: open the trigger
+    // (a click covers pointer, touch and keyboard activation), then pick
+    // the Ukrainian option (accessible name = autonym + display code).
+    await page.getByRole("button", { name: "Język Polski PL" }).click();
+    await page.getByRole("button", { name: "Українська UA" }).click();
 
     await expect(page).toHaveURL(/\/uk\/projects\?src=e2e$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "uk");

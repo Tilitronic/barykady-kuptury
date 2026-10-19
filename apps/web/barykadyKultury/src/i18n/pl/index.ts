@@ -17,6 +17,7 @@ const pl: MessageSchema = {
   },
   nav: {
     language: "Język",
+    changeLanguage: "Zmień język",
     openMenu: "Otwórz menu nawigacji",
     closeMenu: "Zamknij menu nawigacji",
     mainNav: "Nawigacja główna",

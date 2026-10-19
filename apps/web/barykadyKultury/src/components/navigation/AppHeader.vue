@@ -64,22 +64,21 @@
       </nav>
 
       <!--
-        Controls: labelled dark-mode switch + language flag/code picker.
+        Controls: labelled dark-mode switch + language hover disclosure.
 
-        Order is deliberate (user requirement, unchanged by the switch
-        redesign): the language picker sits in the right corner of the
+        Order is deliberate (user requirement, unchanged by the control
+        redesigns): the language switcher sits in the right corner of the
         header and the theme control comes immediately before it. Desktop:
-        inline at the right edge of the panel. Mobile: same order stacked in
-        the drawer, the language legend visible and chips wrapping instead
-        of truncating — nothing is clipped at 320 px because the drawer is
-        full-viewport width.
+        inline at the right edge of the panel. Mobile: same order in the
+        drawer, tapped open — the disclosure trigger (~150 px) and its
+        narrow option panel never truncate at 320 px.
 
         The theme control is a single labelled switch (accessible name ==
-        visible "Dark mode" text); the language cluster is a native fieldset
-        radiogroup whose `<legend>` names the group (visually hidden ≥ 1280
-        px to protect the header width budget, visible in the drawer). Every
-        control's visible text is contained in its accessible name
-        (WCAG 2.5.3).
+        visible "Dark mode" text); the language control is a disclosure
+        button ("Language 🇵🇱 PL ▾", name "Język Polski PL") that expands
+        on hover/focus/click into per-locale option buttons, the current
+        one marked aria-current. Every control's visible text is contained
+        in its accessible name (WCAG 2.5.3).
       -->
       <div class="app-header__controls">
         <ThemeToggle />
@@ -134,14 +133,14 @@ import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
  * fixed drawer on click, stacked and fully readable.
  *
  * Escape closes the panel from any focused element inside it (nav link,
- * language radio, or theme switch) and returns focus to the trigger
+ * language option, or theme switch) and returns focus to the trigger
  * (DESIGN_SYSTEM.md §4, §6 — no hover dependency, explicit open/close state).
  *
  * Moving the controls into the drawer (vs. a compact header strip) was chosen
  * to:
  *  - Keep every control's full accessible name intact (WCAG 2.5.3) in all
  *    three locales without truncation.
- *  - Keep the theme-switch/language-radio names stable for the E2E tests.
+ *  - Keep the theme-switch/language-option names stable for the E2E tests.
  *  - Eliminate the 320 px overflow at its root without CSS workarounds.
  */
 
@@ -182,7 +181,7 @@ function closeMenu(): void {
  * Handle keyboard events on the panel element.
  * Escape closes the menu and returns focus — no focus trap required (T-011
  * spec: "focus trap not required but focus must return to trigger").
- * Catches events from any focused child: nav links, language radios, the
+ * Catches events from any focused child: nav links, language options, the
  * theme switch.
  */
 function handleNavKeydown(event: KeyboardEvent): void {
