@@ -23,6 +23,34 @@ Ticket files live in this folder; the ledger is [STATUS.md](./STATUS.md); open i
 - Architecture-level tickets (T-001, T-004, T-012, T-013, T-034) also require `@architector` review against `docs/architecture.md`.
 - UI tickets also require `@designer` review against `docs/DESIGN_SYSTEM.md` and the brandbook rules.
 
+## Operational guardrails
+
+Adopted 2026-10-18 after the session-efficiency analysis
+(`knowledge/ana001-opencode-session-efficiency/`). These limit per-ticket overhead
+and restart churn; they do not relax any verification requirement above.
+
+1. **Gate by ticket type, not habit.** `@designer` review is required only for UI
+   tickets and `@architector` only for the architecture tickets named in Hard rules.
+   Do not dispatch a lane review a ticket does not require.
+2. **One review pass per ticket.** Apply reviewer findings and re-check in the same
+   ticket; do not open speculative extra lanes.
+3. **Never edit AI tooling inside a ticket session.** Any §10 change to agents,
+   models, skills, rules, or config is parked in `STATUS.md` and applied in a dedicated
+   config session with its own restart, so ticket sessions never pay the restart tax
+   mid-flight.
+4. **Do not block on `question` when a documented "smallest safe" default exists.**
+   Choose the default, record it in `DECISIONS.md`, and continue; reserve human gates
+   for genuine, non-inferable decisions.
+5. **Pushing is part of done.** A session is not closed until its commits are on the
+   remote (the agent's `git push` is denied by policy — request the push and record the
+   resulting sha in `STATUS.md`). Local-only work is not shippable.
+6. **Prefer the thinnest user-visible vertical slice.** When choosing the next ticket,
+   prefer completing an end-to-end user-facing page (e.g. homepage composition, T-025)
+   over further infrastructure, so the product advances rather than its scaffolding alone.
+7. **Do not blindly retry a failed dispatch.** A zero-output or errored subagent session
+   is recorded, and its lane model is verified before the next attempt; never re-pay a
+   lane that just died.
+
 ## Session map & context budget
 
 | Session | Tickets | Focus | Expected context |
