@@ -21,3 +21,11 @@ playwright-report/
 .DS_Store
 .thumbs.db
 *.log
+
+# BEGIN oh-my-opencode-slim worktrees
+.slim/worktrees/
+.slim/worktrees.json
+# END oh-my-opencode-slim worktrees
+
+# Supplied source material — real NGO documents; local only, never committed
+NGOinfoSources/
