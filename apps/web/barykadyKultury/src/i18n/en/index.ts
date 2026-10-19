@@ -49,7 +49,11 @@ const en = {
     socialNav: "Social media"
   },
   theme: {
-    toggleLabel: "Toggle dark theme"
+    /**
+     * Visible label of the dark-mode switch — the wrapping <label> makes it
+     * also the accessible name (WCAG 2.5.3: name == visible text).
+     */
+    darkMode: "Dark mode"
   },
   home: {
     title: "Barykady Kultury",

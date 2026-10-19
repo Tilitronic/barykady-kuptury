@@ -1,20 +1,40 @@
 <template>
-  <div class="language-switcher">
-    <label class="language-switcher__label" for="bk-language">
-      {{ t("nav.language") }}
-    </label>
-    <select
-      id="bk-language"
-      class="language-switcher__select"
-      name="locale"
-      :value="activeLocale"
-      @change="onChange"
-    >
-      <option v-for="locale in SUPPORTED_LOCALES" :key="locale" :value="locale">
-        {{ LOCALE_LABELS[locale] }}
-      </option>
-    </select>
-  </div>
+  <fieldset class="language-switcher">
+    <legend class="language-switcher__legend">{{ t("nav.language") }}</legend>
+    <div class="language-switcher__options">
+      <label
+        v-for="locale in SUPPORTED_LOCALES"
+        :key="locale"
+        class="language-switcher__option"
+      >
+        <input
+          class="language-switcher__input focus-ring"
+          type="radio"
+          name="locale"
+          :value="locale"
+          :checked="locale === activeLocale"
+          @change="onSelect(locale)"
+        />
+        <!--
+          Accessible name = autonym + display code (e.g. "Українська UA"):
+          contains the visible text "UA" (WCAG 2.5.3) and keeps the T-009
+          autonym principle. Both the flag and the visible code are drawn
+          aria-hidden and folded into this single sr-only name, so the name
+          is read once ("English EN") rather than concatenated without a
+          separator.
+        -->
+        <span class="sr-only"
+          >{{ LOCALE_LABELS[locale] }} {{ LOCALE_DISPLAY_CODE[locale] }}</span
+        >
+        <span class="language-switcher__flag" aria-hidden="true">{{
+          LOCALE_FLAGS[locale]
+        }}</span>
+        <span class="language-switcher__code" aria-hidden="true">{{
+          LOCALE_DISPLAY_CODE[locale]
+        }}</span>
+      </label>
+    </div>
+  </fieldset>
 </template>
 
 <script setup lang="ts">
@@ -25,26 +45,29 @@ import { useRoute, useRouter } from "vue-router";
 import {
   DEFAULT_LOCALE,
   isLocale,
+  LOCALE_DISPLAY_CODE,
+  LOCALE_FLAGS,
   LOCALE_LABELS,
-  SUPPORTED_LOCALES
+  SUPPORTED_LOCALES,
+  type Locale
 } from "@/features/i18n/locales";
 import { replaceLocaleInPath } from "@/features/i18n/localePath";
 import { localeStore } from "@/features/i18n/localeStorage";
 
 /**
- * Visible language selector (docs/PRODUCT_REQUIREMENTS.md §2 item 3).
+ * Visible language picker (docs/PRODUCT_REQUIREMENTS.md §2 item 3).
  *
- * A native `<select>` is used because it is keyboard-operable and exposes the
- * current value and option list to assistive technology without custom ARIA.
- * The associated `<label>` provides the accessible name.
+ * Three native radios in one fieldset: the checked radio announces the
+ * current locale, arrow keys move between languages, and the group name
+ * comes from the `<legend>` (`nav.language`) — all platform semantics, no
+ * custom ARIA. Flags + short codes (🇬🇧 EN / 🇵🇱 PL / 🇺🇦 UA) are the
+ * requested visible form; codes are display strings only, the locale value
+ * behind them stays the `uk` routing/storage identifier (see
+ * LOCALE_DISPLAY_CODE in features/i18n/locales.ts).
  *
  * Persistence happens *here*, on the explicit user action, and nowhere else —
  * navigation must never rewrite the saved choice. The surrounding route and
  * query are preserved so switching does not lose the user's place.
- *
- * Option labels intentionally use each language's own name (autonyms) rather
- * than catalogue translations — recognised standard exception, recorded in
- * docs/tickets/T-009-locale-routing.md. Do not localise them.
  */
 const { t } = useI18n();
 const route = useRoute();
@@ -55,11 +78,8 @@ const activeLocale = computed(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-function onChange(event: Event): void {
-  const target = event.target as HTMLSelectElement;
-  const next = target.value;
-
-  if (!isLocale(next) || next === activeLocale.value) {
+function onSelect(next: Locale): void {
+  if (next === activeLocale.value) {
     return;
   }
 
@@ -73,25 +93,93 @@ function onChange(event: Event): void {
 </script>
 
 <style scoped>
+/* Fieldset reset: the chips carry the visual grouping, not a UA border. */
 .language-switcher {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.language-switcher__legend {
+  padding: 0;
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.language-switcher__options {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.language-switcher__label {
-  font-weight: 600;
-}
-
-.language-switcher__select {
+/*
+  Chip = radio dot + flag + short code. Border uses --color-form-border
+  (certified ≥ 3:1 control boundary in both themes, DESIGN_SYSTEM.md §1);
+  the checked chip gets the accent ring and the accent-filled dot via
+  `accent-color`, so the state differs in shape as well as colour
+  (DESIGN_SYSTEM.md §6: never colour alone).
+*/
+.language-switcher__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   min-height: 2.25rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--color-form-border);
+  border-radius: 0.375rem;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-duration),
+    box-shadow var(--motion-duration);
 }
 
-/* Hide the label on small viewports to keep the header compact at 320 px.
-   The select's accessible name is provided by the label; the label is still
-   referenced by `for`/`id` so AT reads it even when visually hidden. */
-@media (max-width: 767px) {
-  .language-switcher__label {
+.language-switcher__option:has(:checked) {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.language-switcher__input {
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+.language-switcher__flag {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.language-switcher__code {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Screen-reader only helper (same pattern as AppHeader's `.sr-only`). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+  Desktop header bar (≥ 1280 px, the inline-controls band): legend visually
+  hidden (still the accessible group name) to keep the cluster inside the
+  header's measured width budget — the flags + codes are self-explanatory.
+  In the drawer (≤ 1279 px — AppHeader's raised drawer breakpoint) the legend
+  is visible; chips never truncate and wrap instead (DESIGN_SYSTEM.md §4, §6).
+*/
+@media (min-width: 1280px) {
+  .language-switcher__legend {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -101,11 +189,6 @@ function onChange(event: Event): void {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
-  }
-
-  .language-switcher__select {
-    max-width: 4.5rem; /* show just the locale code on narrow viewports */
-    min-height: 2rem;
   }
 }
 </style>

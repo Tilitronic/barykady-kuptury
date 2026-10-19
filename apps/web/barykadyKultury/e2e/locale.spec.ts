@@ -85,7 +85,9 @@ test.describe("locale routing", () => {
   }) => {
     await page.goto("/pl/projects?src=e2e");
 
-    await page.getByRole("combobox").selectOption("uk");
+    // The language picker is a radio group of flag+code chips; the
+    // accessible name is the autonym + display code (value stays `uk`).
+    await page.getByRole("radio", { name: "Українська UA" }).click();
 
     await expect(page).toHaveURL(/\/uk\/projects\?src=e2e$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "uk");

@@ -19,6 +19,7 @@ import {
   resolveLogoVariant,
   type LogoContext
 } from "@/components/brand/resolveLogoVariant";
+import { themeController } from "@/features/theme/themeRuntime";
 import { createTestI18n } from "@/test-utils/mount";
 
 // ─── Shared mount helper ──────────────────────────────────────────────────────
@@ -143,6 +144,61 @@ describe("BrandLogo — variant→src mapping", () => {
   });
 });
 
+// ─── 2b. Dark-mode logotype derivative (brand-fixes v3) ──────────────────────
+//
+// WHY: the header now shows the full logotype as a prominent readable
+// wordmark. SCARLET-on-NERO is 2.5:1 (DESIGN_SYSTEM.md §1: forbidden for
+// text), so tone='auto' must switch the logotype to the GRAY93
+// derived-inverse asset (logotype_gray93_web.svg) in dark mode — an asset
+// recolour, not a CSS filter hack.
+
+describe("BrandLogo — auto tone in dark theme (logotype derivative)", () => {
+  /** Run `body` with the controller pinned to the dark resolved theme. */
+  function withTheme<T>(theme: "light" | "dark", body: () => T): T {
+    themeController.setOverride(theme);
+    try {
+      return body();
+    } finally {
+      // Restore "follow the system" so later tests see the light default.
+      themeController.setOverride(null);
+    }
+  }
+
+  it("renders the GRAY93 logotype derivative for auto tone + logotype kind", () => {
+    withTheme("dark", () => {
+      const wrapper = mountLogo({ context: "footer" });
+      expect(wrapper.get("img").attributes("src")).toContain(
+        "logotype_gray93_web"
+      );
+    });
+  });
+
+  it("keeps the SCARLET logotype in light theme", () => {
+    withTheme("light", () => {
+      const wrapper = mountLogo({ context: "footer" });
+      expect(wrapper.get("img").attributes("src")).toContain(
+        "logotype_red_web"
+      );
+    });
+  });
+
+  it("honours an explicit tone override even in dark theme (red stays red)", () => {
+    withTheme("dark", () => {
+      const wrapper = mountLogo({ context: "footer", tone: "red" });
+      expect(wrapper.get("img").attributes("src")).toContain(
+        "logotype_red_web"
+      );
+    });
+  });
+
+  it("the logo MARK dark behaviour is unchanged (red_small ring variant)", () => {
+    withTheme("dark", () => {
+      const wrapper = mountLogo({ context: "compact" });
+      expect(wrapper.get("img").attributes("src")).toContain("logo_red_small");
+    });
+  });
+});
+
 // ─── 3. Logotype viewBox regression (des-2) ───────────────────────────────────
 //
 // WHY: the original logotype SVGs had a square viewBox (821.11 × 821.11) while
@@ -212,6 +268,21 @@ describe("logotype web derivative — viewBox regression (des-2)", () => {
     const vbRed = parseViewBox(join(ASSET_DIR, "logotype_red_web.svg"));
     const vbBlack = parseViewBox(join(ASSET_DIR, "logotype_black_web.svg"));
     expect(vbRed).toEqual(vbBlack);
+  });
+
+  it("logotype_gray93_web.svg (derived-inverse) keeps the identical tight viewBox", () => {
+    const vbRed = parseViewBox(join(ASSET_DIR, "logotype_red_web.svg"));
+    const vbGray = parseViewBox(join(ASSET_DIR, "logotype_gray93_web.svg"));
+    expect(vbGray).toEqual(vbRed);
+  });
+
+  it("logotype_gray93_web.svg is a recolour only: GRAY93 fill rule, no SCARLET fill rule", () => {
+    const svg = readFileSync(
+      join(ASSET_DIR, "logotype_gray93_web.svg"),
+      "utf-8"
+    );
+    expect(svg).toMatch(/fill:\s*#ededed/);
+    expect(svg).not.toMatch(/fill:\s*#c60001/);
   });
 });
 

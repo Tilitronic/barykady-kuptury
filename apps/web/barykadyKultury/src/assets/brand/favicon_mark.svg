@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Barykady Kultury — favicon mark (v3)
+  ======================================
+  Design decision (user, brand-fixes series): a PLAIN, BOLD, FILLED letter "B"
+  on a solid SCARLET block — inverted pairing (light glyph on red surface).
+  NOT the barricade emblem (too small to read at 16 px) and NOT an outlined B.
+
+  Derivation (DESIGN_SYSTEM.md §1, D-13 palette only):
+    - Background: SCARLET #c60001 — solid block, reads on light and dark
+      browser chrome (5.27:1 vs Chrome light tab strip).
+    - Glyph: GRAY93 #ededed letter "B" — 5.27:1 on SCARLET (measured pair,
+      DESIGN_SYSTEM.md §1 "white on scarlet 6.17:1" neighbour; GRAY93-on-
+      scarlet is the same inverted pairing the v2 favicon used).
+    - The glyph is a hand-drawn geometric letterform (SVG path outlines,
+      fill-rule="evenodd" counters) — NO text element, so it renders
+      identically
+      without any font. It is deliberately NOT the brandbook "B" emblem:
+      the emblem is an abstract barricade that does not read as a letter at
+      16 px; a bold stem+two-bowl B does.
+    - Metrics (512 canvas): stem 76, bars 64, counters 96 — at 16×16 the
+      stem is ~2.4 px and each counter ~3 px, clear at favicon sizes.
+    - This file is the single source of truth: scripts/generate-favicons.mjs
+      copies it VERBATIM to public/favicon.svg and rasterises the PNG/ICO
+      fallbacks from it. Edit here, then regenerate; never hand-edit
+      public/favicon.svg.
+  Regenerate: node scripts/generate-favicons.mjs
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  width="512"
+  height="512"
+  role="img"
+  aria-label="Barykady Kultury"
+>
+  <rect x="0" y="0" width="512" height="512" fill="#c60001" />
+  <path
+    fill="#ededed"
+    fill-rule="evenodd"
+    d="M120 64H285A95 96 0 0 1 285 256A100 96 0 0 1 285 448H120ZM196 128H255A50 48 0 0 1 255 224H196ZM196 288H255A55 48 0 0 1 255 384H196Z"
+  />
+</svg>

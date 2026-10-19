@@ -36,7 +36,7 @@ const uk: MessageSchema = {
     socialNav: "Соціальні мережі"
   },
   theme: {
-    toggleLabel: "Перемкнути темну тему"
+    darkMode: "Темний режим"
   },
   home: {
     title: "Barykady Kultury",

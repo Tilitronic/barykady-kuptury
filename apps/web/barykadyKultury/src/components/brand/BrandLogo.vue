@@ -29,11 +29,19 @@
  *
  * DARK MODE — tone='auto' (D-20 selector contract):
  *   logo kind     → logo_red_small (SCARLET ring + white interior on dark bg)
- *   logotype kind → logotype_red_web (no _small variant exists; WCAG exemption for
- *                   decorative logo at 2.5:1 on dark; documented in DESIGN_SYSTEM.md §1)
+ *   logotype kind → logotype_gray93_web (derived-inverse: identical path data,
+ *                   fill recoloured SCARLET → GRAY93; ~12:1 on dark surfaces.
+ *                   Replaces the old always-red behaviour, which only passed
+ *                   while the logotype was a small decorative element — as a
+ *                   prominent readable wordmark SCARLET-on-nero is 2.5:1,
+ *                   below WCAG limits for meaningful text. Recorded in
+ *                   DESIGN_SYSTEM.md §1.)
  *
  * SIZE TOKENS: sm=32px, md=48px, lg=64px, xl=96px
- *   These control the rendered HEIGHT of the logo element. For the mark (`kind='logo'`),
+ *   These control the rendered HEIGHT of the logo element. Callers may
+ *   override the height for a specific placement via the inherited
+ *   --brand-logo-size custom property (the token classes fall back to it).
+ *   For the mark (`kind='logo'`),
  *   width = height (nearly-square content, 0.86:1 ratio). For the logotype, width is
  *   computed automatically from the tight viewBox aspect ratio (3.44:1), so the
  *   wordmark fills the token height exactly.
@@ -41,10 +49,14 @@
  * LOGOTYPE SVG DERIVATIVES (des-2):
  *   logotype_red_web.svg / logotype_black_web.svg carry the same path data as
  *   their originals but use a tight viewBox (113.27 322.70 594.58 175.65).
- *   Measured with Chromium getBBox: content x=115.27 y=324.70 w=590.58 h=171.65;
- *   1-unit margin added. At `md` (48 px height) the wordmark renders at 48 px tall.
- *   The originals (square viewBox) are kept for provenance; never use them directly
- *   in this component.
+ *   Measured with Chromium getBBox: content x=115.27 y=324.70 w=590.58
+ *   h=171.65; 1-unit margin added. At `md` (48 px height) the wordmark
+ *   renders at 48 px tall.
+ *   logotype_gray93_web.svg (brand-header-fixes v3) is a derived-inverse of
+ *   logotype_red_web.svg: identical path data and viewBox, only the fill is
+ *   recoloured SCARLET → GRAY93 for dark surfaces. The originals (square
+ *   viewBox) are kept for provenance; never use them directly in this
+ *   component.
  *
  * CLEAR SPACE (DESIGN_SYSTEM.md §1):
  *   --logo-clear-space (0.5rem) is applied as padding on the wrapper span.
@@ -64,6 +76,7 @@ import logoBlackSrc from "@/assets/brand/logo_black.svg";
 import logoRedSmallSrc from "@/assets/brand/logo_red_small.svg";
 import logoRedSrc from "@/assets/brand/logo_red.svg";
 import logotypeBlackWebSrc from "@/assets/brand/logotype_black_web.svg";
+import logotypeGray93WebSrc from "@/assets/brand/logotype_gray93_web.svg";
 import logotypeRedWebSrc from "@/assets/brand/logotype_red_web.svg";
 import { themeController } from "@/features/theme/themeRuntime";
 import {
@@ -85,8 +98,8 @@ import {
  *             must be overridden for a specific justified reason.
  *
  * tone      — 'red' (SCARLET mark), 'black' (NERO/black mark, light surfaces
- *             only), 'auto' (picks red in light, red_small in dark for logo;
- *             always red for logotype).
+ *             only), 'auto' (picks red in light; red_small in dark for logo;
+ *             GRAY93 derivative in dark for logotype).
  *
  * size      — Token label: sm | md | lg | xl (32 / 48 / 64 / 96 px height).
  *
@@ -132,15 +145,22 @@ const resolvedKind = computed<LogoKind>(() => {
  *   'auto'  → light: red
  *              dark + logo:     red_small (SCARLET ring + white interior;
  *                visible on the dark surface without CSS filter)
- *              dark + logotype: red_web (no small logotype variant in assets)
+ *              dark + logotype: gray93_web (derived-inverse recolour of the
+ *                red logotype — identical path data, light fill — so the
+ *                prominent wordmark clears WCAG on dark surfaces; no CSS
+ *                filter or inversion hack is used anywhere)
  */
 const resolvedSrc = computed<string>(() => {
   const isDark = themeController.theme.value === "dark";
 
   if (resolvedKind.value === "logotype") {
     // Always use tight-viewBox web derivatives for logotype.
-    // No logotype small variant exists; always use red for auto dark mode.
-    return props.tone === "black" ? logotypeBlackWebSrc : logotypeRedWebSrc;
+    if (props.tone === "black") return logotypeBlackWebSrc;
+    if (props.tone === "red") return logotypeRedWebSrc;
+    // auto: the GRAY93 derivative carries the same path data as the SCARLET
+    // original (see data-provenance in logotype_gray93_web.svg), so dark
+    // mode gets a legible wordmark without any CSS filter hack.
+    return isDark ? logotypeGray93WebSrc : logotypeRedWebSrc;
   }
 
   if (props.tone === "auto") {
@@ -185,21 +205,26 @@ const resolvedAlt = computed<string>(() => {
   flex-shrink: 0;
 }
 
-/* Size tokens — token labels only; do not accept raw pixel values via props */
+/*
+  Size tokens — token labels only; do not accept raw pixel values via props.
+  Each class provides the default for its token; callers may override the
+  rendered height via the inherited --brand-logo-size custom property (used
+  by AppHeader to step the logotype down on narrow desktop widths).
+*/
 .brand-logo--sm {
-  --logo-size: 32px;
+  --logo-size: var(--brand-logo-size, 32px);
 }
 
 .brand-logo--md {
-  --logo-size: 48px;
+  --logo-size: var(--brand-logo-size, 48px);
 }
 
 .brand-logo--lg {
-  --logo-size: 64px;
+  --logo-size: var(--brand-logo-size, 64px);
 }
 
 .brand-logo--xl {
-  --logo-size: 96px;
+  --logo-size: var(--brand-logo-size, 96px);
 }
 
 /*
