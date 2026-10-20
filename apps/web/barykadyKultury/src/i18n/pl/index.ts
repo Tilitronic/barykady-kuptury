@@ -150,6 +150,52 @@ const pl: MessageSchema = {
       year: { description: "Publikacje z roku {year}" }
     }
   },
+  /** Ujednolicony czytnik treści długich (T-040). */
+  reader: {
+    retry: "Spróbuj ponownie",
+    language: {
+      label: "Język czytanej treści"
+    },
+    toc: {
+      label: "Spis treści",
+      show: "Pokaż spis treści",
+      hide: "Ukryj spis treści"
+    },
+    controls: {
+      heading: "Ustawienia czytania",
+      textSize: "Rozmiar tekstu",
+      /* Krok 0 to baseline 16 px — etykiety zaczynają się od „Normalny". */
+      sizes: {
+        "0": "Normalny",
+        "1": "Duży",
+        "2": "Bardzo duży",
+        "3": "Maksymalny"
+      },
+      spacingValues: {
+        "0": "Standardowy",
+        "1": "Luźniejszy",
+        "2": "Otwarty",
+        "3": "Szeroki"
+      },
+      measure: "Szerokość wiersza",
+      measureValues: {
+        narrow: "Wąska",
+        medium: "Średnia",
+        wide: "Szeroka"
+      },
+      lineSpacing: "Odstęp wierszy",
+      paragraphSpacing: "Odstęp między akapitami",
+      decrease: "Zmniejsz",
+      increase: "Zwiększ",
+      reset: "Przywróć domyślne",
+      resetDone: "Przywrócono domyślne ustawienia czytania."
+    },
+    states: {
+      empty: "Ten tekst jest niedostępny.",
+      unsupported: "Ten tekst nie jest jeszcze dostępny w wersji do czytania.",
+      unsupportedDownload: " Oryginalny plik można nadal pobrać poniżej."
+    }
+  },
   nav: {
     language: "Język",
     changeLanguage: "Zmień język",
@@ -216,7 +262,6 @@ const pl: MessageSchema = {
     empty: "Brak dostępnych dokumentów.",
     reader: {
       back: "Powrót do dokumentów",
-      languageLabel: "Język dokumentu",
       notFound: "Ten dokument jest niedostępny.",
       unavailable: "Ten dokument nie jest dostępny w wybranym języku."
     },
@@ -360,6 +405,12 @@ const pl: MessageSchema = {
     unavailable: "Ta treść jest tymczasowo niedostępna.",
     fallbackNote: "Ta treść jest dostępna wyłącznie po {language}.",
     fallbackLanguage: "angielsku",
+    /* rzad. bierny po „po …" — formy dla języka treści (rev-1 F) */
+    fallbackLanguageNames: {
+      en: "angielsku",
+      pl: "polsku",
+      uk: "ukraińsku"
+    },
     opensInNewTab: "otwiera się w nowej karcie"
   }
 };

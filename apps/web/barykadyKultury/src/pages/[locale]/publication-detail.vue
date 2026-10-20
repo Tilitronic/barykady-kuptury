@@ -1,12 +1,75 @@
 <template>
   <!--
-    Canonical root slug (T-038/D-24): the URL segment is shared by every
-    locale and the requested locale must supply a translation. An unknown,
-    former-localized or draft slug renders the same translated 404 content as
-    the locale catch-all. RLS already hides drafts anonymously; this is the
-    app-layer complement.
+    Canonical root slug (T-038/D-24). T-040: when the row carries readable
+    long-form content (AST v1, or legacy text until T-041 retires it) the page
+    renders through the shared LongFormReader — content language is `?lang=`,
+    the route locale and chrome never change (D-27), and an unavailable
+    requested translation falls back via the D-38 chain instead of 404ing.
+    Without body data the page keeps its T-020 metadata/files view (publications
+    are metadata-only until T-041 imports), reader controls absent there.
+    An unknown or draft slug renders the translated 404 content. RLS already
+    hides drafts anonymously; this is the app-layer complement.
   -->
-  <div v-if="publicationResult.kind === 'empty'" class="publication-not-found">
+  <div v-if="useReaderView" class="publication-reader">
+    <p class="publication-detail__back">
+      <RouterLink
+        :to="listPath"
+        class="publication-detail__back-link focus-ring"
+      >
+        {{ t("publications.detail.back") }}
+      </RouterLink>
+    </p>
+
+    <LongFormReader
+      :title="readerTitle"
+      :description="reader.selected.value?.description ?? null"
+      :body-ast="reader.selected.value?.bodyAst ?? null"
+      :body="reader.selected.value?.body ?? null"
+      :content-locale="reader.locale.value"
+      :ui-locale="currentLocale"
+      :available-locales="reader.model.value?.availableLocales ?? []"
+      :assets="reader.model.value?.assets ?? []"
+      :status="reader.status.value"
+      :storage-key="readerStorageKey"
+      :is-fallback="readerIsFallback"
+      :offers-download="readerOffersDownload"
+      @change-locale="chooseContentLocale"
+      @retry="reader.retry"
+    >
+      <!--
+        rev-1 E: bibliographic identity must never disappear from the reader.
+        Authors/date/files come from `fetchPublicationDetail` — the same D-38
+        resolution chain as the body — so the metadata shown always matches
+        the language actually being read (a strict per-locale read could
+        otherwise 404 while the reader renders English).
+      -->
+      <p v-if="detail?.publication.authors" class="publication-detail__authors">
+        {{ detail.publication.authors }}
+      </p>
+      <p
+        v-if="detail?.publication.publicationDate"
+        class="publication-detail__date"
+      >
+        <time :datetime="detail.publication.publicationDate">{{
+          detailFormattedDate
+        }}</time>
+      </p>
+      <template v-if="detailFiles.length > 0">
+        <h2 class="publication-detail__files-heading">
+          {{ t("publications.detail.filesHeading") }}
+        </h2>
+        <PublicationFiles
+          :files="detailFiles"
+          :external-url="detail?.publication.externalUrl ?? null"
+        />
+      </template>
+    </LongFormReader>
+  </div>
+
+  <div
+    v-else-if="publicationResult.kind === 'empty'"
+    class="publication-not-found"
+  >
     <h1 class="publication-not-found__title">{{ t("notFound.title") }}</h1>
     <p class="publication-not-found__message">{{ t("notFound.message") }}</p>
     <p class="publication-not-found__back">
@@ -79,11 +142,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { computed, inject, ref, watch } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import LongFormReader from "@/components/reader/LongFormReader.vue";
+import { readerSettingsKey } from "@/components/reader/readerSettings";
 import PublicationFiles from "@/components/publications/PublicationFiles.vue";
+import {
+  fetchPublicationDetail,
+  type PublicationDetail
+} from "@/features/publications/api";
+import { publicationFileUrl } from "@/features/publications/fileUrl";
+import type { PublicationFileView } from "@/features/publications/usePublications";
+import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
+import { useReaderDocument } from "@/features/reader/useReaderDocument";
 import type { PublicationView } from "@/features/publications/usePublications";
 import { usePublication } from "@/features/publications/usePublications";
 import { formatDate } from "@/features/i18n/format";
@@ -114,6 +187,102 @@ const requestedSlug = computed<string>(() => {
 });
 
 const { publicationResult } = usePublication(requestedSlug, currentLocale);
+
+/* ── Reader state (T-040) ────────────────────────────────────────────────── */
+
+const router = useRouter();
+const supabase = inject(SUPABASE_CLIENT_KEY, null);
+
+const requestedLang = computed<string | null>(() => {
+  const { lang } = route.query as { lang?: unknown };
+  return typeof lang === "string" ? lang : null;
+});
+
+const reader = useReaderDocument({
+  kind: "publication",
+  slug: requestedSlug,
+  locale: currentLocale,
+  requestedLang,
+  supabase
+});
+
+/** Reader view only when the selected translation actually has body data. */
+const useReaderView = computed(() => {
+  const selected = reader.selected.value;
+  return (
+    reader.status.value === "ready" &&
+    selected !== null &&
+    (selected.bodyAst !== null || (selected.body?.trim().length ?? 0) > 0)
+  );
+});
+
+const readerTitle = computed(() => reader.selected.value?.title ?? "");
+
+const readerIsFallback = computed(
+  () =>
+    requestedLang.value === null && reader.locale.value !== currentLocale.value
+);
+
+const readerStorageKey = computed(() =>
+  readerSettingsKey("publication", requestedSlug.value)
+);
+
+/* ── D-38 metadata for the reader branch (rev-1 E) ────────────────────────── */
+
+const detail = ref<PublicationDetail | null>(null);
+
+watch(
+  [() => reader.locale.value, requestedSlug, useReaderView],
+  ([locale, slug, readerView], _previous, onCleanup) => {
+    detail.value = null;
+    if (!readerView || !supabase || slug.length === 0) return;
+
+    let stale = false;
+    onCleanup(() => {
+      stale = true;
+    });
+
+    void fetchPublicationDetail(supabase, slug, locale).then(result => {
+      if (stale) return;
+      detail.value = result.kind === "ok" ? (result.items[0] ?? null) : null;
+    });
+  },
+  { immediate: true }
+);
+
+const detailFormattedDate = computed(() => {
+  const value = detail.value?.publication.publicationDate;
+  if (!value) return "";
+  // Content dates read in the CONTENT language (the article's locale).
+  return formatDate(new Date(value), reader.locale.value, {
+    dateStyle: "medium",
+    timeZone: "UTC"
+  });
+});
+
+/** Raw detail files → download-URL views (the PublicationFiles contract). */
+const detailFiles = computed<readonly PublicationFileView[]>(() =>
+  (detail.value?.files ?? []).map(file => ({
+    ...file,
+    downloadUrl: publicationFileUrl(supabase, file.storagePath)
+  }))
+);
+
+/** The unsupported-state download sentence only when a file exists (F). */
+const readerOffersDownload = computed(
+  () =>
+    detailFiles.value.length > 0 ||
+    detail.value?.publication.externalUrl != null
+);
+
+function chooseContentLocale(locale: Locale): void {
+  if (locale === reader.locale.value) return;
+  void router.push({
+    path: route.path,
+    query: { ...route.query, lang: locale },
+    hash: route.hash
+  });
+}
 
 const publication = computed<PublicationView | null>(() =>
   publicationResult.value.kind === "ok"

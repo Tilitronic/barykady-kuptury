@@ -209,6 +209,25 @@ describe("LanguageSwitcher — hover disclosure", () => {
     expect(accessibleName(triggerButton(wrapper))).toBe("Język Українська UA");
   });
 
+  it("drops the reader's ?lang= when the UI locale changes (T-040 rev-1 F)", async () => {
+    // A content-language choice belongs to the OLD UI locale's reader; after
+    // the chrome locale swaps, the new locale must re-resolve its own
+    // default — a stale ?lang would pin the wrong translation.
+    const { wrapper, router } = await mountSwitcher(
+      "/pl/about/documents/regulations?lang=en&src=test"
+    );
+
+    await wrapper.trigger("mouseenter");
+    await optionButtons(wrapper)[2]!.trigger("click"); // uk
+    await flushPromises();
+
+    expect(router.currentRoute.value.path).toBe(
+      "/uk/about/documents/regulations"
+    );
+    expect(router.currentRoute.value.query).toEqual({ src: "test" });
+    expect(router.currentRoute.value.query.lang).toBeUndefined();
+  });
+
   it("labels the trigger in every supported locale", async () => {
     const cases = [
       { locale: "en", name: "Language English EN", title: "Change language" },

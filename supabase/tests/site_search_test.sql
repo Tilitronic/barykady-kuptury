@@ -80,13 +80,14 @@ insert into public.publications (id, slug, status, publication_date, published_a
   ('b4000000-0000-4000-8000-000000000001', 'search-fixture-publication', 'published', '2026-03-01', now()),
   ('b4000000-0000-4000-8000-000000000002', 'search-fixture-draft-publication', 'draft', null, null);
 
-insert into public.publication_translations (id, publication_id, locale, title, abstract) values
+insert into public.publication_translations
+  (id, publication_id, locale, title, abstract, body) values
   ('b4100000-0000-4000-8000-000000000001', 'b4000000-0000-4000-8000-000000000001', 'en',
-   'Zqxpubl Fixture', 'zqxabstract zqxshared'),
+   'Zqxpubl Fixture', 'zqxabstract zqxshared', 'zqxbodypubl publication body'),
   ('b4100000-0000-4000-8000-000000000002', 'b4000000-0000-4000-8000-000000000001', 'pl',
-   'Zqxpubl Publikacja PL', 'zqxabstract PL'),
+   'Zqxpubl Publikacja PL', 'zqxabstract PL', null),
   ('b4100000-0000-4000-8000-000000000003', 'b4000000-0000-4000-8000-000000000002', 'en',
-   'Zqxdraft Publication', null);
+   'Zqxdraft Publication', null, null);
 
 -- Organization documents: published text document, draft.
 insert into public.organization_documents
@@ -116,7 +117,7 @@ insert into public.team_member_translations (id, member_id, locale, role, bio) v
   ('b3100000-0000-4000-8000-000000000002', 'b3000000-0000-4000-8000-000000000002', 'en',
    'zqxdraft role', null);
 
-select plan(45);
+select plan(46);
 
 -- ---------------------------------------------------------------------------
 -- Contract shape and hardening
@@ -260,6 +261,10 @@ select is((select rank from public.search_published_content('zqxprojectbody', 'e
 select is((select rank from public.search_published_content('zqxdocbody', 'en')
             where kind = 'document'),
   1, 'document body match ranks 1');
+
+select is((select rank from public.search_published_content('zqxbodypubl', 'en')
+            where kind = 'publication'),
+  1, 'publication body match ranks 1 (T-040 projection)');
 
 select is((select rank from public.search_published_content('zqxteam', 'en')
             where kind = 'team'),

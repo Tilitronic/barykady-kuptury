@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Quasar } from "quasar";
 import { nextTick } from "vue";
 
 import PublicationDetailPage from "@/pages/[locale]/publication-detail.vue";
@@ -69,6 +70,7 @@ async function mountDetail(
 ) {
   const wrapper = await mountWithPlugins(PublicationDetailPage, {
     locale,
+    plugins: [Quasar],
     supabase,
     initialRoute: `/${locale}/publications/${slug}`,
     routes: [
@@ -258,5 +260,57 @@ describe("publication detail", () => {
     const wrapper = await mountDetail(null, "en", "any");
 
     expect(wrapper.text()).toContain("temporarily unavailable");
+  });
+
+  describe("publication reader (T-040)", () => {
+    it("renders body content through LongFormReader and switches via ?lang", async () => {
+      const fake = createFakeSupabase({
+        tables: {
+          publications: [
+            publishedRow({
+              publication_translations: [
+                { ...EN_TRANSLATION, body: "## Summary\n\nEnglish body text." },
+                { ...PL_TRANSLATION, body: "## Streszczenie\n\nPolski tekst." }
+              ]
+            })
+          ]
+        }
+      });
+      const wrapper = await mountDetail(fake.client, "en", CANONICAL_SLUG);
+
+      expect(wrapper.get("h1").text()).toBe("Sample Publication (EN)");
+      expect(wrapper.text()).toContain("English body text.");
+      // Files stay page-owned metadata below the reader body.
+      expect(wrapper.text()).toContain("Available files");
+      // rev-1 E: bibliographic identity renders in the reader branch too.
+      expect(wrapper.text()).toContain("Author One");
+      expect(wrapper.find("time").exists()).toBe(true);
+
+      await wrapper
+        .get('[data-testid="reader-language"] button[lang="pl"]')
+        .trigger("click");
+      await flushPromises();
+
+      const route = wrapper.vm.$router.currentRoute.value;
+      // D-27: content language is a query change — the route locale stays.
+      expect(route.path).toBe(`/en/publications/${CANONICAL_SLUG}`);
+      expect(route.query.lang).toBe("pl");
+      expect(wrapper.text()).toContain("Polski tekst.");
+    });
+
+    it("keeps the metadata-only view (no reader controls) without body data", async () => {
+      const fake = createFakeSupabase({
+        tables: { publications: [publishedRow()] }
+      });
+      const wrapper = await mountDetail(fake.client, "en", CANONICAL_SLUG);
+
+      expect(wrapper.find('[data-testid="reader-language"]').exists()).toBe(
+        false
+      );
+      expect(wrapper.find('[data-testid="reader-controls"]').exists()).toBe(
+        false
+      );
+      expect(wrapper.text()).toContain("Abstract (EN)");
+    });
   });
 });

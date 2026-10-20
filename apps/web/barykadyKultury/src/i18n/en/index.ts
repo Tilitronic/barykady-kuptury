@@ -165,6 +165,53 @@ const en = {
       year: { description: "Publications from {year}" }
     }
   },
+  /** Unified long-form reader (T-040, D-27/D-32/D-34/D-36/D-38). */
+  reader: {
+    retry: "Try again",
+    language: {
+      label: "Reading language"
+    },
+    toc: {
+      label: "Table of contents",
+      show: "Show table of contents",
+      hide: "Hide table of contents"
+    },
+    controls: {
+      heading: "Reading settings",
+      textSize: "Text size",
+      /* Step 0 is the 16 px baseline — labels start at "Normal". */
+      sizes: {
+        "0": "Normal",
+        "1": "Large",
+        "2": "Extra large",
+        "3": "Maximum"
+      },
+      spacingValues: {
+        "0": "Standard",
+        "1": "Relaxed",
+        "2": "Open",
+        "3": "Wide"
+      },
+      measure: "Line width",
+      measureValues: {
+        narrow: "Narrow",
+        medium: "Medium",
+        wide: "Wide"
+      },
+      lineSpacing: "Line spacing",
+      paragraphSpacing: "Paragraph spacing",
+      decrease: "Decrease",
+      increase: "Increase",
+      reset: "Reset settings",
+      resetDone: "Reading settings reset to defaults."
+    },
+    states: {
+      empty: "This text is not available.",
+      unsupported: "This text is not available in a readable version yet.",
+      /* The download sentence renders ONLY when files exist (rev-1 F). */
+      unsupportedDownload: " The original file can still be downloaded below."
+    }
+  },
   nav: {
     language: "Language",
     /**
@@ -263,7 +310,6 @@ const en = {
     reader: {
       back: "Back to documents",
       /** Accessible name for the in-view language switcher group. */
-      languageLabel: "Document language",
       notFound: "This document is not available.",
       unavailable: "This document is not available in the selected language."
     },
@@ -453,6 +499,16 @@ const en = {
     unavailable: "This content is temporarily unavailable.",
     fallbackNote: "This content is only available in {language}.",
     fallbackLanguage: "English",
+    /**
+     * rev-1 F: the reader names the ACTUAL resolved fallback language.
+     * Grammatical forms per UI locale (EN bare names, PL/UK the case form
+     * the surrounding sentence requires). Keys are CONTENT locales.
+     */
+    fallbackLanguageNames: {
+      en: "English",
+      pl: "Polish",
+      uk: "Ukrainian"
+    },
     opensInNewTab: "opens in a new tab"
   }
 };

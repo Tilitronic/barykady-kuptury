@@ -1,13 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Locale } from "@/features/i18n/locales";
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  type Locale
+} from "@/features/i18n/locales";
 import { selectTranslation } from "@/shared/content/selectTranslation";
 import {
   fromRows,
   unavailable,
   type ContentResult
 } from "@/shared/content/result";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 /**
  * Publications data access (T-015; consumed by T-020).
@@ -42,6 +46,31 @@ export interface PublicationFile {
 }
 
 /** Locale-resolved publication metadata plus its downloadable files. */
+/** A locale-tagged translation row in the domain shape (T-040). */
+export interface PublicationTranslation {
+  readonly locale: Locale;
+  readonly title: string;
+  readonly abstract: string | null;
+  readonly authors: string | null;
+  /** Plain-text projection (or legacy authored text); reader body. */
+  readonly body: string | null;
+  /** ReaderDocument v1 AST, when the translation has been imported. */
+  readonly bodyAst: Json | null;
+  readonly bodyAstVersion: number | null;
+}
+
+/**
+ * D-38 publication detail (T-040): the metadata projection chosen by the
+ * reader fallback chain, the full translation, and only that locale's files.
+ */
+export interface PublicationDetail {
+  readonly publication: PublicationSummary;
+  readonly translation: PublicationTranslation;
+  readonly files: readonly PublicationFile[];
+  readonly availableLocales: readonly Locale[];
+  readonly isFallback: boolean;
+}
+
 export interface PublicationSummary {
   readonly id: string;
   readonly status: PublicationStatus;
@@ -64,7 +93,7 @@ export const PUBLICATION_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof PublicationTranslationRow)[];
 
 const PUBLICATION_SELECT =
-  "id, slug, status, language, publication_date, external_url, sort_order, updated_at, publication_translations(locale, title, abstract, authors), publication_files(locale, label, storage_path, mime_type, file_size_bytes)";
+  "id, slug, status, language, publication_date, external_url, sort_order, updated_at, publication_translations(locale, title, abstract, authors, body, body_ast, body_ast_version), publication_files(locale, label, storage_path, mime_type, file_size_bytes)";
 
 function mapFile(row: PublicationFileRow): PublicationFile {
   return {
@@ -73,6 +102,115 @@ function mapFile(row: PublicationFileRow): PublicationFile {
     storagePath: row.storage_path,
     mimeType: row.mime_type,
     sizeBytes: row.file_size_bytes
+  };
+}
+
+function toTranslation(row: PublicationTranslationRow): PublicationTranslation {
+  return {
+    locale: row.locale,
+    title: row.title,
+    abstract: row.abstract,
+    authors: row.authors,
+    body: row.body ?? null,
+    bodyAst: row.body_ast ?? null,
+    bodyAstVersion: row.body_ast_version ?? null
+  };
+}
+
+export interface SelectedPublicationTranslation {
+  readonly translation: PublicationTranslation;
+  readonly availableLocales: readonly Locale[];
+  readonly isFallback: boolean;
+}
+
+/**
+ * D-38 translation chain for publication metadata/files:
+ * preferred → English → first available (supported-locale order).
+ *
+ * Unlike the reader body resolver, this considers every translation with a
+ * title, because metadata-only publications (no imported AST yet) are still
+ * valid. Files are then filtered to the chosen locale.
+ */
+export function selectPublicationDetailTranslation(
+  translations: readonly PublicationTranslation[],
+  preferredLocale: Locale
+): SelectedPublicationTranslation | null {
+  const byLocale = new Map<Locale, PublicationTranslation>();
+  for (const translation of translations) {
+    byLocale.set(translation.locale, translation);
+  }
+
+  const availableLocales = SUPPORTED_LOCALES.filter(locale =>
+    byLocale.has(locale)
+  );
+
+  const firstAvailable = availableLocales[0];
+  if (!firstAvailable) return null;
+
+  const locale = byLocale.has(preferredLocale)
+    ? preferredLocale
+    : byLocale.has(DEFAULT_LOCALE)
+      ? DEFAULT_LOCALE
+      : firstAvailable;
+
+  const translation = byLocale.get(locale);
+  if (!translation) return null;
+
+  return {
+    translation,
+    availableLocales,
+    isFallback: locale !== preferredLocale
+  };
+}
+
+/** Files belonging to the resolved content locale (no cross-locale mixing). */
+export function publicationFilesForLocale(
+  files: readonly PublicationFile[],
+  locale: Locale
+): readonly PublicationFile[] {
+  return files.filter(file => file.locale === locale);
+}
+
+/** Maps a joined row to the D-38 detail model, or `null` without translations. */
+export function mapPublicationDetail(
+  row: PublicationRowWithTranslations,
+  preferredLocale: Locale
+): PublicationDetail | null {
+  const translations = (row.publication_translations ?? []).map(toTranslation);
+  const selected = selectPublicationDetailTranslation(
+    translations,
+    preferredLocale
+  );
+
+  if (!selected) return null;
+
+  const files = publicationFilesForLocale(
+    (row.publication_files ?? []).map(mapFile),
+    selected.translation.locale
+  );
+
+  const publication: PublicationSummary = {
+    id: row.id,
+    status: row.status,
+    slug: row.slug,
+    title: selected.translation.title,
+    abstract: selected.translation.abstract,
+    authors: selected.translation.authors,
+    language: row.language,
+    publicationDate: row.publication_date,
+    externalUrl: row.external_url,
+    sortOrder: row.sort_order,
+    files,
+    isFallback: selected.isFallback,
+    updatedAt: row.updated_at
+  };
+
+  return {
+    publication,
+    translation: selected.translation,
+    files,
+    availableLocales: selected.availableLocales,
+    isFallback: selected.isFallback
   };
 }
 
@@ -169,6 +307,47 @@ export async function fetchPublishedPublicationBySlug(
 
   const publication = mapPublication(row, locale);
   return publication ? { kind: "ok", items: [publication] } : { kind: "empty" };
+}
+
+/**
+ * D-38 publication detail read (T-040).
+ *
+ * Row strictness is unchanged: published + canonical slug. Translation
+ * strictness is the fallback chain preferred → English → first available, so
+ * a UI locale without a translation still returns the metadata/authors/date
+ * and that locale's files (the exact case the reader fallback exposes).
+ *
+ * `preferredLocale` is the already-resolved content locale (the page/reader
+ * applies `?lang` → UI → EN → first); this function applies the remainder of
+ * the same chain defensively.
+ */
+export async function fetchPublicationDetail(
+  supabase: SupabaseClient<Database> | null,
+  slug: string,
+  preferredLocale: Locale
+): Promise<ContentResult<PublicationDetail>> {
+  if (!supabase) return unavailable();
+
+  const canonicalSlug = slug.trim();
+  if (canonicalSlug.length === 0) return { kind: "empty" };
+
+  const rows = await fetchPublishedPublicationRows(supabase, canonicalSlug);
+  if (rows.kind !== "ok") {
+    return rows.kind === "empty" ? { kind: "empty" } : unavailable();
+  }
+
+  // Defence in depth against a payload that ignores the status filter; RLS
+  // remains the real boundary.
+  const row =
+    rows.items.find(
+      candidate =>
+        candidate.status === "published" && candidate.slug === canonicalSlug
+    ) ?? null;
+
+  if (!row) return { kind: "empty" };
+
+  const detail = mapPublicationDetail(row, preferredLocale);
+  return detail ? { kind: "ok", items: [detail] } : { kind: "empty" };
 }
 
 /**

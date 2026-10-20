@@ -6,6 +6,13 @@ import { createTestI18n } from "@/test-utils/mount";
 import PageToc from "../PageToc.vue";
 
 /**
+ * Structural twin of the component's `TocItem` (the test tsconfig resolves
+ * `*.vue` through the env shim, which has no named exports — vue-tsc sees
+ * the real component).
+ */
+type TocItem = { id: string; label: string; level?: number };
+
+/**
  * T-039 — the reusable TOC contract.
  *
  * happy-dom has no IntersectionObserver, so the tests install a controllable
@@ -60,7 +67,7 @@ const ITEMS = [
   { id: "history", label: "History" }
 ];
 
-function mountToc(items = ITEMS) {
+function mountToc(items: readonly TocItem[] = ITEMS) {
   return mount(PageToc, {
     props: { items, ariaLabel: "On this page" },
     global: { plugins: [createTestI18n("en")] }
@@ -193,5 +200,55 @@ describe("PageToc", () => {
     await flushPromises();
 
     expect((details.element as HTMLDetailsElement).open).toBe(false);
+  });
+
+  describe("hierarchy + content language (T-040 rev-1)", () => {
+    it("nests deeper levels into child lists, keeps flat items flat", () => {
+      const wrapper = mountToc([
+        { id: "a", label: "A", level: 2 },
+        { id: "a1", label: "A one", level: 3 },
+        { id: "a11", label: "A one one", level: 4 },
+        { id: "b", label: "B", level: 2 }
+      ]);
+
+      const desktop = wrapper.element.querySelector(
+        ".page-toc__desktop"
+      ) as HTMLElement;
+
+      // Two top-level entries: A (with nested descendants) and B.
+      const topLinks = [
+        ...desktop.querySelectorAll(":scope > ul > li > a")
+      ].map(a => a.textContent);
+      expect(topLinks).toEqual(["A", "B"]);
+
+      // "A one" nests under A's <li>; "A one one" nests one deeper.
+      const nested = [...desktop.querySelectorAll("li > ul > li > a")].map(
+        a => a.textContent
+      );
+      expect(nested).toEqual(["A one", "A one one"]);
+    });
+
+    it("T-039 flat items render exactly one list level (no regression)", () => {
+      const wrapper = mountToc();
+
+      const desktop = wrapper.get(".page-toc__desktop");
+      expect(desktop.findAll("ul")).toHaveLength(1);
+      expect(desktop.findAll("a")).toHaveLength(2);
+    });
+
+    it("linkLang puts lang on every anchor for reader content language", () => {
+      const wrapper = mount(PageToc, {
+        props: {
+          items: ITEMS,
+          ariaLabel: "On this page",
+          linkLang: "pl"
+        },
+        global: { plugins: [createTestI18n("en")] }
+      });
+
+      for (const link of wrapper.findAll(".page-toc__desktop a")) {
+        expect(link.attributes("lang")).toBe("pl");
+      }
+    });
   });
 });

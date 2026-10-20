@@ -1,33 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { nextTick } from "vue";
+import { Quasar } from "quasar";
 
-import DocumentReader from "@/pages/[locale]/about-document.vue";
+import DocumentReaderPage from "@/pages/[locale]/about-document.vue";
 import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 import { mountWithPlugins } from "@/test-utils/mount";
 
 /**
- * Spec axis: docs/tickets/T-017-about-documents.md + D-12 + D-24 — the reader
- * defaults to the active UI locale, names the source language when English
- * stands in for a missing or incomplete translation, marks the rendered content
- * with its `lang`, and its in-view switcher navigates to the chosen locale
- * prefix while keeping the canonical slug (and query/hash), disabling locales
- * without text.
+ * T-017 → T-040 — the document reader is the shared `LongFormReader`.
+ *
+ * Spec axis: legacy plain-text rows still render (D-38) through the safe
+ * rich-text path; content language is `?lang=` and NEVER the route locale
+ * (D-27); the fallback note names English (D-12); the back link goes to the
+ * consolidated About `#documents` anchor (T-039 m8); unknown/draft slugs are
+ * 404 content, and a failed read never blanks the shell.
  */
-
-const DOC_ID = "00000000-0000-4000-8000-000000000601";
-
-const EN_BODY = "## § 1\n\nThe Association is named “Barykady Kultury” (EN).";
-const PL_BODY = "## § 1\n\nStowarzyszenie nosi nazwę „Barykady Kultury” (PL).";
-const UK_BODY = "## § 1\n\nТовариство має назву «Barykady Kultury» (UK).";
 
 function translation(overrides: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-4000-8000-000000000602",
-    document_id: DOC_ID,
+    document_id: "00000000-0000-4000-8000-000000000601",
     locale: "en",
     title: "Regulations of the Ordinary Association",
     description: null,
-    body: EN_BODY,
+    body: "## § 1\n\nThe association operates on the basis of Polish law.",
+    body_ast: null,
+    body_ast_version: null,
     needs_review: false,
     created_at: "2026-01-05T12:00:00Z",
     updated_at: "2026-01-05T12:00:00Z",
@@ -37,7 +35,7 @@ function translation(overrides: Record<string, unknown> = {}) {
 
 function documentRow(overrides: Record<string, unknown> = {}) {
   return {
-    id: DOC_ID,
+    id: "00000000-0000-4000-8000-000000000601",
     slug: "regulations",
     status: "published",
     document_type: "regulations",
@@ -50,19 +48,19 @@ function documentRow(overrides: Record<string, unknown> = {}) {
     published_at: "2026-01-05T12:00:00Z",
     created_at: "2026-01-05T12:00:00Z",
     updated_at: "2026-01-05T12:00:00Z",
+    source_provider: "manual",
+    source_path: null,
+    source_mime: null,
+    source_external_id: null,
+    source_synced_at: null,
+    allow_original_download: false,
     organization_document_translations: [
       translation(),
       translation({
         id: "00000000-0000-4000-8000-000000000603",
         locale: "pl",
         title: "Regulamin działalności stowarzyszenia zwykłego",
-        body: PL_BODY
-      }),
-      translation({
-        id: "00000000-0000-4000-8000-000000000604",
-        locale: "uk",
-        title: "Регламент діяльності звичайного товариства",
-        body: UK_BODY
+        body: "## § 1\n\nStowarzyszenie działa na podstawie prawa polskiego."
       })
     ],
     ...overrides
@@ -70,23 +68,22 @@ function documentRow(overrides: Record<string, unknown> = {}) {
 }
 
 async function mountReader(
-  supabase: ReturnType<typeof createFakeSupabase>["client"],
-  locale: "en" | "pl" | "uk",
-  slug: string
+  supabase: ReturnType<typeof createFakeSupabase>["client"] | null,
+  path = "/en/about/documents/regulations",
+  locale: "en" | "pl" | "uk" = "en"
 ) {
-  const wrapper = await mountWithPlugins(DocumentReader, {
+  const wrapper = await mountWithPlugins(DocumentReaderPage, {
     locale,
     supabase,
-    initialRoute: `/${locale}/about/documents/${slug}`,
+    plugins: [Quasar],
+    initialRoute: path,
     routes: [
       {
         path: "/:locale(en|pl|uk)/about/documents/:slug",
         name: "about-document",
-        component: DocumentReader
+        component: DocumentReaderPage
       },
       {
-        // m8 (T-039 review): the back link targets the consolidated About
-        // anchor directly — the old list URL is a redirect hop.
         path: "/:locale(en|pl|uk)/about",
         name: "about",
         component: { template: "<div />" }
@@ -101,178 +98,157 @@ async function mountReader(
 async function flushPromises() {
   await nextTick();
   await new Promise(resolve => setTimeout(resolve, 0));
+  await nextTick();
 }
 
-function buttonByLabel(
-  wrapper: Awaited<ReturnType<typeof mountReader>>,
-  label: string
-) {
-  return wrapper.findAll("button").find(b => b.text() === label);
-}
-
-describe("document reader", () => {
-  it("renders the requested locale body and marks its language", async () => {
+describe("document reader (T-040)", () => {
+  it("renders the legacy plain-text body through the safe rich-text path", async () => {
     const fake = createFakeSupabase({
       tables: { organization_documents: [documentRow()] }
     });
-    const wrapper = await mountReader(fake.client, "pl", "regulations");
+    const wrapper = await mountReader(fake.client);
 
+    expect(wrapper.text()).toContain("Regulations of the Ordinary Association");
+    expect(wrapper.find(".localized-rich-text").exists()).toBe(true);
+    expect(wrapper.get("h1").text()).toBe(
+      "Regulations of the Ordinary Association"
+    );
+    expect(wrapper.findAll("h1")).toHaveLength(1);
+  });
+
+  it("keeps the back link on the consolidated About anchor", async () => {
+    const fake = createFakeSupabase({
+      tables: { organization_documents: [documentRow()] }
+    });
+    const wrapper = await mountReader(
+      fake.client,
+      "/pl/about/documents/regulations"
+    );
+
+    expect(wrapper.get(".document-reader__back-link").attributes("href")).toBe(
+      "/pl/about#documents"
+    );
+  });
+
+  it("switching content language updates ?lang= only — the route locale stays", async () => {
+    const fake = createFakeSupabase({
+      tables: { organization_documents: [documentRow()] }
+    });
+    const wrapper = await mountReader(fake.client);
+
+    const plButton = wrapper.get(
+      '[data-testid="reader-language"] button[lang="pl"]'
+    );
+    await plButton.trigger("click");
+    await flushPromises();
+
+    const route = wrapper.vm.$router.currentRoute.value;
+    expect(route.path).toBe("/en/about/documents/regulations");
+    expect(route.query.lang).toBe("pl");
+    // The article switched; the UI chrome locale did not.
+    expect(wrapper.get("article").attributes("lang")).toBe("pl");
     expect(wrapper.get("h1").text()).toBe(
       "Regulamin działalności stowarzyszenia zwykłego"
     );
-    expect(wrapper.text()).toContain("Stowarzyszenie nosi nazwę");
-    expect(wrapper.find(".localized-rich-text").attributes("lang")).toBe("pl");
   });
 
-  it("falls back to English on initial load with a note naming the source", async () => {
-    // Polish translation exists but has no body yet.
+  it("an unavailable ?lang falls back to the default and normalizes the URL", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({
+            organization_document_translations: [translation()]
+          })
+        ]
+      }
+    });
+    const wrapper = await mountReader(
+      fake.client,
+      "/en/about/documents/regulations?lang=de"
+    );
+
+    const route = wrapper.vm.$router.currentRoute.value;
+    // D-38: invalid lang → default rule (UI locale → EN), then replace.
+    expect(route.query.lang).toBe("en");
+    expect(wrapper.find(".localized-rich-text").exists()).toBe(true);
+  });
+
+  it("an unavailable locale value is rejected and normalized", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({
+            organization_document_translations: [translation()]
+          })
+        ]
+      }
+    });
+    const wrapper = await mountReader(
+      fake.client,
+      "/en/about/documents/regulations?lang=pl"
+    );
+
+    // Only English is readable here: the URL normalizes to ?lang=en.
+    expect(wrapper.vm.$router.currentRoute.value.query.lang).toBe("en");
+  });
+
+  it("shows the fallback note when the UI locale translation is missing", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({
+            organization_document_translations: [translation()]
+          })
+        ]
+      }
+    });
+    const wrapper = await mountReader(
+      fake.client,
+      "/pl/about/documents/regulations",
+      "pl"
+    );
+
+    expect(wrapper.text()).toMatch(/po angielsku/);
+  });
+
+  it("renders an explicit not-found state for an unknown slug", async () => {
+    const fake = createFakeSupabase({ tables: { organization_documents: [] } });
+    const wrapper = await mountReader(fake.client);
+
+    expect(wrapper.text()).toContain("This text is not available.");
+  });
+
+  // (Draft hiding is a DB/RLS concern verified by pgTAP + the api lane: the
+  // REST fake ignores filters, so a page test could not prove it honestly.)
+
+  it("shows the unavailable state with a retry control when the query errors", async () => {
+    const fake = createFakeSupabase({ error: { message: "boom" } });
+    const wrapper = await mountReader(fake.client);
+
+    expect(wrapper.text()).toContain("temporarily unavailable");
+    expect(wrapper.find('[aria-label="Try again"]').exists()).toBe(true);
+  });
+
+  it("lists only locales with readable content in the selector", async () => {
     const fake = createFakeSupabase({
       tables: {
         organization_documents: [
           documentRow({
             organization_document_translations: [
               translation(),
-              translation({
-                id: "00000000-0000-4000-8000-000000000603",
-                locale: "pl",
-                title: "Regulamin działalności stowarzyszenia zwykłego",
-                body: null
-              })
+              translation({ locale: "uk", body: null, body_ast: null })
             ]
           })
         ]
       }
     });
-    const wrapper = await mountReader(fake.client, "pl", "regulations");
+    const wrapper = await mountReader(fake.client);
 
-    expect(wrapper.get("h1").text()).toBe(
-      "Regulations of the Ordinary Association"
+    // A single readable locale: the selector is hidden entirely (nothing to
+    // choose), and the uk row with no content never appears.
+    expect(wrapper.find('[data-testid="reader-language"]').exists()).toBe(
+      false
     );
-    expect(wrapper.find(".localized-rich-text").attributes("lang")).toBe("en");
-    expect(wrapper.text()).toMatch(/po angielsku/i);
-  });
-
-  it("renders English with the fallback note when the requested translation is missing entirely", async () => {
-    // D-12: a missing translation is not a 404 — the reader falls back to
-    // English and explains the substitution (M3 regression).
-    const fake = createFakeSupabase({
-      tables: {
-        organization_documents: [
-          documentRow({ organization_document_translations: [translation()] })
-        ]
-      }
-    });
-    const wrapper = await mountReader(fake.client, "pl", "regulations");
-
-    expect(wrapper.get("h1").text()).toBe(
-      "Regulations of the Ordinary Association"
-    );
-    expect(wrapper.text()).toContain("The Association is named");
-    expect(wrapper.find(".localized-rich-text").attributes("lang")).toBe("en");
-    expect(wrapper.get(".document-reader__fallback").text()).toMatch(
-      /po angielsku/i
-    );
-    expect(wrapper.text()).not.toContain("Ten dokument jest niedostępny.");
-  });
-
-  it("navigates the in-view switch to the chosen locale prefix and renders its title", async () => {
-    const fake = createFakeSupabase({
-      tables: { organization_documents: [documentRow()] }
-    });
-    const wrapper = await mountReader(fake.client, "pl", "regulations");
-
-    expect(wrapper.text()).toContain("Stowarzyszenie nosi nazwę");
-
-    await buttonByLabel(wrapper, "English")!.trigger("click");
-    await flushPromises();
-
-    expect(wrapper.vm.$router.currentRoute.value.path).toBe(
-      "/en/about/documents/regulations"
-    );
-    expect(wrapper.get("h1").text()).toBe(
-      "Regulations of the Ordinary Association"
-    );
-    expect(wrapper.text()).toContain("The Association is named");
-    expect(wrapper.text()).not.toContain("Stowarzyszenie nosi nazwę");
-    expect(wrapper.find(".localized-rich-text").attributes("lang")).toBe("en");
-    expect(wrapper.find(".document-reader__fallback").exists()).toBe(false);
-  });
-
-  it("preserves query and hash when the in-view switch navigates", async () => {
-    const fake = createFakeSupabase({
-      tables: { organization_documents: [documentRow()] }
-    });
-    const wrapper = await mountWithPlugins(DocumentReader, {
-      locale: "pl",
-      supabase: fake.client,
-      initialRoute: "/pl/about/documents/regulations?from=about#section-1",
-      routes: [
-        {
-          path: "/:locale(en|pl|uk)/about/documents/:slug",
-          name: "about-document",
-          component: DocumentReader
-        }
-      ]
-    });
-    await flushPromises();
-
-    await buttonByLabel(wrapper, "English")!.trigger("click");
-    await flushPromises();
-
-    expect(wrapper.vm.$router.currentRoute.value.fullPath).toBe(
-      "/en/about/documents/regulations?from=about#section-1"
-    );
-  });
-
-  it("disables a locale whose translation has no body", async () => {
-    const fake = createFakeSupabase({
-      tables: {
-        organization_documents: [
-          documentRow({
-            organization_document_translations: [
-              translation(),
-              translation({
-                id: "00000000-0000-4000-8000-000000000604",
-                locale: "uk",
-                title: "Регламент діяльності звичайного товариства",
-                body: null
-              })
-            ]
-          })
-        ]
-      }
-    });
-    const wrapper = await mountReader(fake.client, "en", "regulations");
-
-    expect(
-      buttonByLabel(wrapper, "Українська")!.attributes("disabled")
-    ).toBeDefined();
-    expect(
-      buttonByLabel(wrapper, "English")!.attributes("disabled")
-    ).toBeUndefined();
-    expect(buttonByLabel(wrapper, "English")!.attributes("aria-pressed")).toBe(
-      "true"
-    );
-  });
-
-  it("shows the translated not-found state when the document is absent", async () => {
-    const fake = createFakeSupabase({
-      tables: { organization_documents: [] }
-    });
-    const wrapper = await mountReader(fake.client, "en", "regulations");
-
-    expect(wrapper.text()).toContain("This document is not available.");
-    expect(wrapper.get(".document-reader__back-link").attributes("href")).toBe(
-      "/en/about#documents"
-    );
-  });
-
-  it("keeps exactly one h1 in the reader", async () => {
-    const fake = createFakeSupabase({
-      tables: { organization_documents: [documentRow()] }
-    });
-    const wrapper = await mountReader(fake.client, "en", "regulations");
-
-    expect(wrapper.findAll("h1")).toHaveLength(1);
+    expect(wrapper.text()).not.toContain("Українська");
   });
 });

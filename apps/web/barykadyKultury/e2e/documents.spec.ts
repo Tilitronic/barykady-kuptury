@@ -201,41 +201,45 @@ test.describe("documents reader", () => {
     await expectNoSeriousViolations(page);
   });
 
-  test("in-view switch updates the locale prefix and renders the chosen title", async ({
+  test("the reader language switch updates ?lang= and never the route locale (D-27)", async ({
     page
   }) => {
-    // M2 regression: the switch used to change only in-memory text, leaving the
-    // URL on the old locale. It must navigate to the same canonical slug under
-    // the chosen prefix so URL and rendered text always agree.
+    // T-040 replaces the prefix-navigation switcher: content language is a
+    // shareable query on the SAME route locale; the UI chrome never changes.
     await gotoWithDocuments(page);
     await page.goto("/pl/about/documents/regulations");
 
-    await page.getByRole("button", { name: "English", exact: true }).click();
+    await page
+      .getByTestId("reader-language")
+      .getByRole("button", { name: "English", exact: true })
+      .click();
 
-    await expect(page).toHaveURL(/\/en\/about\/documents\/regulations$/);
+    await expect(page).toHaveURL(
+      /\/pl\/about\/documents\/regulations\?lang=en$/
+    );
     await expect(
       page.getByRole("heading", { level: 1, name: REGULATIONS_TITLE })
     ).toBeVisible();
     await expect(page.getByText("EN-REGULATION body.")).toBeVisible();
     await expect(page.getByText("PL-REGULATION body.")).toHaveCount(0);
-    await expect(page.locator(".localized-rich-text")).toHaveAttribute(
-      "lang",
-      "en"
-    );
+    await expect(page.locator("article")).toHaveAttribute("lang", "en");
   });
 
   test("is keyboard operable", async ({ page }) => {
     await gotoWithDocuments(page);
     await page.goto("/pl/about/documents/regulations");
 
-    await page.getByRole("button", { name: "English", exact: true }).focus();
+    await page
+      .getByTestId("reader-language")
+      .getByRole("button", { name: "English", exact: true })
+      .focus();
     await page.keyboard.press("Enter");
 
-    await expect(page).toHaveURL(/\/en\/about\/documents\/regulations$/);
+    await expect(page).toHaveURL(/lang=en/);
     await expect(page.getByText("EN-REGULATION body.")).toBeVisible();
   });
 
-  test("falls back to English with a note and disables unavailable locales", async ({
+  test("falls back to English with a note; only readable locales are offered", async ({
     page
   }) => {
     await gotoWithDocuments(page);
@@ -243,21 +247,15 @@ test.describe("documents reader", () => {
 
     await expect(page.getByText("EN-REPORT body.")).toBeVisible();
     await expect(page.getByText("po angielsku")).toBeVisible();
-    await expect(page.locator(".localized-rich-text")).toHaveAttribute(
-      "lang",
-      "en"
-    );
+    await expect(page.locator("article")).toHaveAttribute("lang", "en");
 
-    // UK has no translation at all; PL has no body — both are non-selectable.
+    // T-040 (D-38): the selector lists ONLY locales with readable content.
+    // UK has no translation and PL has no body — neither appears; with one
+    // readable locale there is nothing to choose, so the selector is absent.
+    await expect(page.getByTestId("reader-language")).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Українська", exact: true })
-    ).toBeDisabled();
-    await expect(
-      page.getByRole("button", { name: "Polski", exact: true })
-    ).toBeDisabled();
-    await expect(
-      page.getByRole("button", { name: "English", exact: true })
-    ).toBeEnabled();
+    ).toHaveCount(0);
 
     await expectNoSeriousViolations(page);
   });
@@ -275,8 +273,8 @@ test.describe("documents reader", () => {
       page.getByRole("heading", { level: 1, name: REPORT_TITLE })
     ).toBeVisible();
     await expect(page.getByText("EN-REPORT body.")).toBeVisible();
-    await expect(page.locator(".document-reader__fallback")).toBeVisible();
-    await expect(page.locator(".document-reader__fallback")).toContainText(
+    await expect(page.locator(".long-form-reader__fallback")).toBeVisible();
+    await expect(page.locator(".long-form-reader__fallback")).toContainText(
       "англійською"
     );
     await expect(page.locator(".localized-rich-text")).toHaveAttribute(
@@ -286,27 +284,29 @@ test.describe("documents reader", () => {
     await expect(page.locator("body")).not.toContainText("недоступний");
   });
 
-  test("renders the translated 404 for a draft slug, with no draft data on the page", async ({
+  // T-040: `mockSupabaseRest` now replays PostgREST `eq` filters, so the
+  // published+slug DB filter (the reader API's only status gate) is exercised
+  // end to end here — on top of the api-lane unit tests and pgTAP.
+  test("renders the translated empty state for a draft slug", async ({
     page
   }) => {
     await gotoWithDocuments(page);
     await page.goto("/pl/about/documents/draft-document");
 
-    await expect(page.locator(".document-reader__state")).toContainText(
-      "niedostępny"
+    await expect(page.locator(".long-form-reader__state")).toContainText(
+      "Ten tekst jest niedostępny"
     );
     await expect(page.locator("body")).not.toContainText(DRAFT_TITLE);
-    await expect(page.locator("body")).not.toContainText(
-      "DRAFT-DOCUMENT body."
-    );
   });
 
-  test("renders the translated 404 for an unknown slug", async ({ page }) => {
+  test("renders the translated empty state for an unknown slug", async ({
+    page
+  }) => {
     await gotoWithDocuments(page);
     await page.goto("/pl/about/documents/unknown-document");
 
-    await expect(page.locator(".document-reader__state")).toContainText(
-      "niedostępny"
+    await expect(page.locator(".long-form-reader__state")).toContainText(
+      "Ten tekst jest niedostępny"
     );
     await expect(page.locator("body")).not.toContainText(REGULATIONS_TITLE);
   });

@@ -292,9 +292,15 @@ function onSelect(next: Locale): void {
   }
 
   localeStore.write(next);
+
+  // T-040 rev-1 F: the reader's `?lang=` is a CONTENT choice made under the
+  // OLD UI locale. After the chrome locale swaps, the new locale must
+  // re-resolve its own default (D-38) — a stale ?lang would pin the wrong
+  // translation to a different chrome language.
+  const { lang: _droppedLang, ...query } = route.query;
   void router.push({
     path: replaceLocaleInPath(route.path, next),
-    query: route.query,
+    query,
     hash: route.hash
   });
 }

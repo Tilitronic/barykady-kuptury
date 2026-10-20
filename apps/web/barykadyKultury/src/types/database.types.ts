@@ -70,9 +70,72 @@ export type Database = {
           }
         ];
       };
+      content_assets: {
+        Row: {
+          created_at: string;
+          height: number;
+          id: string;
+          locale: Database["public"]["Enums"]["content_locale"];
+          mime_type: string;
+          organization_document_id: string | null;
+          publication_id: string | null;
+          sha256: string;
+          size_bytes: number | null;
+          storage_path: string;
+          updated_at: string;
+          width: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          height: number;
+          id?: string;
+          locale: Database["public"]["Enums"]["content_locale"];
+          mime_type: string;
+          organization_document_id?: string | null;
+          publication_id?: string | null;
+          sha256: string;
+          size_bytes?: number | null;
+          storage_path: string;
+          updated_at?: string;
+          width: number;
+        };
+        Update: {
+          created_at?: string;
+          height?: number;
+          id?: string;
+          locale?: Database["public"]["Enums"]["content_locale"];
+          mime_type?: string;
+          organization_document_id?: string | null;
+          publication_id?: string | null;
+          sha256?: string;
+          size_bytes?: number | null;
+          storage_path?: string;
+          updated_at?: string;
+          width?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "content_assets_organization_document_id_fkey";
+            columns: ["organization_document_id"];
+            isOneToOne: false;
+            referencedRelation: "organization_documents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_assets_publication_id_fkey";
+            columns: ["publication_id"];
+            isOneToOne: false;
+            referencedRelation: "publications";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       organization_document_translations: {
         Row: {
           body: string | null;
+          body_ast: Json | null;
+          body_ast_version: number | null;
           created_at: string;
           description: string | null;
           document_id: string;
@@ -85,6 +148,8 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           body?: string | null;
+          body_ast?: Json | null;
+          body_ast_version?: number | null;
           created_at?: string;
           description?: string | null;
           document_id: string;
@@ -96,6 +161,8 @@ export type Database = {
         };
         Update: {
           body?: string | null;
+          body_ast?: Json | null;
+          body_ast_version?: number | null;
           created_at?: string;
           description?: string | null;
           document_id?: string;
@@ -117,6 +184,7 @@ export type Database = {
       };
       organization_documents: {
         Row: {
+          allow_original_download: boolean;
           created_at: string;
           document_type: string;
           file_size_bytes: number | null;
@@ -127,12 +195,18 @@ export type Database = {
           published_at: string | null;
           slug: string;
           sort_order: number;
+          source_external_id: string | null;
+          source_mime: string | null;
+          source_path: string | null;
+          source_provider: Database["public"]["Enums"]["content_source_provider"];
+          source_synced_at: string | null;
           status: Database["public"]["Enums"]["content_status"];
           storage_path: string | null;
           updated_at: string;
         };
         ComputedFields: never;
         Insert: {
+          allow_original_download?: boolean;
           created_at?: string;
           document_type: string;
           file_size_bytes?: number | null;
@@ -143,11 +217,17 @@ export type Database = {
           published_at?: string | null;
           slug: string;
           sort_order?: number;
+          source_external_id?: string | null;
+          source_mime?: string | null;
+          source_path?: string | null;
+          source_provider?: Database["public"]["Enums"]["content_source_provider"];
+          source_synced_at?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           storage_path?: string | null;
           updated_at?: string;
         };
         Update: {
+          allow_original_download?: boolean;
           created_at?: string;
           document_type?: string;
           file_size_bytes?: number | null;
@@ -158,6 +238,11 @@ export type Database = {
           published_at?: string | null;
           slug?: string;
           sort_order?: number;
+          source_external_id?: string | null;
+          source_mime?: string | null;
+          source_path?: string | null;
+          source_provider?: Database["public"]["Enums"]["content_source_provider"];
+          source_synced_at?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           storage_path?: string | null;
           updated_at?: string;
@@ -298,6 +383,9 @@ export type Database = {
         Row: {
           abstract: string | null;
           authors: string | null;
+          body: string | null;
+          body_ast: Json | null;
+          body_ast_version: number | null;
           created_at: string;
           id: string;
           locale: Database["public"]["Enums"]["content_locale"];
@@ -310,6 +398,9 @@ export type Database = {
         Insert: {
           abstract?: string | null;
           authors?: string | null;
+          body?: string | null;
+          body_ast?: Json | null;
+          body_ast_version?: number | null;
           created_at?: string;
           id?: string;
           locale: Database["public"]["Enums"]["content_locale"];
@@ -321,6 +412,9 @@ export type Database = {
         Update: {
           abstract?: string | null;
           authors?: string | null;
+          body?: string | null;
+          body_ast?: Json | null;
+          body_ast_version?: number | null;
           created_at?: string;
           id?: string;
           locale?: Database["public"]["Enums"]["content_locale"];
@@ -341,6 +435,7 @@ export type Database = {
       };
       publications: {
         Row: {
+          allow_original_download: boolean;
           created_at: string;
           external_url: string | null;
           id: string;
@@ -349,11 +444,17 @@ export type Database = {
           published_at: string | null;
           slug: string;
           sort_order: number;
+          source_external_id: string | null;
+          source_mime: string | null;
+          source_path: string | null;
+          source_provider: Database["public"]["Enums"]["content_source_provider"];
+          source_synced_at: string | null;
           status: Database["public"]["Enums"]["content_status"];
           updated_at: string;
         };
         ComputedFields: never;
         Insert: {
+          allow_original_download?: boolean;
           created_at?: string;
           external_url?: string | null;
           id?: string;
@@ -362,10 +463,16 @@ export type Database = {
           published_at?: string | null;
           slug: string;
           sort_order?: number;
+          source_external_id?: string | null;
+          source_mime?: string | null;
+          source_path?: string | null;
+          source_provider?: Database["public"]["Enums"]["content_source_provider"];
+          source_synced_at?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
         };
         Update: {
+          allow_original_download?: boolean;
           created_at?: string;
           external_url?: string | null;
           id?: string;
@@ -374,6 +481,11 @@ export type Database = {
           published_at?: string | null;
           slug?: string;
           sort_order?: number;
+          source_external_id?: string | null;
+          source_mime?: string | null;
+          source_path?: string | null;
+          source_provider?: Database["public"]["Enums"]["content_source_provider"];
+          source_synced_at?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
         };
@@ -536,10 +648,34 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      assert_reader_ast_assets_v1: {
+        Args: {
+          asset_locale: Database["public"]["Enums"]["content_locale"];
+          ast: Json;
+          target_document_id: string;
+          target_publication_id: string;
+        };
+        Returns: undefined;
+      };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_published: {
         Args: { p_status: Database["public"]["Enums"]["content_status"] };
         Returns: boolean;
+      };
+      reader_ast_assert_keys_v1: {
+        Args: { allowed_keys: string[]; node: Json; required_keys: string[] };
+        Returns: undefined;
+      };
+      reader_ast_block_text_v1: { Args: { block: Json }; Returns: string };
+      reader_ast_inline_text_v1: { Args: { nodes: Json }; Returns: string };
+      reader_ast_to_plain_text_v1: { Args: { ast: Json }; Returns: string };
+      reader_ast_validate_blocks_v1: {
+        Args: { children: Json; depth?: number };
+        Returns: undefined;
+      };
+      reader_ast_validate_inlines_v1: {
+        Args: { children: Json; depth?: number };
+        Returns: undefined;
       };
       search_published_content: {
         Args: {
@@ -558,9 +694,22 @@ export type Database = {
           title: string;
         }[];
       };
+      validate_reader_ast_v1: {
+        Args: { ast: Json; ast_version: number };
+        Returns: undefined;
+      };
+      validate_reader_block_v1: {
+        Args: { block: Json; depth?: number };
+        Returns: undefined;
+      };
+      validate_reader_inline_v1: {
+        Args: { depth?: number; node: Json };
+        Returns: undefined;
+      };
     };
     Enums: {
       content_locale: "en" | "pl" | "uk";
+      content_source_provider: "manual" | "upload" | "google_doc";
       content_status: "draft" | "published" | "archived";
     };
     CompositeTypes: {
@@ -696,6 +845,7 @@ export const Constants = {
   public: {
     Enums: {
       content_locale: ["en", "pl", "uk"],
+      content_source_provider: ["manual", "upload", "google_doc"],
       content_status: ["draft", "published", "archived"]
     }
   }

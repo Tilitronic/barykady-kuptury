@@ -41,42 +41,29 @@
         <span class="page-toc__skeleton-row page-toc__skeleton-row--short" />
         <span class="page-toc__skeleton-row" />
       </div>
-      <ul v-else class="page-toc__list">
-        <li v-for="item in items" :key="`d-${item.id}`">
-          <a
-            :href="`#${item.id}`"
-            class="page-toc__link focus-ring"
-            :aria-current="activeId === item.id ? 'location' : undefined"
-            @click.prevent="goTo(item.id)"
-          >
-            {{ item.label }}
-          </a>
-        </li>
-      </ul>
+      <TocTree v-else :nodes="tocTree" />
     </div>
 
     <details ref="detailsRef" class="page-toc__mobile">
       <summary class="page-toc__summary focus-ring">{{
         t("toc.onThisPage")
       }}</summary>
-      <ul class="page-toc__list">
-        <li v-for="item in items" :key="`m-${item.id}`">
-          <a
-            :href="`#${item.id}`"
-            class="page-toc__link focus-ring"
-            :aria-current="activeId === item.id ? 'location' : undefined"
-            @click.prevent="goTo(item.id)"
-          >
-            {{ item.label }}
-          </a>
-        </li>
-      </ul>
+      <TocTree :nodes="tocTree" />
     </details>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import {
+  computed,
+  defineComponent,
+  h,
+  nextTick,
+  onBeforeUnmount,
+  ref,
+  type PropType,
+  watch
+} from "vue";
 import { useI18n } from "vue-i18n";
 
 import { applyDeepLink } from "@/shared/content/deepLink";
@@ -85,6 +72,11 @@ import { applyDeepLink } from "@/shared/content/deepLink";
 export interface TocItem {
   readonly id: string;
   readonly label: string;
+  /**
+   * Optional outline level (T-040 reader TOC: h2/h3/h4). Rendered as an
+   * indent step; absent keeps the flat area-page look.
+   */
+  readonly level?: number;
 }
 
 /**
@@ -101,6 +93,12 @@ const props = defineProps<{
   items: readonly TocItem[];
   /** Accessible name of the navigation landmark (localized by the page). */
   ariaLabel: string;
+  /**
+   * T-040 rev-1 F: the reader passes its CONTENT locale so every TOC link
+   * carries `lang` matching the text it points into. Area pages omit it —
+   * their chrome language is the content language.
+   */
+  linkLang?: string | undefined;
 }>();
 
 const { t } = useI18n();
@@ -164,6 +162,86 @@ onBeforeUnmount(() => {
   observer = null;
 });
 
+/*
+ * Hierarchy (rev-1 B1): items carrying `level` render as a REAL nested list
+ * (a `<ul>` inside its parent `<li>`) — the accessible outline structure —
+ * instead of a flat list with padding classes. Items without `level` (all
+ * T-039 pages) keep the flat single-level list byte-for-byte.
+ */
+interface TocNode {
+  readonly item: TocItem;
+  readonly children: TocNode[];
+}
+
+function buildTocTree(items: readonly TocItem[]): TocNode[] {
+  const roots: TocNode[] = [];
+  const stack: { node: TocNode; level: number }[] = [];
+
+  for (const item of items) {
+    const level = item.level ?? 2;
+    const node: TocNode = { item, children: [] };
+
+    while (stack.length > 0 && stack[stack.length - 1]!.level >= level) {
+      stack.pop();
+    }
+
+    if (stack.length === 0) {
+      roots.push(node);
+    } else {
+      stack[stack.length - 1]!.node.children.push(node);
+    }
+    stack.push({ node, level });
+  }
+
+  return roots;
+}
+
+const tocTree = computed(() => buildTocTree(props.items));
+
+const TocTree = defineComponent({
+  name: "TocTree",
+  props: {
+    nodes: {
+      type: Array as PropType<readonly TocNode[]>,
+      required: true
+    }
+  },
+  setup(nodeProps) {
+    const renderLevel = (
+      nodes: readonly TocNode[],
+      depth: number
+    ): ReturnType<typeof h> =>
+      h(
+        "ul",
+        { class: "page-toc__list" },
+        nodes.map(node =>
+          h("li", { key: `${depth}-${node.item.id}` }, [
+            h(
+              "a",
+              {
+                href: `#${node.item.id}`,
+                class: "page-toc__link focus-ring",
+                lang: props.linkLang,
+                "aria-current":
+                  activeId.value === node.item.id ? "location" : undefined,
+                onClick: (event: MouseEvent) => {
+                  event.preventDefault();
+                  goTo(node.item.id);
+                }
+              },
+              node.item.label
+            ),
+            node.children.length > 0
+              ? renderLevel(node.children, depth + 1)
+              : null
+          ])
+        )
+      );
+
+    return () => renderLevel(nodeProps.nodes, 0);
+  }
+});
+
 function goTo(id: string): void {
   applyDeepLink(`#${id}`);
   // Shareable position without a router navigation (whose scrollBehavior
@@ -218,6 +296,12 @@ function goTo(id: string): void {
  * Active section: border thickens + text bolds + aria-current in the DOM —
  * state is never carried by the scarlet color alone (DESIGN_SYSTEM.md §6).
  */
+/* Nested outline levels indent via the child list (rev-1 B1). */
+.page-toc__list .page-toc__list {
+  padding-inline-start: 0.875rem;
+  margin-block-start: 0.125rem;
+}
+
 .page-toc__link[aria-current="location"] {
   border-inline-start-color: var(--color-accent);
   color: var(--color-text);

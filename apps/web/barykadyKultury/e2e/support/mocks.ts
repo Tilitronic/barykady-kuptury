@@ -101,11 +101,29 @@ export async function mockSupabaseRest(
   const { responses = {}, status = 200 } = options;
 
   await page.route(SUPABASE_REST_GLOB, async (route: Route) => {
-    const table = new URL(route.request().url()).pathname
-      .split("/rest/v1/")[1]
-      ?.split("/")[0];
+    const url = new URL(route.request().url());
+    const table = url.pathname.split("/rest/v1/")[1]?.split("/")[0];
 
-    const payload = (table ? responses[table] : undefined) ?? [];
+    const raw = table ? responses[table] : undefined;
+    const rows: readonly unknown[] = Array.isArray(raw)
+      ? (raw as readonly unknown[])
+      : [];
+
+    // PostgREST `eq` filtering, applied when the row carries the column
+    // (T-040): the reader API delegates published+slug selection to the DB,
+    // so a filter-blind fake handed drafts and foreign slugs to `data[0]`.
+    // Rows without the field pass through — fixtures model projections that
+    // legitimately omit columns (e.g. the publications-years query).
+    const filters = [...url.searchParams.entries()].filter(([, value]) =>
+      value.startsWith("eq.")
+    );
+    const payload = rows.filter(row => {
+      if (typeof row !== "object" || row === null) return true;
+      return filters.every(([column, value]) => {
+        const cell = (row as Record<string, unknown>)[column];
+        return cell === undefined || cell === value.slice(3);
+      });
+    });
 
     await route.fulfill({
       status,
