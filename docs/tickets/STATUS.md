@@ -41,7 +41,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-035 | Release readiness & handoff | 7 | todo | — | — | — |
 | T-036 | Support: "what your support does" content slot (deferred from T-022) | — | todo | — | — | — |
 | T-037 | Local demo environment & mock services (demo Supabase data, Bun calendar mock, `pnpm demo`) | 8 | done | @architector (arc-1) + @reviewer (rev-1) | 5b86d33 | 2026-10-19 |
-| T-038 | One canonical slug per entity across all locales (D-24) | 9 | todo | — | — | — |
+| T-038 | One canonical slug per entity across all locales (D-24) | 9 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | cfc67a6 | 2026-10-20 |
 
 ## Session log
 
@@ -55,10 +55,10 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | 6 | 2026-10-18 | 2026-10-18 (T-017 design gate closed after restart; UI range T-018 + T-019 + T-020 + T-021 + T-022 done & reviewed with quick fixes applied; + shared media/file URL seam; + T-036 created) | `HANDOFF-S6-2026-10-18.md` | pending (push pending — main ahead; run `pnpm test:e2e --workers=1`) |
 | 7 | 2026-10-19 | 2026-10-19 (T-023 + T-024 + T-025 done & reviewed; + real brand-emblem favicon correction; D-23 Netlify base; favicon v=4) | `HANDOFF-S7-2026-10-19.md` | pending (push pending — main ahead; run `pnpm test:e2e --workers=1`) |
 | 8 | 2026-10-19 | 2026-10-19 (T-037 + T-026 done & reviewed; local demo env, calendar mock, admin shell, carry-over fixes; review hardening: RLS boundary check, PID identity, architecture record; post-close demo env/CSP defect fixed and browser-verified) | `HANDOFF-S8-2026-10-19.md` | pending (push pending; run `pnpm demo` with `DEMO_DEV_PORT=9200` + `pnpm demo:check`) |
+| 9 | 2026-10-20 | 2026-10-20 (T-038 done & reviewed; canonical slugs across all content URLs, redirect machinery deleted, naming pass, 404 back-links, CSP/redirect hardening, UX regressions fixed, demo seed collision fixed) | — | pending (push pending) |
 
 ## Next session (planned)
 
-- **Session 9** — T-038 canonical slugs (D-24, option A, all content URLs): schema migration to root-level unique slugs, data-access rewrite, seeds/fixtures/E2E, deletion of the uncommitted cross-locale-redirect patch, rev-2 rename pass, 404 back-links, and the outstanding security review (arc-2 returned no findings; rerun as a full pass).
-- **Session 10 (hosting phase)** — deploy validation (D-23 base root), cloud Supabase + production migrations/Storage, real Google Calendar credentials (D-07), real content authoring through the admin, SEO/OG/analytics (T-034), release readiness (T-035), accessibility audit (T-033), full journey matrix (T-032), and admin CRUD tickets T-027…T-031 against the demo environment.
+- **Session 10 (hosting phase)** — deploy validation (D-23 base root), cloud Supabase + production migrations/Storage, real Google Calendar credentials (D-07), real content authoring through the admin, SEO/OG/analytics (T-034, including pinned CSP origin + hreflang), release readiness (T-035), accessibility audit (T-033), full journey matrix (T-032), and admin CRUD tickets T-027…T-031 against the canonical-slug model.
 - `NGOinfoSources/` is now ignored and untracked (`d7b1c8e`); the material is still present in pushed history (`bec10ba`) — decide on a history purge before the hosting phase.
 - Local workstation note: port 9000 is occupied by the `poetry-dev` Docker container. Use `DEMO_DEV_PORT=9200 pnpm demo` (and `DEMO_BASE_URL=http://127.0.0.1:9200 pnpm demo:check`) unless that container is stopped.
