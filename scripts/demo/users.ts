@@ -70,8 +70,10 @@ async function listUsers(
   );
   if (!response.ok) await authFailure(response, "list demo users");
 
-  const payload = (await response.json()) as { users?: AuthUserSummary[] };
-  return payload.users ?? [];
+  const authUsersResponse = (await response.json()) as {
+    users?: AuthUserSummary[]
+  };
+  return authUsersResponse.users ?? [];
 }
 
 export interface EnsuredUser {
@@ -90,11 +92,11 @@ export interface EnsuredUser {
 export async function ensureDemoUsers(
   status: LocalSupabaseStatus
 ): Promise<EnsuredUser[]> {
-  const existing = await listUsers(status);
-  const result: EnsuredUser[] = [];
+  const existingUsers = await listUsers(status);
+  const ensuredUsers: EnsuredUser[] = [];
 
   for (const spec of DEMO_USERS) {
-    const found = findUserByEmail(existing, spec.email);
+    const found = findUserByEmail(existingUsers, spec.email);
     const body = JSON.stringify({
       email: spec.email,
       password: DEMO_PASSWORD,
@@ -114,7 +116,7 @@ export async function ensureDemoUsers(
       if (!response.ok)
         await authFailure(response, `update ${spec.label} user`);
 
-      result.push({
+      ensuredUsers.push({
         label: spec.label,
         email: spec.email,
         id: found.id,
@@ -134,7 +136,7 @@ export async function ensureDemoUsers(
         await authFailure(response, `create ${spec.label} user`);
 
       const created = (await response.json()) as AuthUserSummary;
-      result.push({
+      ensuredUsers.push({
         label: spec.label,
         email: spec.email,
         id: created.id,
@@ -144,5 +146,5 @@ export async function ensureDemoUsers(
     }
   }
 
-  return result;
+  return ensuredUsers;
 }

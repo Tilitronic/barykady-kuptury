@@ -47,12 +47,12 @@ values (
 on conflict (id) do nothing;
 
 insert into public.site_page_translations (
-  id, page_id, locale, slug, title, body, meta_description, needs_review, created_at, updated_at
+  id, page_id, locale, title, body, meta_description, needs_review, created_at, updated_at
 )
 values
   (
     '10000000-0000-4000-8000-000000000002',
-    '10000000-0000-4000-8000-000000000001', 'en', 'home', 'Home — demo preview',
+    '10000000-0000-4000-8000-000000000001', 'en', 'Home — demo preview',
     $demo_home_en$## Demo preview
 
 This is **fictional demo content** for the local design environment. It is not the organization's real mission or history.
@@ -67,7 +67,7 @@ A fictional demo mission: culture, education, and community across borders.
   ),
   (
     '10000000-0000-4000-8000-000000000003',
-    '10000000-0000-4000-8000-000000000001', 'pl', 'strona-glowna', 'Strona główna — podgląd demo',
+    '10000000-0000-4000-8000-000000000001', 'pl', 'Strona główna — podgląd demo',
     $demo_home_pl$## Podgląd demonstracyjny
 
 To **fikcyjna treść demonstracyjna** dla lokalnego środowiska projektowego. Nie jest to prawdziwa misja ani historia organizacji.
@@ -82,7 +82,7 @@ Fikcyjna misja demonstracyjna: kultura, edukacja i społeczność ponad granicam
   ),
   (
     '10000000-0000-4000-8000-000000000004',
-    '10000000-0000-4000-8000-000000000001', 'uk', 'holovna', 'Головна — демонстраційний перегляд',
+    '10000000-0000-4000-8000-000000000001', 'uk', 'Головна — демонстраційний перегляд',
     $demo_home_uk$## Демонстраційний перегляд
 
 Це **вигаданий демонстраційний вміст** для локального середовища проєктування. Це не справжня місія чи історія організації.
@@ -100,12 +100,12 @@ on conflict (id) do nothing;
 -- The base seed's About row stays the verified EN copy. Demo fills the two
 -- partial locales so every locale has a readable About page during design work.
 insert into public.site_page_translations (
-  id, page_id, locale, slug, title, body, meta_description, needs_review, created_at, updated_at
+  id, page_id, locale, title, body, meta_description, needs_review, created_at, updated_at
 )
 values
   (
     '00000000-0000-4000-8000-000000000103',
-    '00000000-0000-4000-8000-000000000101', 'pl', 'o-nas', 'O nas',
+    '00000000-0000-4000-8000-000000000101', 'pl', 'O nas',
     $demo_about_pl$## Wersja demonstracyjna
 
 To **fikcyjny tekst demonstracyjny** używany wyłącznie w lokalnym środowisku projektowym. Prawdziwa treść strony „O nas” zostanie dodana przez panel administracyjny.
@@ -121,7 +121,7 @@ To **fikcyjny tekst demonstracyjny** używany wyłącznie w lokalnym środowisku
   ),
   (
     '00000000-0000-4000-8000-000000000104',
-    '00000000-0000-4000-8000-000000000101', 'uk', 'pro-nas', 'Про нас',
+    '00000000-0000-4000-8000-000000000101', 'uk', 'Про нас',
     $demo_about_uk$## Демонстраційна версія
 
 Це **вигаданий демонстраційний текст**, що використовується лише в локальному середовищі проєктування. Справжній вміст сторінки «Про нас» буде додано через адміністративну панель.
@@ -137,21 +137,18 @@ To **fikcyjny tekst demonstracyjny** używany wyłącznie w lokalnym środowisku
   )
 on conflict (id) do update
   set locale = excluded.locale,
-      slug = excluded.slug,
       title = excluded.title,
       body = excluded.body,
       meta_description = excluded.meta_description,
       needs_review = excluded.needs_review
 where (
   public.site_page_translations.locale,
-  public.site_page_translations.slug,
   public.site_page_translations.title,
   public.site_page_translations.body,
   public.site_page_translations.meta_description,
   public.site_page_translations.needs_review
 ) is distinct from (
   excluded.locale,
-  excluded.slug,
   excluded.title,
   excluded.body,
   excluded.meta_description,
@@ -166,22 +163,24 @@ where (
 
 -- P1 — published, featured rank 1 (reuses base project …201)
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '00000000-0000-4000-8000-000000000201', 'published', 1,
+  '00000000-0000-4000-8000-000000000201', 'demo-cultural-bridge', 'published', 1,
   'demo/projects/demo-cultural-bridge-cover.png',
   '2026-01-10', '2026-03-20', '2026-01-05T12:00:00Z',
   '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'
 )
 on conflict (id) do update
-  set status = excluded.status,
+  set slug = excluded.slug,
+      status = excluded.status,
       featured_rank = excluded.featured_rank,
       cover_path = excluded.cover_path,
       start_date = excluded.start_date,
       end_date = excluded.end_date,
       published_at = excluded.published_at
 where (
+  public.projects.slug,
   public.projects.status,
   public.projects.featured_rank,
   public.projects.cover_path,
@@ -189,6 +188,7 @@ where (
   public.projects.end_date,
   public.projects.published_at
 ) is distinct from (
+  excluded.slug,
   excluded.status,
   excluded.featured_rank,
   excluded.cover_path,
@@ -198,12 +198,12 @@ where (
 );
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values
   (
     '00000000-0000-4000-8000-000000000211',
-    '00000000-0000-4000-8000-000000000201', 'en', 'demo-cultural-bridge',
+    '00000000-0000-4000-8000-000000000201', 'en',
     'Cultural Bridge Workshop (Fictional Demo)',
     'A fictional workshop summary for the local demo environment.',
     $demo_p1_en$## Demo project
@@ -217,8 +217,7 @@ This is fictional demo content used only for local design testing.
   ),
   (
     '00000000-0000-4000-8000-000000000212',
-    '00000000-0000-4000-8000-000000000201', 'pl', 'demo-warsztat-kulturowy',
-    'Warsztat mostów kulturowych (fikcyjna wersja demo)',
+    '00000000-0000-4000-8000-000000000201', 'pl', 'Warsztat mostów kulturowych (fikcyjna wersja demo)',
     'Fikcyjne podsumowanie warsztatu dla lokalnego środowiska demonstracyjnego.',
     $demo_p1_pl$## Projekt demonstracyjny
 
@@ -231,8 +230,7 @@ To fikcyjna treść używana wyłącznie do lokalnego testowania projektu.
   ),
   (
     '00000000-0000-4000-8000-000000000213',
-    '00000000-0000-4000-8000-000000000201', 'uk', 'demo-kulturnyi-mist',
-    'Майстерня культурного мосту (фіктивна демоверсія)',
+    '00000000-0000-4000-8000-000000000201', 'uk', 'Майстерня культурного мосту (фіктивна демоверсія)',
     'Фіктивний опис майстерні для локального демонстраційного середовища.',
     $demo_p1_uk$## Демонстраційний проєкт
 
@@ -245,21 +243,18 @@ To fikcyjna treść używana wyłącznie do lokalnego testowania projektu.
   )
 on conflict (id) do update
   set locale = excluded.locale,
-      slug = excluded.slug,
       title = excluded.title,
       summary = excluded.summary,
       body = excluded.body,
       needs_review = excluded.needs_review
 where (
   public.project_translations.locale,
-  public.project_translations.slug,
   public.project_translations.title,
   public.project_translations.summary,
   public.project_translations.body,
   public.project_translations.needs_review
 ) is distinct from (
   excluded.locale,
-  excluded.slug,
   excluded.title,
   excluded.summary,
   excluded.body,
@@ -268,10 +263,10 @@ where (
 
 -- P2 — published, featured rank 2, long PL/UK titles
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '10000000-0000-4000-8000-000000000210', 'published', 2,
+  '10000000-0000-4000-8000-000000000210', 'demo-language-lab', 'published', 2,
   'demo/projects/demo-language-lab-cover.png',
   '2026-02-01', '2026-05-30', '2026-02-01T09:00:00Z',
   '2026-02-01T09:00:00Z', '2026-02-01T09:00:00Z'
@@ -279,13 +274,12 @@ values (
 on conflict (id) do nothing;
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values
   (
     '10000000-0000-4000-8000-000000002201',
-    '10000000-0000-4000-8000-000000000210', 'en', 'demo-language-lab',
-    'Language Lab (Fictional Demo)',
+    '10000000-0000-4000-8000-000000000210', 'en', 'Language Lab (Fictional Demo)',
     'A fictional language-lab summary for local design testing.',
     $demo_p2_en$## Demo project
 
@@ -298,8 +292,7 @@ A fictional language lab used to exercise the featured-project layout.
   ),
   (
     '10000000-0000-4000-8000-000000002202',
-    '10000000-0000-4000-8000-000000000210', 'pl', 'demo-laboratorium-jezykowe',
-    'Laboratorium językowe dla rodzin — długa demonstracyjna nazwa projektu (fikcyjna)',
+    '10000000-0000-4000-8000-000000000210', 'pl', 'Laboratorium językowe dla rodzin — długa demonstracyjna nazwa projektu (fikcyjna)',
     'Fikcyjne podsumowanie laboratorium językowego dla lokalnego środowiska demonstracyjnego.',
     $demo_p2_pl$## Projekt demonstracyjny
 
@@ -312,8 +305,7 @@ Długi tytuł i opis służą sprawdzeniu zawijania tekstu w kartach i nagłówk
   ),
   (
     '10000000-0000-4000-8000-000000002203',
-    '10000000-0000-4000-8000-000000000210', 'uk', 'demo-movna-laboratoriia',
-    'Мовна лабораторія для родин — довга демонстраційна назва проєкту (фіктивна)',
+    '10000000-0000-4000-8000-000000000210', 'uk', 'Мовна лабораторія для родин — довга демонстраційна назва проєкту (фіктивна)',
     'Фіктивний опис мовної лабораторії для локального демонстраційного середовища.',
     $demo_p2_uk$## Демонстраційний проєкт
 
@@ -328,10 +320,10 @@ on conflict (id) do nothing;
 
 -- P3 — published, featured rank 5 (non-contiguous on purpose), long PL/UK titles
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '10000000-0000-4000-8000-000000000211', 'published', 5,
+  '10000000-0000-4000-8000-000000000211', 'demo-memory-archive', 'published', 5,
   'demo/projects/demo-memory-archive-cover.png',
   '2026-03-01', null, '2026-03-01T09:00:00Z',
   '2026-03-01T09:00:00Z', '2026-03-01T09:00:00Z'
@@ -339,13 +331,12 @@ values (
 on conflict (id) do nothing;
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values
   (
     '10000000-0000-4000-8000-000000002211',
-    '10000000-0000-4000-8000-000000000211', 'en', 'demo-memory-archive',
-    'Memory Archive (Fictional Demo)',
+    '10000000-0000-4000-8000-000000000211', 'en', 'Memory Archive (Fictional Demo)',
     'A fictional documentation project summary.',
     $demo_p3_en$## Demo project
 
@@ -358,8 +349,7 @@ A fictional archive project used to prove non-contiguous featured ranks.
   ),
   (
     '10000000-0000-4000-8000-000000002212',
-    '10000000-0000-4000-8000-000000000211', 'pl', 'demo-archiwum-pamieci',
-    'Archiwum pamięci — wielojęzyczny projekt dokumentacyjny o bardzo długiej nazwie (fikcyjny)',
+    '10000000-0000-4000-8000-000000000211', 'pl', 'Archiwum pamięci — wielojęzyczny projekt dokumentacyjny o bardzo długiej nazwie (fikcyjny)',
     'Fikcyjne podsumowanie projektu dokumentacyjnego.',
     $demo_p3_pl$## Projekt demonstracyjny
 
@@ -372,8 +362,7 @@ Fikcyjny projekt archiwalny sprawdzający porządek wyróżnionych pozycji.
   ),
   (
     '10000000-0000-4000-8000-000000002213',
-    '10000000-0000-4000-8000-000000000211', 'uk', 'demo-arkhiv-pamiati',
-    'Архів пам’яті — багатомовний документаційний проєкт із дуже довгою назвою (фіктивний)',
+    '10000000-0000-4000-8000-000000000211', 'uk', 'Архів пам’яті — багатомовний документаційний проєкт із дуже довгою назвою (фіктивний)',
     'Фіктивний опис документаційного проєкту.',
     $demo_p3_uk$## Демонстраційний проєкт
 
@@ -388,10 +377,10 @@ on conflict (id) do nothing;
 
 -- P4 — published, not featured
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '10000000-0000-4000-8000-000000000212', 'published', null,
+  '10000000-0000-4000-8000-000000000212', 'demo-youth-media', 'published', null,
   'demo/projects/demo-youth-media-cover.png',
   '2026-04-01', '2026-06-15', '2026-04-01T09:00:00Z',
   '2026-04-01T09:00:00Z', '2026-04-01T09:00:00Z'
@@ -399,13 +388,12 @@ values (
 on conflict (id) do nothing;
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values
   (
     '10000000-0000-4000-8000-000000002221',
-    '10000000-0000-4000-8000-000000000212', 'en', 'demo-youth-media',
-    'Youth Media Lab (Fictional Demo)',
+    '10000000-0000-4000-8000-000000000212', 'en', 'Youth Media Lab (Fictional Demo)',
     'A fictional media-literacy project summary.',
     $demo_p4_en$## Demo project
 
@@ -418,8 +406,7 @@ A fictional youth media project for the public listing.
   ),
   (
     '10000000-0000-4000-8000-000000002222',
-    '10000000-0000-4000-8000-000000000212', 'pl', 'demo-media-mlodziezowe',
-    'Laboratorium mediów młodzieżowych (fikcyjna wersja demo)',
+    '10000000-0000-4000-8000-000000000212', 'pl', 'Laboratorium mediów młodzieżowych (fikcyjna wersja demo)',
     'Fikcyjne podsumowanie projektu edukacji medialnej.',
     $demo_p4_pl$## Projekt demonstracyjny
 
@@ -432,8 +419,7 @@ Fikcyjny projekt młodzieżowy widoczny na publicznej liście.
   ),
   (
     '10000000-0000-4000-8000-000000002223',
-    '10000000-0000-4000-8000-000000000212', 'uk', 'demo-molodizhni-media',
-    'Лабораторія молодіжних медіа (фіктивна демоверсія)',
+    '10000000-0000-4000-8000-000000000212', 'uk', 'Лабораторія молодіжних медіа (фіктивна демоверсія)',
     'Фіктивний опис проєкту медіаосвіти.',
     $demo_p4_uk$## Демонстраційний проєкт
 
@@ -448,10 +434,10 @@ on conflict (id) do nothing;
 
 -- P5 — published, not featured
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '10000000-0000-4000-8000-000000000213', 'published', null,
+  '10000000-0000-4000-8000-000000000213', 'demo-eco-workshop', 'published', null,
   'demo/projects/demo-eco-workshop-cover.png',
   '2026-05-01', '2026-07-01', '2026-05-01T09:00:00Z',
   '2026-05-01T09:00:00Z', '2026-05-01T09:00:00Z'
@@ -459,13 +445,12 @@ values (
 on conflict (id) do nothing;
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values
   (
     '10000000-0000-4000-8000-000000002231',
-    '10000000-0000-4000-8000-000000000213', 'en', 'demo-eco-workshop',
-    'Ecology Workshop (Fictional Demo)',
+    '10000000-0000-4000-8000-000000000213', 'en', 'Ecology Workshop (Fictional Demo)',
     'A fictional ecology workshop summary.',
     $demo_p5_en$## Demo project
 
@@ -478,8 +463,7 @@ A fictional ecology workshop for local design testing.
   ),
   (
     '10000000-0000-4000-8000-000000002232',
-    '10000000-0000-4000-8000-000000000213', 'pl', 'demo-warsztat-ekologiczny',
-    'Warsztat ekologiczny (fikcyjna wersja demo)',
+    '10000000-0000-4000-8000-000000000213', 'pl', 'Warsztat ekologiczny (fikcyjna wersja demo)',
     'Fikcyjne podsumowanie warsztatu ekologicznego.',
     $demo_p5_pl$## Projekt demonstracyjny
 
@@ -492,8 +476,7 @@ Fikcyjny warsztat ekologiczny dla lokalnego testowania projektu.
   ),
   (
     '10000000-0000-4000-8000-000000002233',
-    '10000000-0000-4000-8000-000000000213', 'uk', 'demo-ekolohichna-maisternia',
-    'Екологічна майстерня (фіктивна демоверсія)',
+    '10000000-0000-4000-8000-000000000213', 'uk', 'Екологічна майстерня (фіктивна демоверсія)',
     'Фіктивний опис екологічної майстерні.',
     $demo_p5_uk$## Демонстраційний проєкт
 
@@ -506,12 +489,12 @@ Fikcyjny warsztat ekologiczny dla lokalnego testowania projektu.
   )
 on conflict (id) do nothing;
 
--- P6 — published with only an EN translation (PL/UK fallback path)
+-- P6 — published with only an EN translation (PL/UK strict 404 path)
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '10000000-0000-4000-8000-000000000214', 'published', null,
+  '10000000-0000-4000-8000-000000000214', 'demo-fallback-story', 'published', null,
   'demo/projects/demo-fallback-story-cover.png',
   '2026-06-01', null, '2026-06-01T09:00:00Z',
   '2026-06-01T09:00:00Z', '2026-06-01T09:00:00Z'
@@ -519,12 +502,11 @@ values (
 on conflict (id) do nothing;
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values (
   '10000000-0000-4000-8000-000000002241',
-  '10000000-0000-4000-8000-000000000214', 'en', 'demo-fallback-story',
-  'Fallback Story (Fictional Demo)',
+  '10000000-0000-4000-8000-000000000214', 'en', 'Fallback Story (Fictional Demo)',
   'A fictional project with no Polish or Ukrainian translation.',
   $demo_p6_en$## Demo project
 
@@ -539,20 +521,22 @@ on conflict (id) do nothing;
 
 -- P7 — draft (reuses base project …202; must stay invisible to anon)
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '00000000-0000-4000-8000-000000000202', 'draft', null, null, null, null, null,
+  '00000000-0000-4000-8000-000000000202', 'demo-draft-project', 'draft', null, null, null, null, null,
   '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'
 )
 on conflict (id) do update
-  set status = excluded.status,
+  set slug = excluded.slug,
+      status = excluded.status,
       featured_rank = excluded.featured_rank,
       cover_path = excluded.cover_path,
       start_date = excluded.start_date,
       end_date = excluded.end_date,
       published_at = excluded.published_at
 where (
+  public.projects.slug,
   public.projects.status,
   public.projects.featured_rank,
   public.projects.cover_path,
@@ -560,6 +544,7 @@ where (
   public.projects.end_date,
   public.projects.published_at
 ) is distinct from (
+  excluded.slug,
   excluded.status,
   excluded.featured_rank,
   excluded.cover_path,
@@ -569,12 +554,11 @@ where (
 );
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values (
   '00000000-0000-4000-8000-000000000221',
-  '00000000-0000-4000-8000-000000000202', 'en', 'demo-draft-project',
-  'Draft Project (Fictional Demo)',
+  '00000000-0000-4000-8000-000000000202', 'en', 'Draft Project (Fictional Demo)',
   'Draft fixture kept out of public views.',
   $demo_p7_en$## Draft fixture
 
@@ -583,21 +567,18 @@ Fictional draft body used only by the local admin design work.$demo_p7_en$, fals
 )
 on conflict (id) do update
   set locale = excluded.locale,
-      slug = excluded.slug,
       title = excluded.title,
       summary = excluded.summary,
       body = excluded.body,
       needs_review = excluded.needs_review
 where (
   public.project_translations.locale,
-  public.project_translations.slug,
   public.project_translations.title,
   public.project_translations.summary,
   public.project_translations.body,
   public.project_translations.needs_review
 ) is distinct from (
   excluded.locale,
-  excluded.slug,
   excluded.title,
   excluded.summary,
   excluded.body,
@@ -606,23 +587,22 @@ where (
 
 -- P8 — archived (never listed publicly)
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at, created_at, updated_at
 )
 values (
-  '10000000-0000-4000-8000-000000000215', 'archived', null, null,
+  '10000000-0000-4000-8000-000000000215', 'demo-archived-project', 'archived', null, null,
   '2025-01-01', '2025-03-01', '2025-01-01T09:00:00Z',
   '2025-01-01T09:00:00Z', '2025-01-01T09:00:00Z'
 )
 on conflict (id) do nothing;
 
 insert into public.project_translations (
-  id, project_id, locale, slug, title, summary, body, needs_review, created_at, updated_at
+  id, project_id, locale, title, summary, body, needs_review, created_at, updated_at
 )
 values
   (
     '10000000-0000-4000-8000-000000002251',
-    '10000000-0000-4000-8000-000000000215', 'en', 'demo-archived-project',
-    'Archived Project (Fictional Demo)',
+    '10000000-0000-4000-8000-000000000215', 'en', 'Archived Project (Fictional Demo)',
     'A fictional archived project.',
     $demo_p8_en$## Archived demo project
 
@@ -631,8 +611,7 @@ This fictional project is archived and must not appear in public listings.$demo_
   ),
   (
     '10000000-0000-4000-8000-000000002252',
-    '10000000-0000-4000-8000-000000000215', 'pl', 'demo-zarchiwizowany-projekt',
-    'Projekt zarchiwizowany (fikcyjna wersja demo)',
+    '10000000-0000-4000-8000-000000000215', 'pl', 'Projekt zarchiwizowany (fikcyjna wersja demo)',
     'Fikcyjny projekt zarchiwizowany.',
     $demo_p8_pl$## Zarchiwizowany projekt demonstracyjny
 
@@ -641,8 +620,7 @@ Ten fikcyjny projekt jest zarchiwizowany i nie może pojawiać się na publiczny
   ),
   (
     '10000000-0000-4000-8000-000000002253',
-    '10000000-0000-4000-8000-000000000215', 'uk', 'demo-arkhivnyi-proekt',
-    'Архівний проєкт (фіктивна демоверсія)',
+    '10000000-0000-4000-8000-000000000215', 'uk', 'Архівний проєкт (фіктивна демоверсія)',
     'Фіктивний архівний проєкт.',
     $demo_p8_uk$## Архівний демонстраційний проєкт
 
@@ -705,92 +683,89 @@ where (
 );
 
 insert into public.team_member_translations (
-  id, member_id, locale, slug, role, bio, needs_review, created_at, updated_at
+  id, member_id, locale, role, bio, needs_review, created_at, updated_at
 )
 values
   -- member one (base row)
   ('00000000-0000-4000-8000-000000000311', '00000000-0000-4000-8000-000000000301', 'en',
-   'demo-member-one', 'Demo Coordinator (Fictional)',
+   'Demo Coordinator (Fictional)',
    'Fictional biography for local demo testing only.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('00000000-0000-4000-8000-000000000312', '00000000-0000-4000-8000-000000000301', 'pl',
-   'demo-member-one', 'Koordynatorka demonstracyjna (fikcyjna)',
+   'Koordynatorka demonstracyjna (fikcyjna)',
    'Fikcyjna biografia używana wyłącznie w lokalnym środowisku demonstracyjnym.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('00000000-0000-4000-8000-000000000313', '00000000-0000-4000-8000-000000000301', 'uk',
-   'demo-member-one', 'Демонстраційна координаторка (фіктивна)',
+   'Демонстраційна координаторка (фіктивна)',
    'Фіктивна біографія, що використовується лише в локальному демонстраційному середовищі.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   -- member two
   ('10000000-0000-4000-8000-000000003101', '10000000-0000-4000-8000-000000000310', 'en',
-   'demo-member-two', 'Demo Editor (Fictional)',
+   'Demo Editor (Fictional)',
    'Fictional biography for local demo testing only.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003102', '10000000-0000-4000-8000-000000000310', 'pl',
-   'demo-member-two', 'Redaktorka demonstracyjna (fikcyjna)',
+   'Redaktorka demonstracyjna (fikcyjna)',
    'Fikcyjna biografia używana wyłącznie w lokalnym środowisku demonstracyjnym.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003103', '10000000-0000-4000-8000-000000000310', 'uk',
-   'demo-member-two', 'Демонстраційна редакторка (фіктивна)',
+   'Демонстраційна редакторка (фіктивна)',
    'Фіктивна біографія, що використовується лише в локальному демонстраційному середовищі.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   -- member three
   ('10000000-0000-4000-8000-000000003111', '10000000-0000-4000-8000-000000000311', 'en',
-   'demo-member-three', 'Demo Producer (Fictional)',
+   'Demo Producer (Fictional)',
    'Fictional biography for local demo testing only.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003112', '10000000-0000-4000-8000-000000000311', 'pl',
-   'demo-member-three', 'Producentka demonstracyjna (fikcyjna)',
+   'Producentka demonstracyjna (fikcyjna)',
    'Fikcyjna biografia używana wyłącznie w lokalnym środowisku demonstracyjnym.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003113', '10000000-0000-4000-8000-000000000311', 'uk',
-   'demo-member-three', 'Демонстраційна продюсерка (фіктивна)',
+   'Демонстраційна продюсерка (фіктивна)',
    'Фіктивна біографія, що використовується лише в локальному демонстраційному середовищі.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   -- member four
   ('10000000-0000-4000-8000-000000003121', '10000000-0000-4000-8000-000000000312', 'en',
-   'demo-member-four', 'Demo Researcher (Fictional)',
+   'Demo Researcher (Fictional)',
    'Fictional biography for local demo testing only.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003122', '10000000-0000-4000-8000-000000000312', 'pl',
-   'demo-member-four', 'Badaczka demonstracyjna (fikcyjna)',
+   'Badaczka demonstracyjna (fikcyjna)',
    'Fikcyjna biografia używana wyłącznie w lokalnym środowisku demonstracyjnym.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003123', '10000000-0000-4000-8000-000000000312', 'uk',
-   'demo-member-four', 'Демонстраційна дослідниця (фіктивна)',
+   'Демонстраційна дослідниця (фіктивна)',
    'Фіктивна біографія, що використовується лише в локальному демонстраційному середовищі.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   -- member five
   ('10000000-0000-4000-8000-000000003131', '10000000-0000-4000-8000-000000000313', 'en',
-   'demo-member-five', 'Demo Volunteer (Fictional)',
+   'Demo Volunteer (Fictional)',
    'Fictional biography for local demo testing only.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003132', '10000000-0000-4000-8000-000000000313', 'pl',
-   'demo-member-five', 'Wolontariuszka demonstracyjna (fikcyjna)',
+   'Wolontariuszka demonstracyjna (fikcyjna)',
    'Fikcyjna biografia używana wyłącznie w lokalnym środowisku demonstracyjnym.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z'),
   ('10000000-0000-4000-8000-000000003133', '10000000-0000-4000-8000-000000000313', 'uk',
-   'demo-member-five', 'Демонстраційна волонтерка (фіктивна)',
+   'Демонстраційна волонтерка (фіктивна)',
    'Фіктивна біографія, що використовується лише в локальному демонстраційному середовищі.', false,
    '2026-01-05T12:00:00Z', '2026-01-05T12:00:00Z')
 on conflict (id) do update
   set member_id = excluded.member_id,
       locale = excluded.locale,
-      slug = excluded.slug,
       role = excluded.role,
       bio = excluded.bio,
       needs_review = excluded.needs_review
 where (
   public.team_member_translations.member_id,
   public.team_member_translations.locale,
-  public.team_member_translations.slug,
   public.team_member_translations.role,
   public.team_member_translations.bio,
   public.team_member_translations.needs_review
 ) is distinct from (
   excluded.member_id,
   excluded.locale,
-  excluded.slug,
   excluded.role,
   excluded.bio,
   excluded.needs_review
@@ -802,41 +777,43 @@ where (
 -- ===========================================================================
 
 insert into public.publications (
-  id, status, language, publication_date, external_url, sort_order, published_at, created_at, updated_at
+  id, slug, status, language, publication_date, external_url, sort_order, published_at, created_at, updated_at
 )
 values
   (
-    '00000000-0000-4000-8000-000000000401', 'published', 'en', '2026-02-01', null, 1,
+    '00000000-0000-4000-8000-000000000401', 'demo-cultural-bridges-report', 'published', 'en', '2026-02-01', null, 1,
     '2026-02-01T09:00:00Z', '2026-02-01T09:00:00Z', '2026-02-01T09:00:00Z'
   ),
   (
-    '00000000-0000-4000-8000-000000000402', 'published', 'pl', '2026-02-15', null, 2,
+    '00000000-0000-4000-8000-000000000402', 'demo-community-zine', 'published', 'pl', '2026-02-15', null, 2,
     '2026-02-15T09:00:00Z', '2026-02-15T09:00:00Z', '2026-02-15T09:00:00Z'
   ),
   (
-    '10000000-0000-4000-8000-000000000410', 'published', 'uk', '2026-03-01', null, 3,
+    '10000000-0000-4000-8000-000000000410', 'demo-poetry-anthology', 'published', 'uk', '2026-03-01', null, 3,
     '2026-03-01T09:00:00Z', '2026-03-01T09:00:00Z', '2026-03-01T09:00:00Z'
   ),
   (
-    '10000000-0000-4000-8000-000000000411', 'published', 'en', '2026-03-10', null, 4,
+    '10000000-0000-4000-8000-000000000411', 'demo-disinformation-notes', 'published', 'en', '2026-03-10', null, 4,
     '2026-03-10T09:00:00Z', '2026-03-10T09:00:00Z', '2026-03-10T09:00:00Z'
   ),
   (
-    '10000000-0000-4000-8000-000000000412', 'published', 'pl', '2026-03-20', null, 5,
+    '10000000-0000-4000-8000-000000000412', 'demo-volunteer-handbook', 'published', 'pl', '2026-03-20', null, 5,
     '2026-03-20T09:00:00Z', '2026-03-20T09:00:00Z', '2026-03-20T09:00:00Z'
   ),
   (
-    '10000000-0000-4000-8000-000000000413', 'published', 'uk', '2026-04-01', null, 6,
+    '10000000-0000-4000-8000-000000000413', 'demo-ecology-report', 'published', 'uk', '2026-04-01', null, 6,
     '2026-04-01T09:00:00Z', '2026-04-01T09:00:00Z', '2026-04-01T09:00:00Z'
   )
 on conflict (id) do update
-  set status = excluded.status,
+  set slug = excluded.slug,
+      status = excluded.status,
       language = excluded.language,
       publication_date = excluded.publication_date,
       external_url = excluded.external_url,
       sort_order = excluded.sort_order,
       published_at = excluded.published_at
 where (
+  public.publications.slug,
   public.publications.status,
   public.publications.language,
   public.publications.publication_date,
@@ -844,6 +821,7 @@ where (
   public.publications.sort_order,
   public.publications.published_at
 ) is distinct from (
+  excluded.slug,
   excluded.status,
   excluded.language,
   excluded.publication_date,
@@ -853,89 +831,88 @@ where (
 );
 
 insert into public.publication_translations (
-  id, publication_id, locale, slug, title, abstract, authors, needs_review, created_at, updated_at
+  id, publication_id, locale, title, abstract, authors, needs_review, created_at, updated_at
 )
 values
   -- P1 (base row)
   ('00000000-0000-4000-8000-000000000411', '00000000-0000-4000-8000-000000000401', 'en',
-   'demo-cultural-bridges-report', 'Cultural Bridges Report (Fictional Demo)',
+   'Cultural Bridges Report (Fictional Demo)',
    'A fictional report abstract for local design testing.',
    'Demo Author One (Fictional)', false,
    '2026-02-01T09:00:00Z', '2026-02-01T09:00:00Z'),
   ('00000000-0000-4000-8000-000000000412', '00000000-0000-4000-8000-000000000401', 'pl',
-   'demo-raport-miedzykulturowy', 'Raport o mostach kulturowych (fikcyjna wersja demo)',
+   'Raport o mostach kulturowych (fikcyjna wersja demo)',
    'Fikcyjne streszczenie raportu na potrzeby lokalnego środowiska demonstracyjnego.',
    'Autor demonstracyjny (fikcyjny)', false,
    '2026-02-01T09:00:00Z', '2026-02-01T09:00:00Z'),
   ('00000000-0000-4000-8000-000000000413', '00000000-0000-4000-8000-000000000401', 'uk',
-   'demo-mizhkulturnyi-zvit', 'Звіт про культурні мости (фіктивна демоверсія)',
+   'Звіт про культурні мости (фіктивна демоверсія)',
    'Фіктивний огляд звіту для локального демонстраційного середовища.',
    'Демонстраційний автор (фіктивний)', false,
    '2026-02-01T09:00:00Z', '2026-02-01T09:00:00Z'),
   -- P2 (base row + two new translations)
   ('00000000-0000-4000-8000-000000000421', '00000000-0000-4000-8000-000000000402', 'en',
-   'demo-community-zine', 'Community Zine (Fictional Demo)',
+   'Community Zine (Fictional Demo)',
    'A fictional community zine abstract.',
    'Demo Editorial Collective (Fictional)', false,
    '2026-02-15T09:00:00Z', '2026-02-15T09:00:00Z'),
   ('10000000-0000-4000-8000-000000004220', '00000000-0000-4000-8000-000000000402', 'pl',
-   'demo-zine-spoleczny', 'Zine społeczny (fikcyjna wersja demo)',
+   'Zine społeczny (fikcyjna wersja demo)',
    'Fikcyjne streszczenie zina społecznego.',
    'Kolektyw redakcyjny (fikcyjny)', false,
    '2026-02-15T09:00:00Z', '2026-02-15T09:00:00Z'),
   ('10000000-0000-4000-8000-000000004221', '00000000-0000-4000-8000-000000000402', 'uk',
-   'demo-hromadska-zin', 'Громадський зін (фіктивна демоверсія)',
+   'Громадський зін (фіктивна демоверсія)',
    'Фіктивний опис громадського зіну.',
    'Демонстраційний редакційний колектив (фіктивний)', false,
    '2026-02-15T09:00:00Z', '2026-02-15T09:00:00Z'),
   -- P3
   ('10000000-0000-4000-8000-000000004210', '10000000-0000-4000-8000-000000000410', 'en',
-   'demo-poetry-anthology', 'Poetry Anthology (Fictional Demo)',
+   'Poetry Anthology (Fictional Demo)',
    'A fictional poetry anthology abstract.',
    'Demo Poets Circle (Fictional)', false,
    '2026-03-01T09:00:00Z', '2026-03-01T09:00:00Z'),
   ('10000000-0000-4000-8000-000000004211', '10000000-0000-4000-8000-000000000410', 'pl',
-   'demo-antologia-poezji', 'Antologia poezji (fikcyjna wersja demo)',
+   'Antologia poezji (fikcyjna wersja demo)',
    'Fikcyjne streszczenie antologii poezji.',
    'Krąg poetów demonstracyjnych (fikcyjny)', false,
    '2026-03-01T09:00:00Z', '2026-03-01T09:00:00Z'),
   ('10000000-0000-4000-8000-000000004212', '10000000-0000-4000-8000-000000000410', 'uk',
-   'demo-antolohiia-poezii', 'Антологія поезії (фіктивна демоверсія)',
+   'Антологія поезії (фіктивна демоверсія)',
    'Фіктивний опис антології поезії.',
    'Демонстраційне коло поетів (фіктивне)', false,
    '2026-03-01T09:00:00Z', '2026-03-01T09:00:00Z'),
   -- P4 (EN only; fallback exercise)
   ('10000000-0000-4000-8000-000000004230', '10000000-0000-4000-8000-000000000411', 'en',
-   'demo-disinformation-notes', 'Disinformation Field Notes (Fictional Demo)',
+   'Disinformation Field Notes (Fictional Demo)',
    'A fictional media-literacy field note.',
    'Demo Research Desk (Fictional)', false,
    '2026-03-10T09:00:00Z', '2026-03-10T09:00:00Z'),
   -- P5
   ('10000000-0000-4000-8000-000000004240', '10000000-0000-4000-8000-000000000412', 'en',
-   'demo-volunteer-handbook', 'Volunteer Handbook (Fictional Demo)',
+   'Volunteer Handbook (Fictional Demo)',
    'A fictional volunteer handbook abstract.',
    'Demo Volunteer Team (Fictional)', false,
    '2026-03-20T09:00:00Z', '2026-03-20T09:00:00Z'),
   ('10000000-0000-4000-8000-000000004241', '10000000-0000-4000-8000-000000000412', 'pl',
-   'demo-poradnik-wolontariusza', 'Poradnik wolontariusza (fikcyjna wersja demo)',
+   'Poradnik wolontariusza (fikcyjna wersja demo)',
    'Fikcyjne streszczenie poradnika wolontariusza.',
    'Zespół wolontariuszy demonstracyjnych (fikcyjny)', false,
    '2026-03-20T09:00:00Z', '2026-03-20T09:00:00Z'),
   -- P6
   ('10000000-0000-4000-8000-000000004250', '10000000-0000-4000-8000-000000000413', 'en',
-   'demo-ecology-report', 'Ecology Listening Report (Fictional Demo)',
+   'Ecology Listening Report (Fictional Demo)',
    'A fictional ecology listening report abstract.',
    'Demo Ecology Circle (Fictional)', false,
    '2026-04-01T09:00:00Z', '2026-04-01T09:00:00Z'),
   ('10000000-0000-4000-8000-000000004251', '10000000-0000-4000-8000-000000000413', 'uk',
-   'demo-ekolohichnyi-zvit', 'Екологічний звіт (фіктивна демоверсія)',
+   'Екологічний звіт (фіктивна демоверсія)',
    'Фіктивний опис екологічного звіту.',
    'Демонстраційне екологічне коло (фіктивне)', false,
    '2026-04-01T09:00:00Z', '2026-04-01T09:00:00Z')
 on conflict (id) do update
   set publication_id = excluded.publication_id,
       locale = excluded.locale,
-      slug = excluded.slug,
       title = excluded.title,
       abstract = excluded.abstract,
       authors = excluded.authors,
@@ -943,7 +920,6 @@ on conflict (id) do update
 where (
   public.publication_translations.publication_id,
   public.publication_translations.locale,
-  public.publication_translations.slug,
   public.publication_translations.title,
   public.publication_translations.abstract,
   public.publication_translations.authors,
@@ -951,7 +927,6 @@ where (
 ) is distinct from (
   excluded.publication_id,
   excluded.locale,
-  excluded.slug,
   excluded.title,
   excluded.abstract,
   excluded.authors,
@@ -1007,33 +982,35 @@ where (
 );
 
 -- ===========================================================================
--- Organization documents: 3 file-based PDFs (EN/PL/UK editions)
--- The base "regulations" row is repurposed as the English edition; each
--- document keeps all three translations so every UI locale resolves a title.
+-- Organization documents: 3 file-based PDFs (EN/PL/UK editions).
+-- The base `regulations` row (id …601) is the D-12 in-app reader and is left
+-- untouched; demo documents use their own UUID namespace. Each demo document
+-- keeps all three translations so every UI locale resolves a title.
 -- ===========================================================================
 
 insert into public.organization_documents (
-  id, status, document_type, language, publication_date, storage_path, mime_type,
+  id, slug, status, document_type, language, publication_date, storage_path, mime_type,
   file_size_bytes, sort_order, published_at, created_at, updated_at
 )
 values
   (
-    '00000000-0000-4000-8000-000000000601', 'published', 'statute', 'en', '2026-01-15',
-    'demo/documents/demo-statute-en.pdf', 'application/pdf', null, 1,
+    '10000000-0000-4000-8000-000000000610', 'demo-statute-en', 'published', 'statute', 'en', '2026-01-15',
+    'demo/documents/demo-statute-en.pdf', 'application/pdf', null, 10,
     '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'
   ),
   (
-    '10000000-0000-4000-8000-000000000620', 'published', 'statute', 'pl', '2026-01-15',
-    'demo/documents/demo-statute-pl.pdf', 'application/pdf', null, 2,
+    '10000000-0000-4000-8000-000000000620', 'demo-statute-pl', 'published', 'statute', 'pl', '2026-01-15',
+    'demo/documents/demo-statute-pl.pdf', 'application/pdf', null, 11,
     '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'
   ),
   (
-    '10000000-0000-4000-8000-000000000621', 'published', 'statute', 'uk', '2026-01-15',
-    'demo/documents/demo-statute-uk.pdf', 'application/pdf', null, 3,
+    '10000000-0000-4000-8000-000000000621', 'demo-statute-uk', 'published', 'statute', 'uk', '2026-01-15',
+    'demo/documents/demo-statute-uk.pdf', 'application/pdf', null, 12,
     '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'
   )
 on conflict (id) do update
-  set status = excluded.status,
+  set slug = excluded.slug,
+      status = excluded.status,
       document_type = excluded.document_type,
       language = excluded.language,
       publication_date = excluded.publication_date,
@@ -1043,6 +1020,7 @@ on conflict (id) do update
       sort_order = excluded.sort_order,
       published_at = excluded.published_at
 where (
+  public.organization_documents.slug,
   public.organization_documents.status,
   public.organization_documents.document_type,
   public.organization_documents.language,
@@ -1053,6 +1031,7 @@ where (
   public.organization_documents.sort_order,
   public.organization_documents.published_at
 ) is distinct from (
+  excluded.slug,
   excluded.status,
   excluded.document_type,
   excluded.language,
@@ -1065,52 +1044,51 @@ where (
 );
 
 insert into public.organization_document_translations (
-  id, document_id, locale, slug, title, description, body, needs_review, created_at, updated_at
+  id, document_id, locale, title, description, body, needs_review, created_at, updated_at
 )
 values
   -- English edition (base translations repurposed)
-  ('00000000-0000-4000-8000-000000000602', '00000000-0000-4000-8000-000000000601', 'en',
-   'demo-statute-en', 'Demo Statute — English edition (Fictional)',
+  ('10000000-0000-4000-8000-000000006100', '10000000-0000-4000-8000-000000000610', 'en',
+   'Demo Statute — English edition (Fictional)',
    'Fictional demo document for local design testing.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
-  ('00000000-0000-4000-8000-000000000603', '00000000-0000-4000-8000-000000000601', 'pl',
-   'demo-statute-en', 'Statut demonstracyjny — wydanie angielskie (fikcyjne)',
+  ('10000000-0000-4000-8000-000000006101', '10000000-0000-4000-8000-000000000610', 'pl',
+   'Statut demonstracyjny — wydanie angielskie (fikcyjne)',
    'Fikcyjny dokument demonstracyjny do lokalnego testowania projektu.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
-  ('00000000-0000-4000-8000-000000000604', '00000000-0000-4000-8000-000000000601', 'uk',
-   'demo-statute-en', 'Демонстраційний статут — англійське видання (фіктивне)',
+  ('10000000-0000-4000-8000-000000006102', '10000000-0000-4000-8000-000000000610', 'uk',
+   'Демонстраційний статут — англійське видання (фіктивне)',
    'Фіктивний демонстраційний документ для локального тестування дизайну.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
   -- Polish edition
   ('10000000-0000-4000-8000-000000006210', '10000000-0000-4000-8000-000000000620', 'en',
-   'demo-statute-pl', 'Demo Statute — Polish edition (Fictional)',
+   'Demo Statute — Polish edition (Fictional)',
    'Fictional demo document for local design testing.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
   ('10000000-0000-4000-8000-000000006211', '10000000-0000-4000-8000-000000000620', 'pl',
-   'demo-statute-pl', 'Statut demonstracyjny — wydanie polskie (fikcyjne)',
+   'Statut demonstracyjny — wydanie polskie (fikcyjne)',
    'Fikcyjny dokument demonstracyjny do lokalnego testowania projektu.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
   ('10000000-0000-4000-8000-000000006212', '10000000-0000-4000-8000-000000000620', 'uk',
-   'demo-statute-pl', 'Демонстраційний статут — польське видання (фіктивне)',
+   'Демонстраційний статут — польське видання (фіктивне)',
    'Фіктивний демонстраційний документ для локального тестування дизайну.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
   -- Ukrainian edition
   ('10000000-0000-4000-8000-000000006220', '10000000-0000-4000-8000-000000000621', 'en',
-   'demo-statute-uk', 'Demo Statute — Ukrainian edition (Fictional)',
+   'Demo Statute — Ukrainian edition (Fictional)',
    'Fictional demo document for local design testing.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
   ('10000000-0000-4000-8000-000000006221', '10000000-0000-4000-8000-000000000621', 'pl',
-   'demo-statute-uk', 'Statut demonstracyjny — wydanie ukraińskie (fikcyjne)',
+   'Statut demonstracyjny — wydanie ukraińskie (fikcyjne)',
    'Fikcyjny dokument demonstracyjny do lokalnego testowania projektu.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z'),
   ('10000000-0000-4000-8000-000000006222', '10000000-0000-4000-8000-000000000621', 'uk',
-   'demo-statute-uk', 'Демонстраційний статут — українське видання (фіктивне)',
+   'Демонстраційний статут — українське видання (фіктивне)',
    'Фіктивний демонстраційний документ для локального тестування дизайну.', null, false,
    '2026-01-15T09:00:00Z', '2026-01-15T09:00:00Z')
 on conflict (id) do update
   set document_id = excluded.document_id,
       locale = excluded.locale,
-      slug = excluded.slug,
       title = excluded.title,
       description = excluded.description,
       body = excluded.body,
@@ -1118,7 +1096,6 @@ on conflict (id) do update
 where (
   public.organization_document_translations.document_id,
   public.organization_document_translations.locale,
-  public.organization_document_translations.slug,
   public.organization_document_translations.title,
   public.organization_document_translations.description,
   public.organization_document_translations.body,
@@ -1126,7 +1103,6 @@ where (
 ) is distinct from (
   excluded.document_id,
   excluded.locale,
-  excluded.slug,
   excluded.title,
   excluded.description,
   excluded.body,

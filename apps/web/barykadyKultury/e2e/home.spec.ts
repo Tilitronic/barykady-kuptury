@@ -34,7 +34,6 @@ const HOME_PAGE_FIXTURE = [
     site_page_translations: [
       {
         locale: "en",
-        slug: "home",
         title: "Barykady Kultury",
         body: `## Who we are\n\n${MISSION_BODY}`,
         meta_description: null,
@@ -47,6 +46,7 @@ const HOME_PAGE_FIXTURE = [
 const FEATURED_PROJECTS_FIXTURE = [
   {
     id: "00000000-0000-4000-8000-000000000202",
+    slug: "second-featured-project",
     status: "published",
     featured_rank: 2,
     cover_path: null,
@@ -56,7 +56,6 @@ const FEATURED_PROJECTS_FIXTURE = [
     project_translations: [
       {
         locale: "en",
-        slug: "second-featured-project",
         title: SECOND_FEATURED,
         summary: "Second in the configured order.",
         body: "B."
@@ -65,6 +64,7 @@ const FEATURED_PROJECTS_FIXTURE = [
   },
   {
     id: "00000000-0000-4000-8000-000000000201",
+    slug: "first-featured-project",
     status: "published",
     featured_rank: 1,
     cover_path: null,
@@ -74,7 +74,6 @@ const FEATURED_PROJECTS_FIXTURE = [
     project_translations: [
       {
         locale: "en",
-        slug: "first-featured-project",
         title: FIRST_FEATURED,
         summary: "First in the configured order.",
         body: "A."
@@ -83,6 +82,7 @@ const FEATURED_PROJECTS_FIXTURE = [
   },
   {
     id: "00000000-0000-4000-8000-000000000203",
+    slug: "not-featured-project",
     status: "published",
     featured_rank: null,
     cover_path: null,
@@ -92,7 +92,6 @@ const FEATURED_PROJECTS_FIXTURE = [
     project_translations: [
       {
         locale: "en",
-        slug: "not-featured-project",
         title: "Not Featured Project",
         summary: "Newest but not featured.",
         body: "C."
@@ -101,6 +100,7 @@ const FEATURED_PROJECTS_FIXTURE = [
   },
   {
     id: "00000000-0000-4000-8000-000000000299",
+    slug: "draft-project-leak",
     status: "draft",
     featured_rank: 0,
     cover_path: null,
@@ -110,7 +110,6 @@ const FEATURED_PROJECTS_FIXTURE = [
     project_translations: [
       {
         locale: "en",
-        slug: "draft-project-leak",
         title: DRAFT_TITLE,
         summary: "Draft summary must not leak.",
         body: "DRAFT BODY"

@@ -41,12 +41,12 @@ Options:
 `);
 }
 
-async function request(url, options = {}) {
+async function fetchOrThrow(url, options = {}) {
   try {
     return await fetchWithTimeout(url, { timeoutMs: 15_000, ...options });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`request to ${url} failed: ${reason}`);
+    throw new Error(`fetch to ${url} failed: ${reason}`);
   }
 }
 
@@ -76,7 +76,7 @@ function authHeaders(status) {
 }
 
 async function checkDatabase(status) {
-  const response = await request(
+  const response = await fetchOrThrow(
     `${apiBase(status)}/rest/v1/site_pages?select=page_key&limit=1`,
     { headers: authHeaders(status) }
   );
@@ -105,7 +105,7 @@ async function checkPages(base) {
     const url = `${base}/${locale}`;
     let response;
     try {
-      response = await request(url);
+      response = await fetchOrThrow(url);
     } catch (error) {
       throw new Error(
         `${error.message}\n` +
@@ -140,7 +140,7 @@ async function checkCalendar(base) {
     const url = `${base}${CALENDAR_PATH}?scenario=${scenario.name}`;
     let response;
     try {
-      response = await request(url, {
+      response = await fetchOrThrow(url, {
         headers: { accept: "application/json" }
       });
     } catch (error) {
@@ -226,7 +226,7 @@ async function checkAsset(status) {
   const headers = authHeaders(status);
   const api = apiBase(status);
 
-  const response = await request(
+  const response = await fetchOrThrow(
     `${api}/rest/v1/projects?select=cover_path&cover_path=not.is.null&status=eq.published&limit=1`,
     { headers }
   );
@@ -250,7 +250,7 @@ async function checkAsset(status) {
 
   const encoded = path.split("/").map(encodeURIComponent).join("/");
   const assetUrl = `${api}/storage/v1/object/public/public-media/${encoded}`;
-  const asset = await request(assetUrl);
+  const asset = await fetchOrThrow(assetUrl);
 
   if (asset.status !== 200) {
     throw new Error(
@@ -288,7 +288,7 @@ async function checkAsset(status) {
  * authenticated API proof using the demo users.
  */
 async function signInDemoUser(api, status, email) {
-  const response = await request(`${api}/auth/v1/token?grant_type=password`, {
+  const response = await fetchOrThrow(`${api}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: {
       ...authHeaders(status),
@@ -324,7 +324,7 @@ function bearerHeaders(status, accessToken) {
 }
 
 async function readProject(api, status, id) {
-  const response = await request(
+  const response = await fetchOrThrow(
     `${api}/rest/v1/projects?id=eq.${encodeURIComponent(id)}&select=id,status,featured_rank`,
     { headers: authHeaders(status) }
   );
@@ -347,7 +347,7 @@ async function checkAuthBoundary(status) {
   const draftId = "00000000-0000-4000-8000-000000000202";
 
   // 1) Authenticated non-admin INSERT is denied by RLS.
-  const insert = await request(`${api}/rest/v1/projects`, {
+  const insert = await fetchOrThrow(`${api}/rest/v1/projects`, {
     method: "POST",
     headers: {
       ...bearerHeaders(status, viewer.accessToken),
@@ -368,7 +368,7 @@ async function checkAuthBoundary(status) {
 
   // 2) Authenticated non-admin UPDATE affects zero rows (RLS filters it).
   const before = await readProject(api, status, draftId);
-  const update = await request(
+  const update = await fetchOrThrow(
     `${api}/rest/v1/projects?id=eq.${encodeURIComponent(draftId)}`,
     {
       method: "PATCH",
@@ -409,7 +409,7 @@ async function checkAuthBoundary(status) {
       "admin@demo.local lacks app_metadata.role=admin; the demo admin user is wrong"
     );
   }
-  const adminRead = await request(
+  const adminRead = await fetchOrThrow(
     `${api}/rest/v1/projects?id=eq.${encodeURIComponent(draftId)}&select=id,status`,
     { headers: bearerHeaders(status, admin.accessToken) }
   );

@@ -14,20 +14,26 @@ import type { ContentResult } from "@/shared/content/result";
 import type { Database } from "@/types/database.types";
 
 /**
- * Hook axis (T-020): mirrors `useProjects` — loading first, stale-guarded,
- * locale-reactive — and owns the file-URL seam: each file carries a resolved
- * `downloadUrl` so the components receive plain view-model data (the rule the
- * T-017/T-018/T-019 reviews enforced three times).
+ * Hook axis (T-020, canonical slug by T-038/D-24): mirrors `useProjects` —
+ * loading first, stale-guarded, locale-reactive — and owns the file-URL seam.
+ * The detail hook resolves the single root slug plus a requested-locale
+ * translation; the URL segment never varies by locale.
  */
 
 type Client = SupabaseClient<Database> | null;
 type ListingHook = {
-  readonly result: Ref<ContentResult<PublicationView>>;
+  readonly publicationsResult: Ref<ContentResult<PublicationView>>;
 };
+type DetailHook = {
+  readonly publicationResult: Ref<ContentResult<PublicationView>>;
+};
+
+const CANONICAL_SLUG = "sample-publication";
 
 function publicationRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-4000-8000-000000000401",
+    slug: CANONICAL_SLUG,
     status: "published",
     language: "en",
     publication_date: "2026-02-01",
@@ -37,14 +43,12 @@ function publicationRow(overrides: Record<string, unknown> = {}) {
     publication_translations: [
       {
         locale: "en",
-        slug: "sample-publication",
         title: "Sample (EN)",
         abstract: "A",
         authors: "X"
       },
       {
         locale: "pl",
-        slug: "przykladowa-publikacja",
         title: "Przykladowa (PL)",
         abstract: "B",
         authors: "Y"
@@ -84,7 +88,7 @@ async function mountListingProbe(
   const Probe = defineComponent({
     setup() {
       hook = usePublications(activeLocale);
-      return () => h("div", hook.result.value.kind);
+      return () => h("div", hook.publicationsResult.value.kind);
     }
   });
 
@@ -103,12 +107,12 @@ async function mountDetailProbe(
 ) {
   const activeSlug = ref(slug);
   const activeLocale = ref<Locale>(locale);
-  let hook!: ListingHook;
+  let hook!: DetailHook;
 
   const Probe = defineComponent({
     setup() {
       hook = usePublication(activeSlug, activeLocale);
-      return () => h("div", hook.result.value.kind);
+      return () => h("div", hook.publicationResult.value.kind);
     }
   });
 
@@ -137,8 +141,11 @@ describe("usePublications", () => {
     expect(wrapper.text()).toBe("ok");
 
     const items =
-      hook.result.value.kind === "ok" ? hook.result.value.items : [];
+      hook.publicationsResult.value.kind === "ok"
+        ? hook.publicationsResult.value.items
+        : [];
     expect(items).toHaveLength(1);
+    expect(items[0]?.slug).toBe(CANONICAL_SLUG);
     expect(items[0]?.files[0]?.downloadUrl).toContain(
       "public-documents/fixtures/publications/a-en.pdf?download=a-en.pdf"
     );
@@ -172,13 +179,13 @@ describe("usePublications", () => {
 });
 
 describe("usePublication", () => {
-  it("resolves the strict (locale, slug) detail", async () => {
+  it("resolves the canonical slug with the requested-locale translation", async () => {
     const fake = createFakeSupabase({
       tables: { publications: [publicationRow()] }
     });
     const { wrapper } = await mountDetailProbe(
       fake.client,
-      "przykladowa-publikacja",
+      CANONICAL_SLUG,
       "pl"
     );
 
@@ -187,13 +194,26 @@ describe("usePublication", () => {
     expect(wrapper.text()).toBe("ok");
   });
 
-  it("reports empty when another locale owns the slug", async () => {
+  it("reports empty when the requested locale has no translation", async () => {
     const fake = createFakeSupabase({
-      tables: { publications: [publicationRow()] }
+      tables: {
+        publications: [
+          publicationRow({
+            publication_translations: [
+              {
+                locale: "en",
+                title: "Sample (EN)",
+                abstract: "A",
+                authors: "X"
+              }
+            ]
+          })
+        ]
+      }
     });
     const { wrapper } = await mountDetailProbe(
       fake.client,
-      "sample-publication",
+      CANONICAL_SLUG,
       "pl"
     );
     await flush();
@@ -207,11 +227,11 @@ describe("usePublication", () => {
         publications: [
           publicationRow({
             id: "00000000-0000-4000-8000-000000000499",
+            slug: "draft-secret",
             status: "draft",
             publication_translations: [
               {
                 locale: "en",
-                slug: "draft-secret",
                 title: "Draft",
                 abstract: "a",
                 authors: "x"

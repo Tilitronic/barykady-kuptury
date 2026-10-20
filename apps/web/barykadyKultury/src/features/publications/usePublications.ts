@@ -12,13 +12,12 @@ import type { Locale } from "@/features/i18n/locales";
 import type { ContentResult } from "@/shared/content/result";
 
 /**
- * Reactive data sources for public publications (T-020).
+ * Reactive data sources for public publications.
  *
  * Mirror `useProjects`: inject the Supabase client, expose a reactive
  * `ContentResult`, discard stale responses, re-fetch on locale change — and
  * own the file-URL seam so components receive plain view-model data with a
- * resolved `downloadUrl` per language version (the rule the T-017/T-018/T-019
- * reviews enforced).
+ * resolved `downloadUrl` per language version.
  */
 type MaybeRef<T> = Ref<T> | T;
 
@@ -49,24 +48,29 @@ function toView(
 
 function withFileUrls(
   supabase: SupabaseOrNull,
-  result: ContentResult<PublicationSummary>
+  contentResult: ContentResult<PublicationSummary>
 ): ContentResult<PublicationView> {
-  return result.kind === "ok"
-    ? { kind: "ok", items: result.items.map(p => toView(supabase, p)) }
-    : result;
+  return contentResult.kind === "ok"
+    ? {
+        kind: "ok",
+        items: contentResult.items.map(p => toView(supabase, p))
+      }
+    : contentResult;
 }
 
 /** Published publications for a locale (newest first). */
 export function usePublications(locale: MaybeRef<Locale>): {
-  readonly result: Ref<ContentResult<PublicationView>>;
+  readonly publicationsResult: Ref<ContentResult<PublicationView>>;
 } {
   const supabase = inject(SUPABASE_CLIENT_KEY, null);
-  const result = ref<ContentResult<PublicationView>>({ kind: "loading" });
+  const publicationsResult = ref<ContentResult<PublicationView>>({
+    kind: "loading"
+  });
 
   watchEffect(onInvalidate => {
     const activeLocale = typeof locale === "string" ? locale : locale.value;
 
-    result.value = { kind: "loading" };
+    publicationsResult.value = { kind: "loading" };
 
     let stale = false;
     onInvalidate(() => {
@@ -74,12 +78,17 @@ export function usePublications(locale: MaybeRef<Locale>): {
     });
 
     void (async () => {
-      const next = await fetchPublishedPublications(supabase, activeLocale);
-      if (!stale) result.value = withFileUrls(supabase, next);
+      const fetchedPublications = await fetchPublishedPublications(
+        supabase,
+        activeLocale
+      );
+      if (!stale) {
+        publicationsResult.value = withFileUrls(supabase, fetchedPublications);
+      }
     })();
   });
 
-  return { result };
+  return { publicationsResult };
 }
 
 /**
@@ -90,15 +99,17 @@ export function usePublications(locale: MaybeRef<Locale>): {
 export function usePublication(
   slug: MaybeRef<string>,
   locale: MaybeRef<Locale>
-): { readonly result: Ref<ContentResult<PublicationView>> } {
+): { readonly publicationResult: Ref<ContentResult<PublicationView>> } {
   const supabase = inject(SUPABASE_CLIENT_KEY, null);
-  const result = ref<ContentResult<PublicationView>>({ kind: "loading" });
+  const publicationResult = ref<ContentResult<PublicationView>>({
+    kind: "loading"
+  });
 
   watchEffect(onInvalidate => {
     const activeSlug = typeof slug === "string" ? slug : slug.value;
     const activeLocale = typeof locale === "string" ? locale : locale.value;
 
-    result.value = { kind: "loading" };
+    publicationResult.value = { kind: "loading" };
 
     let stale = false;
     onInvalidate(() => {
@@ -106,14 +117,16 @@ export function usePublication(
     });
 
     void (async () => {
-      const next = await fetchPublishedPublicationBySlug(
+      const fetchedPublication = await fetchPublishedPublicationBySlug(
         supabase,
         activeSlug,
         activeLocale
       );
-      if (!stale) result.value = withFileUrls(supabase, next);
+      if (!stale) {
+        publicationResult.value = withFileUrls(supabase, fetchedPublication);
+      }
     })();
   });
 
-  return { result };
+  return { publicationResult };
 }

@@ -150,3 +150,8 @@ pnpm test:db:idempotency
   `admin@demo.local` reaches `/en/admin`, `viewer@demo.local` reaches
   `/en/admin/access-denied`; 90 E2E and the build stay green. Use
   `127.0.0.1`, not `localhost`, for the demo origin.
+- (session 9, T-038 follow-up) The demo seed no longer repurposes the base
+  `regulations` organization-document IDs. Demo statutes use
+  `10000000-…610/620/621` with their own translation IDs; the base D-12 in-app
+  reader and its three bodies are preserved. The demo now seeds 4 documents
+  (base regulations + 3 fictional PDFs).

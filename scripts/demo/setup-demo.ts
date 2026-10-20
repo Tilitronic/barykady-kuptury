@@ -37,6 +37,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { writeDemoAssets, type GeneratedAsset } from "./assets";
+import { assertLoopbackApiUrl } from "./demo-lib.mjs";
 import {
   buildCountQuery,
   buildDbReferenceQuery,
@@ -64,47 +65,49 @@ function run(
   args: readonly string[],
   options: { readonly input?: string; readonly inherit?: boolean } = {}
 ) {
-  const result = spawnSync(command, [...args], {
+  const processResult = spawnSync(command, [...args], {
     cwd: REPO_ROOT,
     encoding: "utf8",
     input: options.input,
     stdio: options.inherit ? "inherit" : ["pipe", "pipe", "pipe"]
   });
 
-  if (result.error) {
-    throw new Error(`could not run ${command}: ${result.error.message}`);
+  if (processResult.error) {
+    throw new Error(`could not run ${command}: ${processResult.error.message}`);
   }
-  if (result.status !== 0) {
-    const details = (result.stderr || result.stdout || "")
+  if (processResult.status !== 0) {
+    const details = (processResult.stderr || processResult.stdout || "")
       .trim()
       .split("\n")
       .slice(-12)
       .join("\n");
     throw new Error(
-      `${command} ${args.join(" ")} failed (exit ${result.status})${details ? `\n${details}` : ""}`
+      `${command} ${args.join(" ")} failed (exit ${processResult.status})${details ? `\n${details}` : ""}`
     );
   }
 
-  return result;
+  return processResult;
 }
 
 function readStatus(): LocalSupabaseStatus {
-  const result = spawnSync(
+  const statusResult = spawnSync(
     "pnpm",
     ["--dir", APP_DIR, "exec", "supabase", "status", "-o", "env"],
     { cwd: REPO_ROOT, encoding: "utf8" }
   );
 
-  if (result.error) {
-    throw new Error(`could not run the Supabase CLI: ${result.error.message}`);
-  }
-  if (result.status !== 0) {
+  if (statusResult.error) {
     throw new Error(
-      `\`supabase status\` failed. Is Docker running?\n${(result.stderr || "").trim()}`
+      `could not run the Supabase CLI: ${statusResult.error.message}`
+    );
+  }
+  if (statusResult.status !== 0) {
+    throw new Error(
+      `\`supabase status\` failed. Is Docker running?\n${(statusResult.stderr || "").trim()}`
     );
   }
 
-  return selectLocalStatus(parseStatusEnv(result.stdout));
+  return selectLocalStatus(parseStatusEnv(statusResult.stdout));
 }
 
 /** Starts the local stack if it is not already up; `supabase start` is idempotent. */
@@ -130,14 +133,14 @@ function findDatabaseContainer(): string {
 
   const projectId = readProjectId(readFileSync(CONFIG_PATH, "utf8"));
   const expected = `supabase_db_${projectId}`;
-  const result = run("docker", [
+  const dockerPsResult = run("docker", [
     "ps",
     "--filter",
     `name=^${expected}$`,
     "--format",
     "{{.Names}}"
   ]);
-  const found = result.stdout
+  const found = dockerPsResult.stdout
     .split(/\r?\n/)
     .map(line => line.trim())
     .filter(Boolean)[0];
@@ -152,7 +155,7 @@ function findDatabaseContainer(): string {
 }
 
 function query(container: string, sql: string): string {
-  const result = run("docker", [
+  const psqlResult = run("docker", [
     "exec",
     "-i",
     container,
@@ -167,7 +170,7 @@ function query(container: string, sql: string): string {
     "-c",
     sql
   ]);
-  return result.stdout.trim();
+  return psqlResult.stdout.trim();
 }
 
 function applySql(container: string, sql: string): void {
@@ -219,7 +222,7 @@ function verifyCounts(container: string): Map<string, string> {
     publications: "6",
     publication_files: "7",
     team_members: "5",
-    organization_documents: "3",
+    organization_documents: "4",
     calendar_event_links: "3",
     draft_project_translations: "1"
   };
@@ -309,28 +312,9 @@ ${users.map(user => `    ${user.email} — ${user.role ? `app_metadata.role = "$
   );
 }
 
-/**
- * Demo tooling may only touch a loopback Supabase stack.
- *
- * The demo seed, demo users and generated assets must never reach a hosted
- * project. Refusing a non-local API URL is a cheap, fail-closed guard against
- * a misconfigured `supabase status` / stray environment. It is not a
- * substitute for the deployment warnings, but it makes accidental promotion
- * require a deliberate code change.
- */
-function assertLocalStack(status: LocalSupabaseStatus): void {
-  const host = new URL(status.apiUrl).hostname;
-  if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
-    throw new Error(
-      `refusing to run the demo setup against a non-local Supabase API ` +
-        `(${status.apiUrl}). Demo data and demo users are local-only.`
-    );
-  }
-}
-
 async function main(): Promise<void> {
   const status = ensureStack();
-  assertLocalStack(status);
+  assertLoopbackApiUrl(status.apiUrl);
 
   const manifest = buildAssetManifest();
   console.log(

@@ -60,7 +60,6 @@ const HOME_PAGE_ROW = {
   site_page_translations: [
     {
       locale: "en",
-      slug: "home",
       title: "Barykady Kultury",
       body: "## Who we are\n\nHOME-INTRO body from site_pages.",
       meta_description: null,
@@ -76,6 +75,7 @@ function projectRow(
 ) {
   return {
     id,
+    slug: title.toLowerCase().replace(/\s+/g, "-"),
     status: "published",
     featured_rank: null,
     cover_path: null,
@@ -85,7 +85,6 @@ function projectRow(
     project_translations: [
       {
         locale: "en",
-        slug: title.toLowerCase().replace(/\s+/g, "-"),
         title,
         summary: "Summary.",
         body: "Body."
@@ -412,13 +411,15 @@ describe("featured projects section", () => {
     expect(wrapper.text()).not.toContain("Four");
   });
 
-  it("links cards with the strict-slug rule (fallback under English)", async () => {
+  it("links an English fallback card under the English owning locale", async () => {
+    // Strict detail resolution 404s a locale without a translation, so the
+    // prefix must follow the rendered text while the slug stays canonical.
     stubFetch(okBody([]));
     const enOnly = projectRow("p1", "English only", {
+      slug: "english-only",
       project_translations: [
         {
           locale: "en",
-          slug: "english-only",
           title: "English only",
           summary: "s",
           body: "b"

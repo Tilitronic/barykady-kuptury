@@ -6,10 +6,12 @@ import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 import { mountWithPlugins } from "@/test-utils/mount";
 
 /**
- * Spec axis: docs/tickets/T-017-about-documents.md — the reader defaults to the
- * active UI locale, names the source language on initial-load fallback, marks
- * the rendered content with its `lang`, and its in-view switcher renders only an
- * explicitly chosen locale while disabling locales without text (D-12).
+ * Spec axis: docs/tickets/T-017-about-documents.md + D-12 + D-24 — the reader
+ * defaults to the active UI locale, names the source language when English
+ * stands in for a missing or incomplete translation, marks the rendered content
+ * with its `lang`, and its in-view switcher navigates to the chosen locale
+ * prefix while keeping the canonical slug (and query/hash), disabling locales
+ * without text.
  */
 
 const DOC_ID = "00000000-0000-4000-8000-000000000601";
@@ -23,7 +25,6 @@ function translation(overrides: Record<string, unknown> = {}) {
     id: "00000000-0000-4000-8000-000000000602",
     document_id: DOC_ID,
     locale: "en",
-    slug: "regulations",
     title: "Regulations of the Ordinary Association",
     description: null,
     body: EN_BODY,
@@ -37,6 +38,7 @@ function translation(overrides: Record<string, unknown> = {}) {
 function documentRow(overrides: Record<string, unknown> = {}) {
   return {
     id: DOC_ID,
+    slug: "regulations",
     status: "published",
     document_type: "regulations",
     language: null,
@@ -53,14 +55,12 @@ function documentRow(overrides: Record<string, unknown> = {}) {
       translation({
         id: "00000000-0000-4000-8000-000000000603",
         locale: "pl",
-        slug: "regulamin",
         title: "Regulamin działalności stowarzyszenia zwykłego",
         body: PL_BODY
       }),
       translation({
         id: "00000000-0000-4000-8000-000000000604",
         locale: "uk",
-        slug: "rehlament",
         title: "Регламент діяльності звичайного товариства",
         body: UK_BODY
       })
@@ -113,7 +113,7 @@ describe("document reader", () => {
     const fake = createFakeSupabase({
       tables: { organization_documents: [documentRow()] }
     });
-    const wrapper = await mountReader(fake.client, "pl", "regulamin");
+    const wrapper = await mountReader(fake.client, "pl", "regulations");
 
     expect(wrapper.get("h1").text()).toBe(
       "Regulamin działalności stowarzyszenia zwykłego"
@@ -133,7 +133,6 @@ describe("document reader", () => {
               translation({
                 id: "00000000-0000-4000-8000-000000000603",
                 locale: "pl",
-                slug: "regulamin",
                 title: "Regulamin działalności stowarzyszenia zwykłego",
                 body: null
               })
@@ -142,7 +141,7 @@ describe("document reader", () => {
         ]
       }
     });
-    const wrapper = await mountReader(fake.client, "pl", "regulamin");
+    const wrapper = await mountReader(fake.client, "pl", "regulations");
 
     expect(wrapper.get("h1").text()).toBe(
       "Regulations of the Ordinary Association"
@@ -151,17 +150,43 @@ describe("document reader", () => {
     expect(wrapper.text()).toMatch(/po angielsku/i);
   });
 
-  it("switches to an explicitly chosen locale with no fallback", async () => {
+  it("renders English with the fallback note when the requested translation is missing entirely", async () => {
+    // D-12: a missing translation is not a 404 — the reader falls back to
+    // English and explains the substitution (M3 regression).
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({ organization_document_translations: [translation()] })
+        ]
+      }
+    });
+    const wrapper = await mountReader(fake.client, "pl", "regulations");
+
+    expect(wrapper.get("h1").text()).toBe(
+      "Regulations of the Ordinary Association"
+    );
+    expect(wrapper.text()).toContain("The Association is named");
+    expect(wrapper.find(".localized-rich-text").attributes("lang")).toBe("en");
+    expect(wrapper.get(".document-reader__fallback").text()).toMatch(
+      /po angielsku/i
+    );
+    expect(wrapper.text()).not.toContain("Ten dokument jest niedostępny.");
+  });
+
+  it("navigates the in-view switch to the chosen locale prefix and renders its title", async () => {
     const fake = createFakeSupabase({
       tables: { organization_documents: [documentRow()] }
     });
-    const wrapper = await mountReader(fake.client, "pl", "regulamin");
+    const wrapper = await mountReader(fake.client, "pl", "regulations");
 
     expect(wrapper.text()).toContain("Stowarzyszenie nosi nazwę");
 
     await buttonByLabel(wrapper, "English")!.trigger("click");
     await flushPromises();
 
+    expect(wrapper.vm.$router.currentRoute.value.path).toBe(
+      "/en/about/documents/regulations"
+    );
     expect(wrapper.get("h1").text()).toBe(
       "Regulations of the Ordinary Association"
     );
@@ -169,6 +194,32 @@ describe("document reader", () => {
     expect(wrapper.text()).not.toContain("Stowarzyszenie nosi nazwę");
     expect(wrapper.find(".localized-rich-text").attributes("lang")).toBe("en");
     expect(wrapper.find(".document-reader__fallback").exists()).toBe(false);
+  });
+
+  it("preserves query and hash when the in-view switch navigates", async () => {
+    const fake = createFakeSupabase({
+      tables: { organization_documents: [documentRow()] }
+    });
+    const wrapper = await mountWithPlugins(DocumentReader, {
+      locale: "pl",
+      supabase: fake.client,
+      initialRoute: "/pl/about/documents/regulations?from=about#section-1",
+      routes: [
+        {
+          path: "/:locale(en|pl|uk)/about/documents/:slug",
+          name: "about-document",
+          component: DocumentReader
+        }
+      ]
+    });
+    await flushPromises();
+
+    await buttonByLabel(wrapper, "English")!.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.vm.$router.currentRoute.value.fullPath).toBe(
+      "/en/about/documents/regulations?from=about#section-1"
+    );
   });
 
   it("disables a locale whose translation has no body", async () => {
@@ -181,7 +232,6 @@ describe("document reader", () => {
               translation({
                 id: "00000000-0000-4000-8000-000000000604",
                 locale: "uk",
-                slug: "rehlament",
                 title: "Регламент діяльності звичайного товариства",
                 body: null
               })
@@ -210,6 +260,9 @@ describe("document reader", () => {
     const wrapper = await mountReader(fake.client, "en", "regulations");
 
     expect(wrapper.text()).toContain("This document is not available.");
+    expect(wrapper.get(".document-reader__back-link").attributes("href")).toBe(
+      "/en/about/documents"
+    );
   });
 
   it("keeps exactly one h1 in the reader", async () => {

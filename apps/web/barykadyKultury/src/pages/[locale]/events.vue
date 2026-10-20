@@ -115,10 +115,9 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
  *
  * The `useEvents` hook owns the calendar fetch, the Supabase link query and
  * their join; this page only maps states to markup and computes the project
- * link path with the T-019 strict-slug precedent: a fallback translation
- * carries the English slug, so it links under the English prefix — the URL
- * always contains its own locale's slug. PublicLayout provides the shell —
- * do NOT add AppShell here.
+ * link path. Under D-24 the project slug is canonical across locales, so the
+ * link always uses the active locale prefix — switching language only swaps
+ * that prefix. PublicLayout provides the shell — do NOT add AppShell here.
  */
 const { t } = useI18n();
 const route = useRoute();

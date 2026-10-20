@@ -6,10 +6,11 @@ import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 import { mountWithPlugins } from "@/test-utils/mount";
 
 /**
- * Spec axis: docs/tickets/T-017-about-documents.md — the listing shows the
- * localized title + `document_type` + publication date, links text documents to
- * the reader, collapses missing optional metadata, and has translated empty /
- * unavailable states.
+ * Spec axis: docs/tickets/T-017-about-documents.md + D-12 — the listing shows
+ * the localized title + `document_type` + publication date, links text
+ * documents to the reader under the active locale (the reader itself falls
+ * back to English with a note), collapses missing optional metadata, and has
+ * translated empty / unavailable states.
  */
 
 function translation(overrides: Record<string, unknown> = {}) {
@@ -17,7 +18,6 @@ function translation(overrides: Record<string, unknown> = {}) {
     id: "00000000-0000-4000-8000-000000000602",
     document_id: "00000000-0000-4000-8000-000000000601",
     locale: "en",
-    slug: "regulations",
     title: "Regulations of the Ordinary Association",
     description: null,
     body: "## § 1\n\nBody.",
@@ -31,6 +31,7 @@ function translation(overrides: Record<string, unknown> = {}) {
 function documentRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-4000-8000-000000000601",
+    slug: "regulations",
     status: "published",
     document_type: "regulations",
     language: null,
@@ -47,7 +48,6 @@ function documentRow(overrides: Record<string, unknown> = {}) {
       translation({
         id: "00000000-0000-4000-8000-000000000603",
         locale: "pl",
-        slug: "regulamin",
         title: "Regulamin działalności stowarzyszenia zwykłego"
       })
     ],
@@ -83,9 +83,27 @@ describe("documents listing", () => {
 
     const link = wrapper.get(".documents-list__link");
     expect(link.text()).toBe("Regulamin działalności stowarzyszenia zwykłego");
-    expect(link.attributes("href")).toBe("/pl/about/documents/regulamin");
+    expect(link.attributes("href")).toBe("/pl/about/documents/regulations");
     expect(wrapper.text()).toContain("Regulamin");
     expect(wrapper.get("h1").text()).toBe("Dokumenty");
+  });
+
+  it("links an English fallback document under the active locale (the reader falls back)", async () => {
+    // Documents retain D-12: unlike projects/publications, a missing requested
+    // translation resolves the reader with English text + a note, so the
+    // listing link must stay on the user's active prefix.
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({ organization_document_translations: [translation()] })
+        ]
+      }
+    });
+    const wrapper = await mountListing(fake.client, "uk");
+
+    const link = wrapper.get(".documents-list__link");
+    expect(link.text()).toBe("Regulations of the Ordinary Association");
+    expect(link.attributes("href")).toBe("/uk/about/documents/regulations");
   });
 
   it("collapses missing optional metadata (no date, no description)", async () => {

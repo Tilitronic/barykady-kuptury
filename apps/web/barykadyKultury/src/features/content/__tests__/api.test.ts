@@ -10,7 +10,6 @@ import { createFakeSupabase } from "@/test-utils/fakeSupabase";
  */
 const EN_TRANSLATION = {
   locale: "en",
-  slug: "about",
   title: "About us",
   body: "Body (EN)",
   meta_description: "About the association",
@@ -60,7 +59,9 @@ describe("fetchPublishedPage", () => {
     expect(page!.metaDescription).toBe("About the association");
     expect(page!.isFallback).toBe(false);
     expect(page!.needsReview).toBe(false);
+    // T-038/D-24: site pages have no slug; page_key is their stable identity.
     expect(Object.keys(page!)).not.toContain("page_key");
+    expect(Object.keys(page!)).not.toContain("slug");
   });
 
   it("returns the empty state when the page is not published", async () => {

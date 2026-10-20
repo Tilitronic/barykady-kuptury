@@ -64,7 +64,7 @@ export const PUBLICATION_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof PublicationTranslationRow)[];
 
 const PUBLICATION_SELECT =
-  "id, status, language, publication_date, external_url, sort_order, updated_at, publication_translations(locale, slug, title, abstract, authors), publication_files(locale, label, storage_path, mime_type, file_size_bytes)";
+  "id, slug, status, language, publication_date, external_url, sort_order, updated_at, publication_translations(locale, title, abstract, authors), publication_files(locale, label, storage_path, mime_type, file_size_bytes)";
 
 function mapFile(row: PublicationFileRow): PublicationFile {
   return {
@@ -94,7 +94,7 @@ export function mapPublication(
   return {
     id: row.id,
     status: row.status,
-    slug: translation.slug,
+    slug: row.slug,
     title: translation.title,
     abstract: translation.abstract,
     authors: translation.authors,
@@ -122,13 +122,13 @@ export async function fetchPublishedPublications(
 }
 
 /**
- * Finds the published publication whose OWN locale carries `slug`.
+ * Finds the published publication reachable at the canonical root `slug`.
  *
- * T-019 precedent, applied to publications (ticket line: "an English fallback
- * slug must not silently resolve a Polish URL"): STRICT (locale, slug)
- * matching, and a draft row is never resolvable even if a misconfigured
- * payload leaks it (docs/PRODUCT_REQUIREMENTS.md §8; RLS remains the real
- * boundary, proven in `rls_content_matrix_test.sql`).
+ * T-038/D-24 replaces the T-019 per-locale slug rule: the published row must
+ * carry the root slug AND have a translation for the requested locale. A draft
+ * row is never resolvable even if a misconfigured payload leaks it
+ * (docs/PRODUCT_REQUIREMENTS.md §8; RLS remains the real boundary, proven in
+ * `rls_content_matrix_test.sql`).
  */
 export function findPublicationBySlug(
   rows: readonly PublicationRowWithTranslations[],
@@ -139,22 +139,20 @@ export function findPublicationBySlug(
     rows.find(
       row =>
         row.status === "published" &&
+        row.slug === slug &&
         row.publication_translations.some(
-          translation =>
-            translation.locale === locale && translation.slug === slug
+          translation => translation.locale === locale
         )
     ) ?? null
   );
 }
 
 /**
- * The published publication reachable at `slug` for the requested locale.
+ * The published publication reachable at the canonical `slug` for the locale.
  *
- * In-process slug resolution against the published rows (same seam as the
- * T-017 reader and the T-019 project detail): embedded-resource filtering
- * cannot select the parent by a translation column while returning all
- * translations, and the public set is small. Empty means "no such public
- * page" — the page renders 404 content, never a cross-locale fallback.
+ * The slug is on the parent row, so the query filters by it directly and still
+ * returns every translation. Empty means "no such public page" — the page
+ * renders 404 content, never a cross-locale fallback.
  */
 export async function fetchPublishedPublicationBySlug(
   supabase: SupabaseClient<Database> | null,
@@ -163,7 +161,7 @@ export async function fetchPublishedPublicationBySlug(
 ): Promise<ContentResult<PublicationSummary>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedPublicationRows(supabase);
+  const rows = await fetchPublishedPublicationRows(supabase, slug);
   if (rows.kind !== "ok") return rows;
 
   const row = findPublicationBySlug(rows.items, slug, locale);
@@ -173,14 +171,22 @@ export async function fetchPublishedPublicationBySlug(
   return publication ? { kind: "ok", items: [publication] } : { kind: "empty" };
 }
 
-/** Shared published-rows query for the listing and the by-slug detail read. */
+/**
+ * Shared published-rows query for the listing and the by-slug detail read.
+ * `slug` narrows to the canonical root identity; the listing omits it.
+ */
 async function fetchPublishedPublicationRows(
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<Database>,
+  slug?: string
 ): Promise<ContentResult<PublicationRowWithTranslations>> {
-  const query = supabase.from("publications");
-  const { data, error } = await query
+  let query = supabase
+    .from("publications")
     .select(PUBLICATION_SELECT)
-    .eq("status", "published")
+    .eq("status", "published");
+
+  if (slug !== undefined) query = query.eq("slug", slug);
+
+  const { data, error } = await query
     .order("publication_date", { ascending: false, nullsFirst: false })
     .overrideTypes<PublicationRowWithTranslations[], { merge: false }>();
 

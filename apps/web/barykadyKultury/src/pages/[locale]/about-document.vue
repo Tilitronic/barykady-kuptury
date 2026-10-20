@@ -51,11 +51,11 @@
       </p>
 
       <!--
-        In-view language switcher: the URL slug stays stable, an unavailable
-        locale is disabled, and an explicit switch renders only that locale
-        (never a silent substitution). The visible label distinguishes this
-        control from the sub-nav pills it otherwise matches (T-017 design
-        review) and names the text it controls for AT via aria-labelledby.
+        In-view language switcher: the canonical slug stays stable, an
+        unavailable locale is disabled, and choosing a language navigates to
+        that locale prefix (preserving query/hash) so the URL never claims a
+        locale whose text is not rendered. The visible label names the text
+        this control governs for AT via aria-labelledby.
       -->
       <div
         class="document-reader__languages"
@@ -93,8 +93,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { computed } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import LocalizedRichText from "@/components/content/LocalizedRichText.vue";
@@ -107,17 +107,22 @@ import {
   SUPPORTED_LOCALES,
   type Locale
 } from "@/features/i18n/locales";
+import { replaceLocaleInPath } from "@/features/i18n/localePath";
 
 /**
  * About → Documents → regulation reader (T-017).
  *
- * One logical document is fetched by its locale-specific URL slug and rendered
- * as in-app text (D-12). Initial load falls back to English with a note; the
- * in-view switcher then renders an explicitly chosen locale with no fallback.
- * PublicLayout provides the shell — do NOT add AppShell here.
+ * One logical document is fetched by its canonical root slug (D-24) — the same
+ * segment under every locale prefix — and rendered as in-app text (D-12). The
+ * requested locale resolves to English with a note when its translation is
+ * missing or incomplete; the in-view switcher navigates to the chosen locale
+ * prefix (keeping the canonical slug + query/hash) so the URL always matches
+ * the rendered text. PublicLayout provides the shell — do NOT add AppShell
+ * here.
  */
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 
 const currentLocale = computed<Locale>(() => {
   const { locale } = route.params as { locale?: unknown };
@@ -129,32 +134,21 @@ const requestedSlug = computed<string>(() => {
   return typeof slug === "string" ? slug : "";
 });
 
-const { result } = useDocument(requestedSlug, currentLocale);
+const { result } = useDocument(requestedSlug);
 
 const reader = computed(() =>
   result.value.kind === "ok" ? result.value.items[0] : null
 );
 
 /**
- * `null` means "initial load": the shared requested→English fallback applies.
- * A non-null value is an explicit user choice and always disables fallback so
- * the rendered text can never silently differ from the pressed language.
+ * The URL locale is the single source of truth: both the header switcher and
+ * this in-view control navigate, so every render is a fresh requested→English
+ * resolution (D-12) instead of an in-memory override that could leave the URL
+ * claiming a different language than the text.
  */
-const explicitLocale = ref<Locale | null>(null);
-
-// A header language switch changes the URL prefix and must re-apply the
-// initial-load fallback rules for the new requested locale.
-watch(currentLocale, () => {
-  explicitLocale.value = null;
-});
-
 const selection = computed(() =>
   reader.value
-    ? selectReaderTranslation(
-        reader.value,
-        explicitLocale.value ?? currentLocale.value,
-        { allowFallback: explicitLocale.value === null }
-      )
+    ? selectReaderTranslation(reader.value, currentLocale.value)
     : null
 );
 
@@ -173,8 +167,15 @@ function isAvailable(locale: Locale): boolean {
 }
 
 function choose(locale: Locale): void {
-  if (!isAvailable(locale)) return;
-  explicitLocale.value = locale;
+  if (!isAvailable(locale) || locale === currentLocale.value) return;
+
+  // Pure prefix swap on the same canonical slug: the reader refetches nothing
+  // (all translations are already loaded), and query/hash keep the user's place.
+  void router.push({
+    path: replaceLocaleInPath(route.path, locale),
+    query: route.query,
+    hash: route.hash
+  });
 }
 </script>
 

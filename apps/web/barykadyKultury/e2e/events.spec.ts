@@ -47,16 +47,15 @@ const LINKS_FIXTURE = [
     google_event_id: "fixture-event-timed",
     project_id: "00000000-0000-4000-8000-000000000201",
     projects: {
+      slug: "sample-community-workshop",
       status: "published",
       project_translations: [
         {
           locale: "en",
-          slug: "sample-community-workshop",
           title: PROJECT_TITLE
         },
         {
           locale: "pl",
-          slug: "przykladowy-warsztat-spoleczny",
           title: "Przykladowy warsztat spoleczny (fikcyjny)"
         }
       ]
@@ -67,11 +66,11 @@ const LINKS_FIXTURE = [
     google_event_id: "fixture-event-all-day",
     project_id: "00000000-0000-4000-8000-000000000202",
     projects: {
+      slug: "sample-draft-project",
       status: "draft",
       project_translations: [
         {
           locale: "en",
-          slug: "sample-draft-project",
           title: DRAFT_PROJECT_TITLE
         }
       ]
@@ -82,11 +81,11 @@ const LINKS_FIXTURE = [
     google_event_id: "fixture-event-third",
     project_id: "00000000-0000-4000-8000-000000000203",
     projects: {
+      slug: "wrong-calendar-project",
       status: "published",
       project_translations: [
         {
           locale: "en",
-          slug: "wrong-calendar-project",
           title: "Wrong Calendar Project"
         }
       ]
@@ -97,6 +96,7 @@ const LINKS_FIXTURE = [
 const PROJECTS_FIXTURE = [
   {
     id: "00000000-0000-4000-8000-000000000201",
+    slug: "sample-community-workshop",
     status: "published",
     featured_rank: null,
     cover_path: null,
@@ -106,7 +106,6 @@ const PROJECTS_FIXTURE = [
     project_translations: [
       {
         locale: "en",
-        slug: "sample-community-workshop",
         title: PROJECT_TITLE,
         summary: "A fictional summary used only by local fixtures (EN).",
         body: "EN-PROJECT body."

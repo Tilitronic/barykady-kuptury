@@ -1,14 +1,23 @@
 <template>
   <!--
-    Strict (locale, slug) resolution (T-019 line 16): an unknown or foreign
-    slug — including any draft slug — renders the same translated 404 content
-    as the locale catch-all, never another locale's project and never draft
-    text. RLS already hides drafts anonymously (rls_content_matrix_test.sql);
-    this is the app-layer complement.
+    Canonical root slug (T-038/D-24): the URL segment is shared by every
+    locale and the requested locale must supply a translation. An unknown,
+    former-localized or draft slug — including any draft leaked into the
+    payload — renders the same translated 404 content as the locale catch-all.
+    RLS already hides drafts anonymously (rls_content_matrix_test.sql); this is
+    the app-layer complement.
   -->
-  <div v-if="result.kind === 'empty'" class="project-not-found">
+  <div v-if="projectResult.kind === 'empty'" class="project-not-found">
     <h1 class="project-not-found__title">{{ t("notFound.title") }}</h1>
     <p class="project-not-found__message">{{ t("notFound.message") }}</p>
+    <p class="project-not-found__back">
+      <RouterLink
+        :to="listPath"
+        class="project-not-found__back-link focus-ring"
+      >
+        {{ t("projects.detail.back") }}
+      </RouterLink>
+    </p>
   </div>
 
   <article v-else class="project-detail">
@@ -21,14 +30,14 @@
     <h1 class="project-detail__title">{{ headingText }}</h1>
 
     <div
-      v-if="result.kind === 'loading'"
+      v-if="projectResult.kind === 'loading'"
       class="project-detail__state"
       role="status"
     >
       {{ t("content.loading") }}
     </div>
     <div
-      v-else-if="result.kind === 'unavailable'"
+      v-else-if="projectResult.kind === 'unavailable'"
       class="project-detail__state"
     >
       {{ t("content.unavailable") }}
@@ -61,11 +70,9 @@
 
       <div class="project-detail__meta">
         <!--
-          Localized lifecycle status (docs/PRODUCT_REQUIREMENTS.md §4; T-019
-          review, Spec finding 1): the detail is where a status is news. The
-          published-only listing would repeat one uniform badge on every card,
-          so the card omits it — this page resolves only published rows, so the
-          label renders the `projects.status.*` family through the enum value.
+          Localized lifecycle status (docs/PRODUCT_REQUIREMENTS.md §4): the
+          detail is where a status is news. The published-only listing would
+          repeat one uniform badge on every card, so the card omits it.
         -->
         <p class="project-detail__status">
           {{ t(`projects.status.${project.status}`) }}
@@ -78,12 +85,6 @@
           </template>
         </p>
       </div>
-
-      <!--
-        Associated upcoming events (T-019 scope, filled by T-024): the slot
-        renders nothing until real event-project mappings exist — inventing
-        events would violate AGENTS.md rule 6.
-      -->
 
       <LocalizedRichText
         :content="project.body ?? ''"
@@ -107,13 +108,14 @@ import { formatDate } from "@/features/i18n/format";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
- * Project detail page (T-019).
+ * Project detail page.
  *
- * One logical project resolved strictly by (requestedLocale, slug); full
- * description through the sanitised rich-text renderer (no `v-html`, T-016
- * primitive reused, not forked). Cover is informative here — unlike the card
- * it is not wrapped in a named link — so its alt is the project title, and
- * explicit dimensions prevent layout shift. PublicLayout provides the shell.
+ * One logical project resolved by its canonical root slug plus the requested
+ * locale's translation (T-038/D-24); full description through the sanitised
+ * rich-text renderer (no `v-html`, T-016 primitive reused, not forked). Cover
+ * is informative here — unlike the card it is not wrapped in a named link — so
+ * its alt is the project title, and explicit dimensions prevent layout shift.
+ * PublicLayout provides the shell.
  */
 const { t } = useI18n();
 const route = useRoute();
@@ -128,10 +130,12 @@ const requestedSlug = computed<string>(() => {
   return typeof slug === "string" ? slug : "";
 });
 
-const { result } = useProject(requestedSlug, currentLocale);
+const { projectResult } = useProject(requestedSlug, currentLocale);
 
 const project = computed<ProjectSummaryView | null>(() =>
-  result.value.kind === "ok" ? (result.value.items[0] ?? null) : null
+  projectResult.value.kind === "ok"
+    ? (projectResult.value.items[0] ?? null)
+    : null
 );
 
 const headingText = computed(() => project.value?.title ?? t("projects.title"));
@@ -243,5 +247,19 @@ function formatted(date: string): string {
 .project-not-found__message {
   margin: 0;
   color: var(--color-text-muted);
+}
+
+.project-not-found__back {
+  margin: 1.5rem 0 0;
+  font-size: var(--font-size-small);
+}
+
+.project-not-found__back-link {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.project-not-found__back-link:hover {
+  text-decoration: underline;
 }
 </style>

@@ -3,16 +3,22 @@
     <h1 class="projects-page__title">{{ t("projects.title") }}</h1>
 
     <div
-      v-if="result.kind === 'loading'"
+      v-if="projectsResult.kind === 'loading'"
       class="projects-page__state"
       role="status"
     >
       {{ t("content.loading") }}
     </div>
-    <div v-else-if="result.kind === 'empty'" class="projects-page__state">
+    <div
+      v-else-if="projectsResult.kind === 'empty'"
+      class="projects-page__state"
+    >
       {{ t("projects.empty") }}
     </div>
-    <div v-else-if="result.kind === 'unavailable'" class="projects-page__state">
+    <div
+      v-else-if="projectsResult.kind === 'unavailable'"
+      class="projects-page__state"
+    >
       {{ t("content.unavailable") }}
     </div>
     <!--
@@ -45,14 +51,14 @@ import {
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
- * Projects listing (T-019).
+ * Projects listing.
  *
  * Published projects only, newest-updated first; drafts are excluded by RLS
  * and again by the data-access mapping (docs/PRODUCT_REQUIREMENTS.md §8).
- * Linking honours the strict (locale, slug) rule: a card whose text stands in
- * from English links under the English prefix — the slug always resolves
- * under its own locale, so there are no dead links and no silent cross-locale
- * slug resolution (ticket line 16). PublicLayout provides the shell.
+ * Cards link with the canonical slug under the rendering text's owning locale
+ * prefix (D-24): strict detail resolution only resolves a locale that has a
+ * translation, so English fallback rows link under /en while same-locale rows
+ * stay on the active prefix. PublicLayout provides the shell.
  */
 const { t } = useI18n();
 const route = useRoute();
@@ -62,15 +68,16 @@ const currentLocale = computed<Locale>(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-const { result } = useProjects(currentLocale);
+const { projectsResult } = useProjects(currentLocale);
 
 const projects = computed<readonly ProjectSummaryView[]>(() =>
-  result.value.kind === "ok" ? result.value.items : []
+  projectsResult.value.kind === "ok" ? projectsResult.value.items : []
 );
 
 function detailPath(project: ProjectSummaryView): string {
-  // The slug belongs to the translation that produced it; fallback rows carry
-  // the English slug, so they link to the locale where it resolves.
+  // Owning-locale rule: the slug stays canonical, but the prefix follows the
+  // language whose text is actually rendered. Without this an English fallback
+  // card on /pl would link to a /pl detail that strict resolution 404s.
   const owningLocale = project.isFallback
     ? DEFAULT_LOCALE
     : currentLocale.value;

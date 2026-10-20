@@ -17,6 +17,7 @@ import { join } from "node:path";
 import {
   REPO_ROOT,
   assertBun,
+  assertLoopbackApiUrl,
   ensureSupabase,
   readStatus,
   run,
@@ -47,7 +48,8 @@ async function main() {
   assertBun();
 
   console.log("demo:reset: ensuring the local Supabase stack is running…");
-  ensureSupabase({ start: true });
+  const runningStatus = ensureSupabase({ start: true });
+  assertLoopbackApiUrl(runningStatus.apiUrl);
 
   console.log(
     "\ndemo:reset: dropping the local database and replaying migrations + base seed…\n"

@@ -6,15 +6,18 @@ import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 import { mountWithPlugins } from "@/test-utils/mount";
 
 /**
- * Spec axis (T-020): the listing shows published publications only, links
- * each card to the slug's owning locale (T-019 strict-slug precedent — no
- * dead links, no silent cross-locale resolution), and has translated
- * empty/unavailable states.
+ * Spec axis (T-038/D-24): the listing shows published publications only and
+ * links each card with the one canonical slug shared by every locale. The
+ * prefix follows the language whose text is rendered: an English-stand-in card
+ * links under `/en` because strict detail resolution 404s a locale without a
+ * translation. There is no per-locale slug. Empty/unavailable states stay
+ * translated.
  */
+
+const CANONICAL_SLUG = "sample-publication";
 
 const EN_TRANSLATION = {
   locale: "en",
-  slug: "sample-publication",
   title: "Sample Publication (EN)",
   abstract: "Abstract (EN)",
   authors: "Author One"
@@ -22,7 +25,6 @@ const EN_TRANSLATION = {
 
 const PL_TRANSLATION = {
   locale: "pl",
-  slug: "przykladowa-publikacja",
   title: "Przykladowa publikacja (PL)",
   abstract: "Streszczenie (PL)",
   authors: "Autor Dwaj"
@@ -31,6 +33,7 @@ const PL_TRANSLATION = {
 function publishedRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-4000-8000-000000000401",
+    slug: CANONICAL_SLUG,
     status: "published",
     language: "en",
     publication_date: "2026-02-01",
@@ -93,9 +96,10 @@ describe("publications listing", () => {
           publishedRow(),
           publishedRow({
             id: "00000000-0000-4000-8000-000000000499",
+            slug: "draft-leak",
             status: "draft",
             publication_translations: [
-              { ...EN_TRANSLATION, slug: "draft-leak", title: "DRAFT LEAK" }
+              { ...EN_TRANSLATION, title: "DRAFT LEAK" }
             ]
           })
         ]
@@ -107,18 +111,21 @@ describe("publications listing", () => {
     expect(wrapper.text()).not.toContain("DRAFT LEAK");
   });
 
-  it("links a same-locale card to the localized slug under the requested locale", async () => {
+  it("links a same-locale card with the canonical slug under the requested locale", async () => {
     const fake = createFakeSupabase({
       tables: { publications: [publishedRow()] }
     });
     const wrapper = await mountListing(fake.client, "pl");
 
     expect(wrapper.get(".publication-card__link").attributes("href")).toBe(
-      "/pl/publications/przykladowa-publikacja"
+      `/pl/publications/${CANONICAL_SLUG}`
     );
   });
 
-  it("links an English-stand-in card to the English prefix, never a dead URL", async () => {
+  it("links an English-stand-in card under the English owning locale", async () => {
+    // Strict detail resolution requires a requested-locale translation, so a
+    // card rendering English fallback text must link under /en; the slug stays
+    // canonical and the fallback note still explains the substitution.
     const fake = createFakeSupabase({
       tables: {
         publications: [
@@ -129,7 +136,7 @@ describe("publications listing", () => {
     const wrapper = await mountListing(fake.client, "uk");
 
     expect(wrapper.get(".publication-card__link").attributes("href")).toBe(
-      "/en/publications/sample-publication"
+      `/en/publications/${CANONICAL_SLUG}`
     );
     expect(wrapper.get(".publication-card__fallback").text()).toContain(
       "англійською"

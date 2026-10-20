@@ -14,18 +14,26 @@ import type { ContentResult } from "@/shared/content/result";
 import type { Database } from "@/types/database.types";
 
 /**
- * Hook axis (T-019): both project hooks mirror `useDocuments` — loading first,
- * stale-guarded, locale-reactive — and are the seam where the cover public URL
- * is resolved, so `ProjectCard` and the detail page receive plain view-model
- * data and never touch the client (the rule the T-018 review enforced).
+ * Hook axis (T-019, canonical slug by T-038/D-24): both project hooks mirror
+ * `useDocuments` — loading first, stale-guarded, locale-reactive — and are the
+ * seam where the cover public URL is resolved. The URL identity is the single
+ * root slug shared by all locales; only the locale prefix changes.
  */
 
 type Client = SupabaseClient<Database> | null;
-type ListingHook = { readonly result: Ref<ContentResult<ProjectSummaryView>> };
+type ListingHook = {
+  readonly projectsResult: Ref<ContentResult<ProjectSummaryView>>;
+};
+type DetailHook = {
+  readonly projectResult: Ref<ContentResult<ProjectSummaryView>>;
+};
+
+const CANONICAL_SLUG = "community-workshop";
 
 function projectRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-4000-8000-000000000201",
+    slug: CANONICAL_SLUG,
     status: "published",
     featured_rank: null,
     cover_path: "fixtures/projects/cover.webp",
@@ -35,14 +43,12 @@ function projectRow(overrides: Record<string, unknown> = {}) {
     project_translations: [
       {
         locale: "en",
-        slug: "workshop",
         title: "Workshop (EN)",
         summary: "Summary",
         body: "Body"
       },
       {
         locale: "pl",
-        slug: "warsztat",
         title: "Warsztat (PL)",
         summary: "Podsumowanie",
         body: "Treść"
@@ -66,7 +72,7 @@ async function mountListingProbe(
   const Probe = defineComponent({
     setup() {
       hook = useProjects(activeLocale);
-      return () => h("div", hook.result.value.kind);
+      return () => h("div", hook.projectsResult.value.kind);
     }
   });
 
@@ -85,12 +91,12 @@ async function mountDetailProbe(
 ) {
   const activeSlug = ref(slug);
   const activeLocale = ref<Locale>(locale);
-  let hook!: ListingHook;
+  let hook!: DetailHook;
 
   const Probe = defineComponent({
     setup() {
       hook = useProject(activeSlug, activeLocale);
-      return () => h("div", hook.result.value.kind);
+      return () => h("div", hook.projectResult.value.kind);
     }
   });
 
@@ -117,8 +123,11 @@ describe("useProjects", () => {
     expect(wrapper.text()).toBe("ok");
 
     const items =
-      hook.result.value.kind === "ok" ? hook.result.value.items : [];
+      hook.projectsResult.value.kind === "ok"
+        ? hook.projectsResult.value.items
+        : [];
     expect(items).toHaveLength(1);
+    expect(items[0]?.slug).toBe(CANONICAL_SLUG);
     expect(items[0]?.coverUrl).toContain(
       "public-media/fixtures/projects/cover.webp"
     );
@@ -147,11 +156,11 @@ describe("useProjects", () => {
 });
 
 describe("useProject", () => {
-  it("resolves the strict (locale, slug) detail", async () => {
+  it("resolves the canonical slug with the requested-locale translation", async () => {
     const fake = createFakeSupabase({ tables: { projects: [projectRow()] } });
     const { wrapper, hook } = await mountDetailProbe(
       fake.client,
-      "warsztat",
+      CANONICAL_SLUG,
       "pl"
     );
 
@@ -160,14 +169,35 @@ describe("useProject", () => {
     expect(wrapper.text()).toBe("ok");
 
     const items =
-      hook.result.value.kind === "ok" ? hook.result.value.items : [];
+      hook.projectResult.value.kind === "ok"
+        ? hook.projectResult.value.items
+        : [];
     expect(items[0]?.title).toBe("Warsztat (PL)");
-    expect(items[0]?.slug).toBe("warsztat");
+    expect(items[0]?.slug).toBe(CANONICAL_SLUG);
   });
 
-  it("reports empty when another locale owns the slug (no silent cross-locale resolution)", async () => {
-    const fake = createFakeSupabase({ tables: { projects: [projectRow()] } });
-    const { wrapper } = await mountDetailProbe(fake.client, "warsztat", "en");
+  it("reports empty when the requested locale has no translation", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        projects: [
+          projectRow({
+            project_translations: [
+              {
+                locale: "en",
+                title: "Workshop (EN)",
+                summary: "Summary",
+                body: "Body"
+              }
+            ]
+          })
+        ]
+      }
+    });
+    const { wrapper } = await mountDetailProbe(
+      fake.client,
+      CANONICAL_SLUG,
+      "pl"
+    );
     await flush();
 
     expect(wrapper.text()).toBe("empty");
@@ -180,11 +210,11 @@ describe("useProject", () => {
           projectRow(),
           projectRow({
             id: "00000000-0000-4000-8000-000000000202",
+            slug: "draft-secret",
             status: "draft",
             project_translations: [
               {
                 locale: "en",
-                slug: "draft-secret",
                 title: "Draft",
                 summary: "s",
                 body: "b"

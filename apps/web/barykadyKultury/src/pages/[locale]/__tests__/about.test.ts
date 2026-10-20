@@ -46,7 +46,6 @@ function aboutRow(overrides: Record<string, unknown> = {}) {
     site_page_translations: [
       {
         locale: "en",
-        slug: "about",
         title: "About us",
         body: EN_BODY,
         meta_description: "About the association",
@@ -100,7 +99,6 @@ describe("About page", () => {
             site_page_translations: [
               {
                 locale: "en",
-                slug: "about",
                 title: "About us",
                 body: EN_BODY,
                 meta_description: "About the association",
@@ -108,7 +106,6 @@ describe("About page", () => {
               },
               {
                 locale: "pl",
-                slug: "o-nas",
                 title: "O nas",
                 body: "## Misja\nRozwijać kulturę.",
                 meta_description: "O stowarzyszeniu",
@@ -144,7 +141,6 @@ describe("About page", () => {
             site_page_translations: [
               {
                 locale: "en",
-                slug: "about",
                 title: "About us",
                 body: FULL_EN_BODY,
                 meta_description: "About the association",
@@ -174,7 +170,6 @@ describe("About page", () => {
             site_page_translations: [
               {
                 locale: "en",
-                slug: "about",
                 title: "About us",
                 body: FULL_EN_BODY,
                 meta_description: "About the association",
@@ -182,7 +177,6 @@ describe("About page", () => {
               },
               {
                 locale: "pl",
-                slug: "o-nas",
                 title: "O nas",
                 body: null,
                 meta_description: null,

@@ -3,10 +3,11 @@ import { DEFAULT_LOCALE, type Locale } from "@/features/i18n/locales";
 import type { EventProjectLink } from "./api";
 
 /**
- * The single implementation of the T-019 strict-slug rule for event→project
- * links (T-024 Events page, T-025 homepage): a link whose text stands in
- * from English carries the English slug, so the URL always contains its own
- * locale's slug and can never dead-end on a missing translation.
+ * T-038/D-24: a project has one canonical slug, so the entity segment never
+ * changes by locale. The prefix follows the language whose text is actually
+ * rendered: a same-locale event project stays on the current prefix, while an
+ * English fallback title links under /en. This prevents a fallback card from
+ * pointing at a strict detail route that 404s for the requested locale.
  */
 export function eventProjectPath(
   link: EventProjectLink | null,
@@ -15,5 +16,6 @@ export function eventProjectPath(
   if (!link) return null;
 
   const owningLocale = link.isFallback ? DEFAULT_LOCALE : currentLocale;
+
   return `/${owningLocale}/projects/${link.slug}`;
 }

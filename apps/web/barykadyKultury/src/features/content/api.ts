@@ -31,7 +31,6 @@ export interface SitePageContent {
   readonly id: string;
   readonly status: SitePageStatus;
   readonly pageKey: string;
-  readonly slug: string;
   readonly title: string;
   readonly body: string | null;
   readonly metaDescription: string | null;
@@ -47,7 +46,7 @@ export const SITE_PAGE_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof SitePageTranslationRow)[];
 
 const SITE_PAGE_SELECT =
-  "id, page_key, status, updated_at, site_page_translations(locale, slug, title, body, meta_description, needs_review)";
+  "id, page_key, status, updated_at, site_page_translations(locale, title, body, meta_description, needs_review)";
 
 /** Maps one joined row to a domain model, or `null` without usable text. */
 export function mapSitePage(
@@ -68,7 +67,6 @@ export function mapSitePage(
     id: row.id,
     status: row.status,
     pageKey: row.page_key,
-    slug: translation.slug,
     title: translation.title,
     body: translation.body,
     metaDescription: translation.meta_description,

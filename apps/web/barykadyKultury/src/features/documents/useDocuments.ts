@@ -16,9 +16,9 @@ import type { ContentResult } from "@/shared/content/result";
  * Both hooks inject the single Supabase client provided by
  * `src/boot/supabase.ts` (or a fake in tests) and expose a reactive
  * `ContentResult` so a page can switch on loading / empty / unavailable /
- * success (docs/TESTING.md §2). The reader hook re-fetches when either the slug
- * or the requested locale changes — for example when the header language
- * switcher navigates to another locale prefix.
+ * success (docs/TESTING.md §2). The reader hook re-fetches when the slug
+ * changes: one canonical document carries every translation, so a locale-prefix
+ * switch re-resolves the rendered text locally (D-12) without another request.
  */
 type MaybeRef<T> = Ref<T> | T;
 
@@ -49,10 +49,9 @@ export function useDocuments(locale: MaybeRef<Locale>): {
 }
 
 /** The published document reachable at `slug`, for the reader page. */
-export function useDocument(
-  slug: MaybeRef<string>,
-  locale: MaybeRef<Locale>
-): { readonly result: Ref<ContentResult<OrganizationDocumentReader>> } {
+export function useDocument(slug: MaybeRef<string>): {
+  readonly result: Ref<ContentResult<OrganizationDocumentReader>>;
+} {
   const supabase = inject(SUPABASE_CLIENT_KEY, null);
   const result = ref<ContentResult<OrganizationDocumentReader>>({
     kind: "loading"
@@ -60,7 +59,6 @@ export function useDocument(
 
   watchEffect(onInvalidate => {
     const activeSlug = typeof slug === "string" ? slug : slug.value;
-    const activeLocale = typeof locale === "string" ? locale : locale.value;
 
     result.value = { kind: "loading" };
 
@@ -70,11 +68,7 @@ export function useDocument(
     });
 
     void (async () => {
-      const next = await fetchPublishedDocumentBySlug(
-        supabase,
-        activeSlug,
-        activeLocale
-      );
+      const next = await fetchPublishedDocumentBySlug(supabase, activeSlug);
       if (!stale) result.value = next;
     })();
   });

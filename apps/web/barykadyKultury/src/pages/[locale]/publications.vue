@@ -3,17 +3,20 @@
     <h1 class="publications-page__title">{{ t("publications.title") }}</h1>
 
     <div
-      v-if="result.kind === 'loading'"
+      v-if="publicationsResult.kind === 'loading'"
       class="publications-page__state"
       role="status"
     >
       {{ t("content.loading") }}
     </div>
-    <div v-else-if="result.kind === 'empty'" class="publications-page__state">
+    <div
+      v-else-if="publicationsResult.kind === 'empty'"
+      class="publications-page__state"
+    >
       {{ t("publications.empty") }}
     </div>
     <div
-      v-else-if="result.kind === 'unavailable'"
+      v-else-if="publicationsResult.kind === 'unavailable'"
       class="publications-page__state"
     >
       {{ t("content.unavailable") }}
@@ -46,14 +49,15 @@ import {
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
- * Publications listing (T-020).
+ * Publications listing.
  *
  * Published publications only, newest-first; drafts are excluded by RLS and
  * again by the data-access mapping (docs/PRODUCT_REQUIREMENTS.md §8).
- * Linking honours the strict (locale, slug) rule (T-019 precedent): a card
- * whose text stands in from English carries the English slug, so it links
- * under the English prefix — the URL always contains its own locale's slug.
- * PublicLayout provides the shell — do NOT add AppShell here.
+ * Cards link with the canonical slug under the rendering text's owning locale
+ * prefix (D-24): strict detail resolution only resolves a locale that has a
+ * translation, so English fallback rows link under /en while same-locale rows
+ * stay on the active prefix. PublicLayout provides the shell — do NOT add
+ * AppShell here.
  */
 const { t } = useI18n();
 const route = useRoute();
@@ -63,13 +67,16 @@ const currentLocale = computed<Locale>(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-const { result } = usePublications(currentLocale);
+const { publicationsResult } = usePublications(currentLocale);
 
 const publications = computed<readonly PublicationView[]>(() =>
-  result.value.kind === "ok" ? result.value.items : []
+  publicationsResult.value.kind === "ok" ? publicationsResult.value.items : []
 );
 
 function detailPath(publication: PublicationView): string {
+  // Owning-locale rule: the slug stays canonical, but the prefix follows the
+  // language whose text is actually rendered. Without this an English fallback
+  // card on /pl would link to a /pl detail that strict resolution 404s.
   const owningLocale = publication.isFallback
     ? DEFAULT_LOCALE
     : currentLocale.value;

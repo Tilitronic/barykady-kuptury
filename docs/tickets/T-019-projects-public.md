@@ -13,7 +13,7 @@ In:
 - `/locale/projects/:slug` detail: full description (sanitised localized rich text), dates, **localized status label**, cover image with alt, related upcoming events slot (filled by T-024).
 - Translation fallback per T-015 (`isFallback` surfaced as a subtle note).
 - Draft protection proven twice: RLS test (anon select returns zero rows) and E2E (direct URL to a draft slug → 404, not an empty page).
-- Slugs unique per locale; an English fallback slug must not silently resolve a Polish URL.
+- Canonical slug rule (D-24/T-038, supersedes the original localized-slug rule): one root slug is shared by every locale; a public URL resolves only when the row is published, the root slug matches, and a translation exists for the requested locale. A fallback translation must never resolve under a locale that has no translation.
 - Component tests: card matrix (cover/no cover, dates absent, long titles), detail heading hierarchy.
 - E2E: listing → detail; direct deep link; draft 404; keyboard navigable cards.
 

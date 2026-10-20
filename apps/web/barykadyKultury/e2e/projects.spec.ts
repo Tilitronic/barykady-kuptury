@@ -19,10 +19,12 @@ const EN_TITLE = "Sample Community Workshop (Fictional)";
 const PL_TITLE = "Przykladowy warsztat spoleczny (fikcyjny)";
 const UK_TITLE = "Zrazkova hromadska maisternia (fiktyvna)";
 const DRAFT_TITLE = "Draft Title Must Not Leak";
+const EN_ONLY_TITLE = "English Only Project (Fictional)";
 
 const PROJECTS_FIXTURE = [
   {
     id: "00000000-0000-4000-8000-000000000201",
+    slug: "sample-community-workshop",
     status: "published",
     featured_rank: 1,
     cover_path: "fixtures/projects/sample-cover.webp",
@@ -32,21 +34,18 @@ const PROJECTS_FIXTURE = [
     project_translations: [
       {
         locale: "en",
-        slug: "sample-community-workshop",
         title: EN_TITLE,
         summary: "A fictional summary used only by local fixtures (EN).",
         body: "## About\n\nEN-PROJECT body."
       },
       {
         locale: "pl",
-        slug: "przykladowy-warsztat-spoleczny",
         title: PL_TITLE,
         summary: "Fikcyjne podsumowanie (PL).",
         body: "## O projekcie\n\nPL-PROJECT body."
       },
       {
         locale: "uk",
-        slug: "zrazkova-hromadska-maisternia",
         title: UK_TITLE,
         summary: "Fiktyvnyi korotkyi opys (UK).",
         body: "## Pro proiekt\n\nUK-PROJECT body."
@@ -55,6 +54,7 @@ const PROJECTS_FIXTURE = [
   },
   {
     id: "00000000-0000-4000-8000-000000000202",
+    slug: "sample-draft-project",
     status: "draft",
     featured_rank: null,
     cover_path: null,
@@ -64,7 +64,6 @@ const PROJECTS_FIXTURE = [
     project_translations: [
       {
         locale: "en",
-        slug: "sample-draft-project",
         title: DRAFT_TITLE,
         summary: "Draft summary must not leak.",
         body: "DRAFT BODY"
@@ -73,8 +72,35 @@ const PROJECTS_FIXTURE = [
   }
 ];
 
-async function gotoWithProjects(page: Page): Promise<void> {
-  await mockSupabaseRest(page, { responses: { projects: PROJECTS_FIXTURE } });
+/**
+ * A published row with no Polish/Ukrainian translation. The canonical slug
+ * resolves the row, but the strict locale rule must then render the translated
+ * 404 rather than substitute English (T-038, T-019 line 16).
+ */
+const EN_ONLY_PROJECT = {
+  id: "00000000-0000-4000-8000-000000000203",
+  slug: "english-only-project",
+  status: "published",
+  featured_rank: null,
+  cover_path: null,
+  start_date: null,
+  end_date: null,
+  updated_at: "2026-02-03T00:00:00Z",
+  project_translations: [
+    {
+      locale: "en",
+      title: EN_ONLY_TITLE,
+      summary: "English-only fixture.",
+      body: "EN-ONLY body."
+    }
+  ]
+};
+
+async function gotoWithProjects(
+  page: Page,
+  projects: unknown[] = PROJECTS_FIXTURE
+): Promise<void> {
+  await mockSupabaseRest(page, { responses: { projects } });
 }
 
 /** Fails on serious findings too, beyond the helper's critical-only default. */
@@ -128,9 +154,36 @@ test.describe("projects", () => {
     await expectNoSeriousViolations(page);
   });
 
+  test("links an English-only fallback card under /en from the Polish listing", async ({
+    page
+  }) => {
+    // C1 regression: the card renders English text, but strict detail
+    // resolution 404s a Polish URL for this project. The listing must therefore
+    // link under the owning locale (/en), never the active /pl prefix.
+    await gotoWithProjects(page, [...PROJECTS_FIXTURE, EN_ONLY_PROJECT]);
+    await page.goto("/pl/projects");
+
+    const fallbackCard = page.locator(".project-card", {
+      hasText: EN_ONLY_TITLE
+    });
+    await expect(fallbackCard).toBeVisible();
+    await expect(fallbackCard.locator(".project-card__fallback")).toBeVisible();
+
+    await page.getByRole("link", { name: EN_ONLY_TITLE }).click();
+
+    await expect(page).toHaveURL(/\/en\/projects\/english-only-project$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      EN_ONLY_TITLE
+    );
+    await expect(page.getByText("EN-ONLY body.")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).not.toHaveText(
+      "Nie znaleziono strony"
+    );
+  });
+
   test("opens a localized deep link directly", async ({ page }) => {
     await gotoWithProjects(page);
-    await page.goto("/uk/projects/zrazkova-hromadska-maisternia");
+    await page.goto("/uk/projects/sample-community-workshop");
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(UK_TITLE);
     await expect(page.getByText("UK-PROJECT body.")).toBeVisible();
@@ -138,6 +191,37 @@ test.describe("projects", () => {
       "lang",
       "uk"
     );
+
+    await expectNoSeriousViolations(page);
+  });
+
+  test("language switch keeps the canonical slug and renders the target-locale title", async ({
+    page
+  }) => {
+    // D-24: one canonical slug per entity. Switching language is a pure
+    // locale-prefix swap — no localized slug, no lookup, no redirect.
+    await gotoWithProjects(page);
+    await page.goto("/en/projects/sample-community-workshop");
+
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(EN_TITLE);
+
+    await page.getByRole("button", { name: "Language English EN" }).click();
+    await page.getByRole("button", { name: "Polski PL" }).click();
+
+    await expect(page).toHaveURL(/\/pl\/projects\/sample-community-workshop$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(PL_TITLE);
+    await expect(page.getByText("PL-PROJECT body.")).toBeVisible();
+    await expect(page.locator(".localized-rich-text")).toHaveAttribute(
+      "lang",
+      "pl"
+    );
+
+    // A second switch (pl → uk) proves the slug never varies by source locale.
+    await page.getByRole("button", { name: "Język Polski PL" }).click();
+    await page.getByRole("button", { name: "Українська UA" }).click();
+
+    await expect(page).toHaveURL(/\/uk\/projects\/sample-community-workshop$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(UK_TITLE);
 
     await expectNoSeriousViolations(page);
   });
@@ -157,13 +241,24 @@ test.describe("projects", () => {
     await expectNoSeriousViolations(page);
   });
 
-  test("renders the 404 when an English slug is used on a Polish URL", async ({
+  test("renders the translated 404 when the requested locale has no translation", async ({
     page
   }) => {
-    // The strict (locale, slug) rule (ticket line 16): the English slug must
-    // not silently resolve the Polish URL.
+    // The canonical slug resolves the row, but there is no Polish translation:
+    // strict resolution renders the 404 instead of falling back to English.
+    await gotoWithProjects(page, [...PROJECTS_FIXTURE, EN_ONLY_PROJECT]);
+    await page.goto("/pl/projects/english-only-project");
+
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Nie znaleziono strony"
+    );
+    await expect(page.locator("body")).not.toContainText(EN_ONLY_TITLE);
+    await expect(page.locator("body")).not.toContainText("EN-ONLY body.");
+  });
+
+  test("renders the translated 404 for an unknown slug", async ({ page }) => {
     await gotoWithProjects(page);
-    await page.goto("/pl/projects/sample-community-workshop");
+    await page.goto("/pl/projects/unknown-project");
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Nie znaleziono strony"

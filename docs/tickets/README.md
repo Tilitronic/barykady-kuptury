@@ -63,6 +63,7 @@ and restart churn; they do not relax any verification requirement above.
 | 6 | T-026…T-031 | Admin auth, CRUD, uploads, featured order, event mapping | ~60% |
 | 7 | T-032…T-035 | E2E matrix, a11y audit, SEO/deploy, release handoff | ~50% |
 | 8 | T-037, T-026 | Local demo environment + admin auth shell | ~70% |
+| 9 | T-038 | One canonical slug per entity (D-24), naming pass, security review | ~60% |
 
 **Session stop rule:** stop opening new tickets at ~55% context usage, even mid-session.
 Finish or park the current ticket, run its review gate, then:

@@ -25,7 +25,6 @@ const TEAM_MEMBERS_FIXTURE = [
     team_member_translations: [
       {
         locale: "en",
-        slug: "anna-kowalska",
         role: "Chair of the board",
         bio: "Anna co-founded the association and coordinates its board work."
       }
@@ -41,7 +40,6 @@ const TEAM_MEMBERS_FIXTURE = [
     team_member_translations: [
       {
         locale: "en",
-        slug: "oleh-veres",
         role: "Treasurer",
         bio: "Oleh oversees budgets and reporting."
       }
@@ -57,7 +55,6 @@ const TEAM_MEMBERS_FIXTURE = [
     team_member_translations: [
       {
         locale: "en",
-        slug: "daryna-shevchenko",
         role: null,
         bio: null
       }

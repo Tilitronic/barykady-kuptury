@@ -11,14 +11,13 @@ import type { Locale } from "@/features/i18n/locales";
 import type { ContentResult } from "@/shared/content/result";
 
 /**
- * Reactive data sources for public projects (T-019).
+ * Reactive data sources for public projects.
  *
  * Both hooks mirror `useDocuments`: inject the single Supabase client provided
  * by `src/boot/supabase.ts` (or a fake in tests), expose a reactive
  * `ContentResult`, discard stale responses, and re-fetch when the locale
  * changes. The hooks also own the cover-URL seam — `projectCoverUrl` runs
- * here so components receive plain view-model data and never touch the client
- * (the rule the T-018 review enforced).
+ * here so components receive plain view-model data and never touch the client.
  */
 type MaybeRef<T> = Ref<T> | T;
 
@@ -38,27 +37,29 @@ function toView(
 
 function withCoverUrls(
   supabase: SupabaseOrNull,
-  result: ContentResult<ProjectSummary>
+  contentResult: ContentResult<ProjectSummary>
 ): ContentResult<ProjectSummaryView> {
-  return result.kind === "ok"
+  return contentResult.kind === "ok"
     ? {
         kind: "ok",
-        items: result.items.map(project => toView(supabase, project))
+        items: contentResult.items.map(project => toView(supabase, project))
       }
-    : result;
+    : contentResult;
 }
 
 /** Published projects for a locale (newest-updated first). */
 export function useProjects(locale: MaybeRef<Locale>): {
-  readonly result: Ref<ContentResult<ProjectSummaryView>>;
+  readonly projectsResult: Ref<ContentResult<ProjectSummaryView>>;
 } {
   const supabase = inject(SUPABASE_CLIENT_KEY, null);
-  const result = ref<ContentResult<ProjectSummaryView>>({ kind: "loading" });
+  const projectsResult = ref<ContentResult<ProjectSummaryView>>({
+    kind: "loading"
+  });
 
   watchEffect(onInvalidate => {
     const activeLocale = typeof locale === "string" ? locale : locale.value;
 
-    result.value = { kind: "loading" };
+    projectsResult.value = { kind: "loading" };
 
     let stale = false;
     onInvalidate(() => {
@@ -66,12 +67,17 @@ export function useProjects(locale: MaybeRef<Locale>): {
     });
 
     void (async () => {
-      const next = await fetchPublishedProjects(supabase, activeLocale);
-      if (!stale) result.value = withCoverUrls(supabase, next);
+      const fetchedProjects = await fetchPublishedProjects(
+        supabase,
+        activeLocale
+      );
+      if (!stale) {
+        projectsResult.value = withCoverUrls(supabase, fetchedProjects);
+      }
     })();
   });
 
-  return { result };
+  return { projectsResult };
 }
 
 /**
@@ -83,15 +89,17 @@ export function useProjects(locale: MaybeRef<Locale>): {
 export function useProject(
   slug: MaybeRef<string>,
   locale: MaybeRef<Locale>
-): { readonly result: Ref<ContentResult<ProjectSummaryView>> } {
+): { readonly projectResult: Ref<ContentResult<ProjectSummaryView>> } {
   const supabase = inject(SUPABASE_CLIENT_KEY, null);
-  const result = ref<ContentResult<ProjectSummaryView>>({ kind: "loading" });
+  const projectResult = ref<ContentResult<ProjectSummaryView>>({
+    kind: "loading"
+  });
 
   watchEffect(onInvalidate => {
     const activeSlug = typeof slug === "string" ? slug : slug.value;
     const activeLocale = typeof locale === "string" ? locale : locale.value;
 
-    result.value = { kind: "loading" };
+    projectResult.value = { kind: "loading" };
 
     let stale = false;
     onInvalidate(() => {
@@ -99,14 +107,16 @@ export function useProject(
     });
 
     void (async () => {
-      const next = await fetchPublishedProjectBySlug(
+      const fetchedProject = await fetchPublishedProjectBySlug(
         supabase,
         activeSlug,
         activeLocale
       );
-      if (!stale) result.value = withCoverUrls(supabase, next);
+      if (!stale) {
+        projectResult.value = withCoverUrls(supabase, fetchedProject);
+      }
     })();
   });
 
-  return { result };
+  return { projectResult };
 }

@@ -16,7 +16,6 @@ import { mountWithPlugins } from "@/test-utils/mount";
 function translation(overrides: Record<string, unknown> = {}) {
   return {
     locale: "en",
-    slug: "anna-kowalska",
     role: "Zarząd",
     bio: "Bio.",
     ...overrides

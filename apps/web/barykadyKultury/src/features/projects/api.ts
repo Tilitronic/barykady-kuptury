@@ -57,7 +57,7 @@ export const PROJECT_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof ProjectTranslationRow)[];
 
 const PROJECT_SELECT =
-  "id, status, featured_rank, cover_path, start_date, end_date, updated_at, project_translations(locale, slug, title, summary, body)";
+  "id, slug, status, featured_rank, cover_path, start_date, end_date, updated_at, project_translations(locale, title, summary, body)";
 
 /** Maps one joined row to a domain model, or `null` when it has no usable text. */
 export function mapProject(
@@ -77,7 +77,7 @@ export function mapProject(
   return {
     id: row.id,
     status: row.status,
-    slug: translation.slug,
+    slug: row.slug,
     title: translation.title,
     summary: translation.summary,
     body: translation.body,
@@ -104,14 +104,15 @@ export async function fetchPublishedProjects(
 }
 
 /**
- * Finds the published project whose OWN locale carries `slug`.
+ * Finds the published project reachable at the canonical root `slug`.
  *
- * T-019 slug rule (docs/tickets/T-019-projects-public.md line 16): resolution
- * is STRICT on (locale, slug) — an English fallback slug must never resolve a
- * Polish URL, and no pl↔uk substitution exists. A draft row is rejected here
- * even if a misconfigured payload leaks it (docs/PRODUCT_REQUIREMENTS.md §8):
- * RLS is the real boundary (proven in `rls_content_matrix_test.sql`), this is
- * the app-layer complement so no draft content can render or link.
+ * T-038/D-24: one slug is shared by every locale, so resolution only requires
+ * the published row to carry that root slug AND to have a translation for the
+ * requested locale. An English fallback slug can no longer resolve a Polish
+ * URL because there is no per-locale slug. A draft row is rejected here even if
+ * a misconfigured payload leaks it (docs/PRODUCT_REQUIREMENTS.md §8): RLS is
+ * the real boundary (proven in `rls_content_matrix_test.sql`), this is the
+ * app-layer complement so no draft content can render or link.
  */
 export function findProjectBySlug(
   rows: readonly ProjectRowWithTranslations[],
@@ -122,23 +123,21 @@ export function findProjectBySlug(
     rows.find(
       row =>
         row.status === "published" &&
+        row.slug === slug &&
         row.project_translations.some(
-          translation =>
-            translation.locale === locale && translation.slug === slug
+          translation => translation.locale === locale
         )
     ) ?? null
   );
 }
 
 /**
- * The published project reachable at `slug` for the requested locale.
+ * The published project reachable at the canonical `slug` for the locale.
  *
- * Slug resolution happens in process against the published rows because
- * embedded-resource filtering cannot both select the parent by a translation
- * column and return all of its translations in one PostgREST request (same
- * seam the T-017 document reader uses; the public project set is small).
- * An empty result means "no such public page" — the page renders 404 content,
- * never a cross-locale fallback (AGENTS.md rule 7: no extra query round-trips).
+ * T-038/D-24 made the lookup trivial: the slug lives on the parent row, so the
+ * query filters by it directly and still embeds every translation. `empty`
+ * means "no such public page" — the page renders 404 content, never a
+ * cross-locale fallback (AGENTS.md rule 7: no extra query round-trips).
  */
 export async function fetchPublishedProjectBySlug(
   supabase: SupabaseClient<Database> | null,
@@ -147,7 +146,7 @@ export async function fetchPublishedProjectBySlug(
 ): Promise<ContentResult<ProjectSummary>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedProjectRows(supabase);
+  const rows = await fetchPublishedProjectRows(supabase, slug);
   if (rows.kind !== "ok") return rows;
 
   const row = findProjectBySlug(rows.items, slug, locale);
@@ -157,14 +156,22 @@ export async function fetchPublishedProjectBySlug(
   return project ? { kind: "ok", items: [project] } : { kind: "empty" };
 }
 
-/** Shared published-rows query for the listing and the by-slug detail read. */
+/**
+ * Shared published-rows query for the listing and the by-slug detail read.
+ * `slug` narrows to the canonical root identity; the listing omits it.
+ */
 async function fetchPublishedProjectRows(
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<Database>,
+  slug?: string
 ): Promise<ContentResult<ProjectRowWithTranslations>> {
-  const query = supabase.from("projects");
-  const { data, error } = await query
+  let query = supabase
+    .from("projects")
     .select(PROJECT_SELECT)
-    .eq("status", "published")
+    .eq("status", "published");
+
+  if (slug !== undefined) query = query.eq("slug", slug);
+
+  const { data, error } = await query
     .order("updated_at", { ascending: false })
     .overrideTypes<ProjectRowWithTranslations[], { merge: false }>();
 

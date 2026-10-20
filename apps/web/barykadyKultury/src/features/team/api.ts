@@ -27,12 +27,11 @@ export interface TeamMemberRowWithTranslations extends TeamMemberRow {
   readonly team_member_translations: readonly TeamMemberTranslationRow[];
 }
 
-/** Locale-independent member name plus the localized slug/role/bio. */
+/** Locale-independent member name plus the localized role/bio. */
 export interface TeamMember {
   readonly id: string;
   readonly status: TeamMemberStatus;
   readonly name: string;
-  readonly slug: string;
   readonly role: string | null;
   readonly bio: string | null;
   readonly portraitPath: string | null;
@@ -50,7 +49,7 @@ export const TEAM_MEMBER_REQUIRED_FIELDS =
   [] as const satisfies readonly (keyof TeamMemberTranslationRow)[];
 
 const TEAM_MEMBER_SELECT =
-  "id, name, status, sort_order, portrait_path, updated_at, team_member_translations(locale, slug, role, bio)";
+  "id, name, status, sort_order, portrait_path, updated_at, team_member_translations(locale, role, bio)";
 
 /** Maps one joined row to a domain model, or `null` without a usable translation. */
 export function mapTeamMember(
@@ -71,7 +70,6 @@ export function mapTeamMember(
     id: row.id,
     status: row.status,
     name: row.name,
-    slug: translation.slug,
     role: translation.role,
     bio: translation.bio,
     portraitPath: row.portrait_path,

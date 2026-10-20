@@ -48,7 +48,6 @@ const SITE_PAGES_FIXTURE = [
     site_page_translations: [
       {
         locale: "en",
-        slug: "about",
         title: "About us",
         body: EN_BODY,
         meta_description: "About the Barykady Kultury association.",
@@ -56,7 +55,6 @@ const SITE_PAGES_FIXTURE = [
       },
       {
         locale: "pl",
-        slug: "o-nas",
         title: "O nas",
         body: null,
         meta_description: null,
@@ -64,7 +62,6 @@ const SITE_PAGES_FIXTURE = [
       },
       {
         locale: "uk",
-        slug: "pro-nas",
         title: "Про нас",
         body: null,
         meta_description: null,

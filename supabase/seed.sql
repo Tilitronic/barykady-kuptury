@@ -16,16 +16,16 @@ insert into public.site_pages (id, page_key, status, sort_order, published_at)
 values ('00000000-0000-4000-8000-000000000101', 'about', 'published', 1, '2026-01-05T12:00:00Z')
 on conflict (id) do nothing;
 
-insert into public.site_page_translations (id, page_id, locale, slug, title, body, meta_description, needs_review)
+insert into public.site_page_translations (id, page_id, locale, title, body, meta_description, needs_review)
 values
   ('00000000-0000-4000-8000-000000000102', '00000000-0000-4000-8000-000000000101', 'en',
-   'about', 'About us',
+   'About us',
    E'## Mission\n\nTo expand Ukrainian culture beyond borders and give it the space it deserves.\n\n## History\n\nThe association was founded by Daria Yakovleva in Poznań.\n\n## Values\n\n- Identity\n- Education\n- Support\n- Community\n\n## Aims\n\nThe aims of the Association are:\n\n- Cultural diplomacy: acting as a "cultural bridge" between Ukrainians, Poles, and the international community.\n- Non-formal, educational and upbringing activities: popularizing knowledge, developing soft and civic skills, as well as raising youth awareness of democratic political processes.\n- Development of critical thinking and countering propaganda and disinformation.\n- Human rights protection, promoting gender equality, protecting women''s rights and the dignity of migrants and refugees.\n- Integration and support: activities for national and ethnic minorities, supporting the adaptation processes of Ukrainians and other foreigners in Poland.\n- National heritage and historical memory: protection of cultural assets and the restoration and cultivation of historical memory, with particular emphasis on the care of Ukrainian graves and memorial sites in Poland.\n- Environmental protection: initiating and supporting research on the impact of the Russian war on the ecology.\n- Promotion and organization of volunteering, as well as charitable activities.\n- Promotion and popularization of Ukrainian culture in Poland and worldwide.\n- Initiating public actions, assemblies, and protests in defense of human rights and democratic values.',
    'About the Barykady Kultury association.', false),
   ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000101', 'pl',
-   'o-nas', 'O nas', null, null, true),
+   'O nas', null, null, true),
   ('00000000-0000-4000-8000-000000000104', '00000000-0000-4000-8000-000000000101', 'uk',
-   'pro-nas', 'Про нас', null, null, true)
+   'Про нас', null, null, true)
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -33,10 +33,11 @@ on conflict (id) do nothing;
 -- ---------------------------------------------------------------------------
 
 insert into public.projects (
-  id, status, featured_rank, cover_path, start_date, end_date, published_at
+  id, slug, status, featured_rank, cover_path, start_date, end_date, published_at
 )
 values (
   '00000000-0000-4000-8000-000000000201',
+  'sample-community-workshop',
   'published',
   1,
   'fixtures/projects/sample-cover.webp',
@@ -46,32 +47,31 @@ values (
 )
 on conflict (id) do nothing;
 
-insert into public.project_translations (id, project_id, locale, slug, title, summary, body)
+insert into public.project_translations (id, project_id, locale, title, summary, body)
 values
   ('00000000-0000-4000-8000-000000000211', '00000000-0000-4000-8000-000000000201', 'en',
-   'sample-community-workshop', 'Sample Community Workshop (Fictional)',
+   'Sample Community Workshop (Fictional)',
    'A fictional summary used only by local development fixtures.',
    'A fictional description used only by local development fixtures.'),
   ('00000000-0000-4000-8000-000000000212', '00000000-0000-4000-8000-000000000201', 'pl',
-   'przykladowy-warsztat-spoleczny', 'Przykladowy warsztat spoleczny (fikcyjny)',
+   'Przykladowy warsztat spoleczny (fikcyjny)',
    'Fikcyjne podsumowanie uzywane wylacznie w lokalnych danych testowych.',
    'Fikcyjny opis uzywany wylacznie w lokalnych danych testowych.'),
   ('00000000-0000-4000-8000-000000000213', '00000000-0000-4000-8000-000000000201', 'uk',
-   'zrazkova-hromadska-maisternia', 'Zrazkova hromadska maisternia (fiktyvna)',
+   'Zrazkova hromadska maisternia (fiktyvna)',
    'Fiktyvnyi korotkyi opys dlia lokalnykh testovykh danykh.',
    'Fiktyvnyi opys dlia lokalnykh testovykh danykh.')
 on conflict (id) do nothing;
 
-insert into public.projects (id, status)
-values ('00000000-0000-4000-8000-000000000202', 'draft')
+insert into public.projects (id, slug, status)
+values ('00000000-0000-4000-8000-000000000202', 'sample-draft-project', 'draft')
 on conflict (id) do nothing;
 
-insert into public.project_translations (id, project_id, locale, slug, title, summary)
+insert into public.project_translations (id, project_id, locale, title, summary)
 values (
   '00000000-0000-4000-8000-000000000221',
   '00000000-0000-4000-8000-000000000202',
   'en',
-  'sample-draft-project',
   'Sample Draft Project (Fictional)',
   'Draft fixture: Polish and Ukrainian translations are intentionally absent.'
 )
@@ -85,16 +85,16 @@ insert into public.team_members (id, name, status, sort_order, published_at)
 values ('00000000-0000-4000-8000-000000000301', 'Sample Person (Fictional)', 'published', 1, '2026-01-05T12:00:00Z')
 on conflict (id) do nothing;
 
-insert into public.team_member_translations (id, member_id, locale, slug, role, bio, needs_review)
+insert into public.team_member_translations (id, member_id, locale, role, bio, needs_review)
 values
   ('00000000-0000-4000-8000-000000000311', '00000000-0000-4000-8000-000000000301', 'en',
-   'sample-person', 'Sample Role (Fictional)',
+   'Sample Role (Fictional)',
    'Fictional fixture biography used only by local development.', false),
   ('00000000-0000-4000-8000-000000000312', '00000000-0000-4000-8000-000000000301', 'pl',
-   'przykladowa-osoba', 'Przykladowa rola (fikcyjna)',
+   'Przykladowa rola (fikcyjna)',
    'Fikcyjna biografia uzywana wylacznie w lokalnym rozwoju.', true),
   ('00000000-0000-4000-8000-000000000313', '00000000-0000-4000-8000-000000000301', 'uk',
-   'zrazkova-osoba', 'Zrazkova rol (fiktyvna)',
+   'Zrazkova rol (fiktyvna)',
    'Fiktyvna biohrafiia dlia lokalnoi rozrobky.', true)
 on conflict (id) do nothing;
 
@@ -102,26 +102,26 @@ on conflict (id) do nothing;
 -- Publications: one with files (EN+PL), one external URL with optional fields missing
 -- ---------------------------------------------------------------------------
 
-insert into public.publications (id, status, language, publication_date, external_url, sort_order, published_at)
+insert into public.publications (id, slug, status, language, publication_date, external_url, sort_order, published_at)
 values
-  ('00000000-0000-4000-8000-000000000401', 'published', 'en', '2026-02-01', null, 1, '2026-02-01T09:00:00Z'),
-  ('00000000-0000-4000-8000-000000000402', 'published', 'en', null,
+  ('00000000-0000-4000-8000-000000000401', 'sample-publication', 'published', 'en', '2026-02-01', null, 1, '2026-02-01T09:00:00Z'),
+  ('00000000-0000-4000-8000-000000000402', 'sample-external-publication', 'published', 'en', null,
    'https://example.org/fictional-sample-publication', 2, '2026-02-02T09:00:00Z')
 on conflict (id) do nothing;
 
-insert into public.publication_translations (id, publication_id, locale, slug, title, abstract, authors, needs_review)
+insert into public.publication_translations (id, publication_id, locale, title, abstract, authors, needs_review)
 values
   ('00000000-0000-4000-8000-000000000411', '00000000-0000-4000-8000-000000000401', 'en',
-   'sample-publication', 'Sample Publication (Fictional)',
+   'Sample Publication (Fictional)',
    'A fictional abstract for local development fixtures.', 'Sample Author (Fictional)', false),
   ('00000000-0000-4000-8000-000000000412', '00000000-0000-4000-8000-000000000401', 'pl',
-   'przykladowa-publikacja', 'Przykladowa publikacja (fikcyjna)',
+   'Przykladowa publikacja (fikcyjna)',
    'Fikcyjne streszczenie na potrzeby lokalnego rozwoju.', 'Przykladowy autor (fikcyjny)', false),
   ('00000000-0000-4000-8000-000000000413', '00000000-0000-4000-8000-000000000401', 'uk',
-   'zrazkova-publikatsiia', 'Zrazkova publikatsiia (fiktyvna)',
+   'Zrazkova publikatsiia (fiktyvna)',
    'Fiktyvne reziume dlia lokalnoi rozrobky.', 'Zrazkovyi avtor (fiktyvnyi)', false),
   ('00000000-0000-4000-8000-000000000421', '00000000-0000-4000-8000-000000000402', 'en',
-   'sample-external-publication', 'Sample External Publication (Fictional)',
+   'Sample External Publication (Fictional)',
    null, null, false)
 on conflict (id) do nothing;
 
@@ -162,18 +162,18 @@ on conflict (id) do nothing;
 -- ---------------------------------------------------------------------------
 
 insert into public.organization_documents (
-  id, status, document_type, language, storage_path, publication_date, sort_order, published_at
+  id, slug, status, document_type, language, storage_path, publication_date, sort_order, published_at
 )
 values (
-  '00000000-0000-4000-8000-000000000601', 'published', 'regulations', null, null, null, 1, '2026-01-05T12:00:00Z'
+  '00000000-0000-4000-8000-000000000601', 'regulations', 'published', 'regulations', null, null, null, 1, '2026-01-05T12:00:00Z'
 )
 on conflict (id) do nothing;
 
 insert into public.organization_document_translations (
-  id, document_id, locale, slug, title, body, needs_review
+  id, document_id, locale, title, body, needs_review
 )
 values
-  ('00000000-0000-4000-8000-000000000602', '00000000-0000-4000-8000-000000000601', 'en', 'regulations',
+  ('00000000-0000-4000-8000-000000000602', '00000000-0000-4000-8000-000000000601', 'en',
    'Regulations of the Ordinary Association',
    $regulations_en$Ordinary Association "Barykady Kultury"
 
@@ -310,7 +310,7 @@ The Association obtains funds for its activities from membership fees, donations
 ## § 10
 
 Decisions regarding amendments to the regulations and dissolution of the association are made by the General Meeting of Members by a majority of at least 2/3 of votes in the presence of at least half of the members entitled to vote. When adopting a resolution on dissolution, the General Meeting determines the destination of the remaining assets.$regulations_en$, false),
-  ('00000000-0000-4000-8000-000000000603', '00000000-0000-4000-8000-000000000601', 'pl', 'regulamin',
+  ('00000000-0000-4000-8000-000000000603', '00000000-0000-4000-8000-000000000601', 'pl',
    'Regulamin działalności stowarzyszenia zwykłego',
    $regulamin_pl$Stowarzyszenie Zwykłe „Barykady Kultury”
 
@@ -447,7 +447,7 @@ Stowarzyszenie uzyskuje środki na działalność ze składek członkowskich, da
 ## § 10
 
 Decyzję w sprawie zmiany regulaminu oraz rozwiązania stowarzyszenia podejmuje Walne Zebranie Członków większością co najmniej 2/3 głosów przy obecności co najmniej połowy członków uprawnionych do głosowania. Podejmując uchwałę o rozwiązaniu Stowarzyszenia Walne Zebranie Członków określa przeznaczenie pozostałych środków majątkowych Stowarzyszenia.$regulamin_pl$, false),
-  ('00000000-0000-4000-8000-000000000604', '00000000-0000-4000-8000-000000000601', 'uk', 'rehlament',
+  ('00000000-0000-4000-8000-000000000604', '00000000-0000-4000-8000-000000000601', 'uk',
    'Регламент діяльності звичайного товариства',
    $rehlament_uk$Звичайне товариство «Barykady Kultury»
 

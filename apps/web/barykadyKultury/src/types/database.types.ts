@@ -79,7 +79,6 @@ export type Database = {
           id: string;
           locale: Database["public"]["Enums"]["content_locale"];
           needs_review: boolean;
-          slug: string;
           title: string;
           updated_at: string;
         };
@@ -92,7 +91,6 @@ export type Database = {
           id?: string;
           locale: Database["public"]["Enums"]["content_locale"];
           needs_review?: boolean;
-          slug: string;
           title: string;
           updated_at?: string;
         };
@@ -104,7 +102,6 @@ export type Database = {
           id?: string;
           locale?: Database["public"]["Enums"]["content_locale"];
           needs_review?: boolean;
-          slug?: string;
           title?: string;
           updated_at?: string;
         };
@@ -128,6 +125,7 @@ export type Database = {
           mime_type: string | null;
           publication_date: string | null;
           published_at: string | null;
+          slug: string;
           sort_order: number;
           status: Database["public"]["Enums"]["content_status"];
           storage_path: string | null;
@@ -143,6 +141,7 @@ export type Database = {
           mime_type?: string | null;
           publication_date?: string | null;
           published_at?: string | null;
+          slug: string;
           sort_order?: number;
           status?: Database["public"]["Enums"]["content_status"];
           storage_path?: string | null;
@@ -157,6 +156,7 @@ export type Database = {
           mime_type?: string | null;
           publication_date?: string | null;
           published_at?: string | null;
+          slug?: string;
           sort_order?: number;
           status?: Database["public"]["Enums"]["content_status"];
           storage_path?: string | null;
@@ -172,7 +172,6 @@ export type Database = {
           locale: Database["public"]["Enums"]["content_locale"];
           needs_review: boolean;
           project_id: string;
-          slug: string;
           summary: string | null;
           title: string;
           updated_at: string;
@@ -185,7 +184,6 @@ export type Database = {
           locale: Database["public"]["Enums"]["content_locale"];
           needs_review?: boolean;
           project_id: string;
-          slug: string;
           summary?: string | null;
           title: string;
           updated_at?: string;
@@ -197,7 +195,6 @@ export type Database = {
           locale?: Database["public"]["Enums"]["content_locale"];
           needs_review?: boolean;
           project_id?: string;
-          slug?: string;
           summary?: string | null;
           title?: string;
           updated_at?: string;
@@ -220,6 +217,7 @@ export type Database = {
           featured_rank: number | null;
           id: string;
           published_at: string | null;
+          slug: string;
           start_date: string | null;
           status: Database["public"]["Enums"]["content_status"];
           updated_at: string;
@@ -232,6 +230,7 @@ export type Database = {
           featured_rank?: number | null;
           id?: string;
           published_at?: string | null;
+          slug: string;
           start_date?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
@@ -243,6 +242,7 @@ export type Database = {
           featured_rank?: number | null;
           id?: string;
           published_at?: string | null;
+          slug?: string;
           start_date?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
@@ -303,7 +303,6 @@ export type Database = {
           locale: Database["public"]["Enums"]["content_locale"];
           needs_review: boolean;
           publication_id: string;
-          slug: string;
           title: string;
           updated_at: string;
         };
@@ -316,7 +315,6 @@ export type Database = {
           locale: Database["public"]["Enums"]["content_locale"];
           needs_review?: boolean;
           publication_id: string;
-          slug: string;
           title: string;
           updated_at?: string;
         };
@@ -328,7 +326,6 @@ export type Database = {
           locale?: Database["public"]["Enums"]["content_locale"];
           needs_review?: boolean;
           publication_id?: string;
-          slug?: string;
           title?: string;
           updated_at?: string;
         };
@@ -350,6 +347,7 @@ export type Database = {
           language: Database["public"]["Enums"]["content_locale"] | null;
           publication_date: string | null;
           published_at: string | null;
+          slug: string;
           sort_order: number;
           status: Database["public"]["Enums"]["content_status"];
           updated_at: string;
@@ -362,6 +360,7 @@ export type Database = {
           language?: Database["public"]["Enums"]["content_locale"] | null;
           publication_date?: string | null;
           published_at?: string | null;
+          slug: string;
           sort_order?: number;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
@@ -373,6 +372,7 @@ export type Database = {
           language?: Database["public"]["Enums"]["content_locale"] | null;
           publication_date?: string | null;
           published_at?: string | null;
+          slug?: string;
           sort_order?: number;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
@@ -388,7 +388,6 @@ export type Database = {
           meta_description: string | null;
           needs_review: boolean;
           page_id: string;
-          slug: string;
           title: string;
           updated_at: string;
         };
@@ -401,7 +400,6 @@ export type Database = {
           meta_description?: string | null;
           needs_review?: boolean;
           page_id: string;
-          slug: string;
           title: string;
           updated_at?: string;
         };
@@ -413,7 +411,6 @@ export type Database = {
           meta_description?: string | null;
           needs_review?: boolean;
           page_id?: string;
-          slug?: string;
           title?: string;
           updated_at?: string;
         };
@@ -467,7 +464,6 @@ export type Database = {
           member_id: string;
           needs_review: boolean;
           role: string | null;
-          slug: string;
           updated_at: string;
         };
         ComputedFields: never;
@@ -479,7 +475,6 @@ export type Database = {
           member_id: string;
           needs_review?: boolean;
           role?: string | null;
-          slug: string;
           updated_at?: string;
         };
         Update: {
@@ -490,7 +485,6 @@ export type Database = {
           member_id?: string;
           needs_review?: boolean;
           role?: string | null;
-          slug?: string;
           updated_at?: string;
         };
         Relationships: [

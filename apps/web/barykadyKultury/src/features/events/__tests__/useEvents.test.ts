@@ -47,16 +47,15 @@ function linkRow(
     google_event_id: "fixture-event-timed",
     project_id: "00000000-0000-4000-8000-000000000201",
     projects: {
+      slug: "sample-project",
       status: "published",
       project_translations: [
         {
           locale: "en",
-          slug: "sample-project",
           title: "Sample Project (EN)"
         },
         {
           locale: "pl",
-          slug: "przykladowy-projekt",
           title: "Przykladowy projekt (PL)"
         }
       ],

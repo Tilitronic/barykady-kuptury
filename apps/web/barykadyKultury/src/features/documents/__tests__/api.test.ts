@@ -9,21 +9,22 @@ import {
 import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 
 /**
- * Spec axis: docs/tickets/T-017-about-documents.md — a document may be
- * file-based or in-app text (D-12). The data access must surface the localized
- * `body`, the set of locales that actually carry text (for the switcher), and
- * resolve a reader document from a URL slug with an explicit
- * requested→English→unavailable fallback that never substitutes pl↔uk.
+ * Spec axis: docs/tickets/T-038-canonical-slugs.md + D-24 + D-12 — documents
+ * use one root slug shared by every locale. Resolution is the published row
+ * carrying that slug only; the reader then applies the documented
+ * requested→English text fallback with a note. Unknown, draft and archived
+ * slugs stay empty. A document may be file-based or in-app text, and the reader
+ * still surfaces the localized body and the set of locales that carry text.
  */
 
 const DOC_ID = "00000000-0000-4000-8000-000000000601";
+const CANONICAL_SLUG = "regulations";
 
 function translation(overrides: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-4000-8000-000000000602",
     document_id: DOC_ID,
     locale: "en",
-    slug: "regulations",
     title: "Regulations of the Ordinary Association",
     description: null,
     body: "## § 1\n\nEnglish body.",
@@ -37,6 +38,7 @@ function translation(overrides: Record<string, unknown> = {}) {
 function documentRow(overrides: Record<string, unknown> = {}) {
   return {
     id: DOC_ID,
+    slug: CANONICAL_SLUG,
     status: "published",
     document_type: "regulations",
     language: null,
@@ -88,14 +90,12 @@ describe("fetchPublishedDocuments", () => {
               translation({
                 id: "00000000-0000-4000-8000-000000000603",
                 locale: "pl",
-                slug: "regulamin",
                 title: "Regulamin działalności stowarzyszenia zwykłego",
                 body: "## § 1\n\nPolski tekst."
               }),
               translation({
                 id: "00000000-0000-4000-8000-000000000604",
                 locale: "uk",
-                slug: "rehlament",
                 title: "Регламент діяльності звичайного товариства",
                 body: null
               })
@@ -112,6 +112,7 @@ describe("fetchPublishedDocuments", () => {
     const [doc] = result.items;
     expect(doc!.title).toBe("Regulamin działalności stowarzyszenia zwykłego");
     expect(doc!.body).toContain("Polski tekst");
+    expect(doc!.slug).toBe(CANONICAL_SLUG);
     expect(doc!.availableLocales).toEqual(["en", "pl"]);
     expect(doc!.isFallback).toBe(false);
     expect(Object.keys(doc!)).not.toContain("document_type");
@@ -135,7 +136,17 @@ describe("fetchPublishedDocuments", () => {
 });
 
 describe("fetchPublishedDocumentBySlug", () => {
-  it("resolves the document whose requested-locale slug matches", async () => {
+  it("queries by the canonical root slug", async () => {
+    const fake = createFakeSupabase({
+      tables: { organization_documents: [documentRow()] }
+    });
+
+    await fetchPublishedDocumentBySlug(fake.client, CANONICAL_SLUG);
+
+    expect(eqValue(fake.calls, "slug")).toEqual([CANONICAL_SLUG]);
+  });
+
+  it("resolves the canonical slug when the requested-locale translation exists", async () => {
     const fake = createFakeSupabase({
       tables: {
         organization_documents: [
@@ -145,7 +156,6 @@ describe("fetchPublishedDocumentBySlug", () => {
               translation({
                 id: "00000000-0000-4000-8000-000000000603",
                 locale: "pl",
-                slug: "regulamin",
                 title: "Regulamin działalności stowarzyszenia zwykłego",
                 body: "## § 1\n\nPolski tekst."
               })
@@ -157,8 +167,7 @@ describe("fetchPublishedDocumentBySlug", () => {
 
     const result = await fetchPublishedDocumentBySlug(
       fake.client,
-      "regulamin",
-      "pl"
+      CANONICAL_SLUG
     );
     expect(result.kind).toBe("ok");
     if (result.kind !== "ok") return;
@@ -167,34 +176,72 @@ describe("fetchPublishedDocumentBySlug", () => {
     expect(result.items[0]!.translations).toHaveLength(2);
   });
 
-  it("falls back to the English slug when the locale slug is absent", async () => {
+  it("resolves the canonical slug when the requested translation is absent (reader falls back to English)", async () => {
+    // D-12: documents keep the documented English text fallback. A missing
+    // requested translation is NOT a 404; the reader renders English + a note.
     const fake = createFakeSupabase({
       tables: { organization_documents: [documentRow()] }
     });
 
     const result = await fetchPublishedDocumentBySlug(
       fake.client,
-      "regulations",
-      "pl"
+      CANONICAL_SLUG
     );
-
     expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+
+    const reader = result.items[0]!;
+    expect(reader.availableLocales).toEqual(["en"]);
+
+    const selected = selectReaderTranslation(reader, "pl");
+    expect(selected?.translation.locale).toBe("en");
+    expect(selected?.isFallback).toBe(true);
   });
 
-  it("returns the empty state when no slug matches", async () => {
+  it("returns the empty state when the slug does not match the root", async () => {
     const fake = createFakeSupabase({
       tables: { organization_documents: [documentRow()] }
     });
 
     expect(
-      await fetchPublishedDocumentBySlug(fake.client, "does-not-exist", "en")
+      await fetchPublishedDocumentBySlug(fake.client, "does-not-exist")
+    ).toEqual({ kind: "empty" });
+  });
+
+  it("returns empty for a draft row even when the payload leaks it", async () => {
+    const draft = documentRow({
+      id: "00000000-0000-4000-8000-000000000699",
+      slug: "draft-document",
+      status: "draft"
+    });
+    const fake = createFakeSupabase({
+      tables: { organization_documents: [documentRow(), draft] }
+    });
+
+    expect(
+      await fetchPublishedDocumentBySlug(fake.client, "draft-document")
+    ).toEqual({ kind: "empty" });
+  });
+
+  it("returns empty for an archived row even when the payload leaks it", async () => {
+    const archived = documentRow({
+      id: "00000000-0000-4000-8000-000000000698",
+      slug: "archived-document",
+      status: "archived"
+    });
+    const fake = createFakeSupabase({
+      tables: { organization_documents: [documentRow(), archived] }
+    });
+
+    expect(
+      await fetchPublishedDocumentBySlug(fake.client, "archived-document")
     ).toEqual({ kind: "empty" });
   });
 
   it("returns the unavailable state without a client", async () => {
-    expect(
-      await fetchPublishedDocumentBySlug(null, "regulations", "en")
-    ).toEqual({ kind: "unavailable" });
+    expect(await fetchPublishedDocumentBySlug(null, CANONICAL_SLUG)).toEqual({
+      kind: "unavailable"
+    });
   });
 });
 
@@ -209,21 +256,18 @@ describe("selectReaderTranslation", () => {
     translations: [
       {
         locale: "en",
-        slug: "regulations",
         title: "Regulations",
         description: null,
         body: "EN body"
       },
       {
         locale: "pl",
-        slug: "regulamin",
         title: "Regulamin",
         description: null,
         body: null
       },
       {
         locale: "uk",
-        slug: "rehlament",
         title: "Регламент",
         description: null,
         body: "UK body"
@@ -249,7 +293,6 @@ describe("selectReaderTranslation", () => {
       translations: [
         {
           locale: "pl",
-          slug: "regulamin",
           title: "Regulamin",
           description: null,
           body: "PL body"

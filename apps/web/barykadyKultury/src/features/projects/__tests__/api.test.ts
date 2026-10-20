@@ -9,16 +9,14 @@ import {
 import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 
 /**
- * Spec axis: docs/tickets/T-015-typed-data-access.md — the select functions
- * "query filters published only, and maps rows to domain objects without
- * leaking DB column names" (docs/TESTING.md §2, docs/architecture.md §3).
- *
- * The fake client (`src/test-utils/fakeSupabase.ts`) is typed and does no I/O,
- * so the published filter and the row→domain mapping are proven deterministically.
+ * Spec axis: docs/tickets/T-038-canonical-slugs.md + D-24 — one canonical root
+ * slug is shared by every locale. Detail resolution is STRICT: the published
+ * row must carry the root slug AND a translation must exist for the requested
+ * locale (the T-019 rule, now trivially expressed). An English fallback slug
+ * must never resolve a Polish URL, and a draft is never resolvable.
  */
 const EN_TRANSLATION = {
   locale: "en",
-  slug: "community-workshop",
   title: "Community Workshop (EN)",
   summary: "Summary (EN)",
   body: "Body (EN)"
@@ -26,17 +24,19 @@ const EN_TRANSLATION = {
 
 const PL_TRANSLATION = {
   locale: "pl",
-  slug: "warsztat-spoleczny",
   title: "Warsztat spoleczny (PL)",
   summary: "Podsumowanie (PL)",
   body: "Tresc (PL)"
 };
+
+const CANONICAL_SLUG = "community-workshop";
 
 function projectRow(
   overrides: Record<string, unknown> = {}
 ): ProjectRowWithTranslations {
   return {
     id: "00000000-0000-4000-8000-000000000201",
+    slug: CANONICAL_SLUG,
     status: "published",
     featured_rank: 2,
     cover_path: "fixtures/projects/cover.webp",
@@ -81,7 +81,8 @@ describe("fetchPublishedProjects", () => {
     const [project] = result.items;
     expect(project).toBeDefined();
     expect(project!.title).toBe("Warsztat spoleczny (PL)");
-    expect(project!.slug).toBe("warsztat-spoleczny");
+    // The slug comes from the root row, never from a locale translation.
+    expect(project!.slug).toBe(CANONICAL_SLUG);
     expect(project!.isFallback).toBe(false);
     expect(project!.featuredRank).toBe(2);
     expect(project!.coverPath).toBe("fixtures/projects/cover.webp");
@@ -106,6 +107,7 @@ describe("fetchPublishedProjects", () => {
 
     expect(result.items[0]!.isFallback).toBe(true);
     expect(result.items[0]!.title).toBe("Community Workshop (EN)");
+    expect(result.items[0]!.slug).toBe(CANONICAL_SLUG);
   });
 
   it("returns the empty state when no row matches", async () => {
@@ -132,36 +134,35 @@ describe("fetchPublishedProjects", () => {
 });
 
 /**
- * T-019 slug rule (docs/tickets/T-019-projects-public.md line 16): detail
- * resolution is STRICT on (requestedLocale, slug) — an English fallback slug
- * must never resolve a Polish URL, and a draft row is never resolvable even
- * if it somehow reaches the client.
+ * T-038/D-24: the root slug is the only slug. The requested locale must have a
+ * translation, but the URL segment never changes between locales.
  */
 describe("findProjectBySlug", () => {
   const rows = [projectRow()];
 
-  it("resolves the exact (locale, slug) pair", () => {
-    const row = findProjectBySlug(rows, "warsztat-spoleczny", "pl");
+  it("resolves the canonical root slug for a locale that has a translation", () => {
+    const row = findProjectBySlug(rows, CANONICAL_SLUG, "pl");
 
     expect(row).toBeDefined();
     expect(row?.id).toBe("00000000-0000-4000-8000-000000000201");
   });
 
-  it("does not resolve the English slug through a Polish URL", () => {
-    expect(findProjectBySlug(rows, "community-workshop", "pl")).toBeNull();
+  it("rejects an unknown slug", () => {
+    expect(findProjectBySlug(rows, "not-a-project", "pl")).toBeNull();
   });
 
-  it("does not resolve a Polish slug through an English URL", () => {
-    expect(findProjectBySlug(rows, "warsztat-spoleczny", "en")).toBeNull();
+  it("rejects a locale without a translation", () => {
+    const enOnly = [projectRow({ project_translations: [EN_TRANSLATION] })];
+
+    expect(findProjectBySlug(enOnly, CANONICAL_SLUG, "pl")).toBeNull();
   });
 
   it("never resolves a draft row, even when the payload contains it", () => {
     const draft = projectRow({
       id: "00000000-0000-4000-8000-000000000202",
+      slug: "sample-draft-project",
       status: "draft",
-      project_translations: [
-        { ...EN_TRANSLATION, slug: "sample-draft-project" }
-      ]
+      project_translations: [EN_TRANSLATION]
     });
 
     expect(findProjectBySlug([draft], "sample-draft-project", "en")).toBeNull();
@@ -169,12 +170,20 @@ describe("findProjectBySlug", () => {
 });
 
 describe("fetchPublishedProjectBySlug", () => {
-  it("returns the single project whose translation matches (locale, slug)", async () => {
+  it("queries by the canonical root slug", async () => {
+    const fake = createFakeSupabase({ tables: { projects: [projectRow()] } });
+
+    await fetchPublishedProjectBySlug(fake.client, CANONICAL_SLUG, "pl");
+
+    expect(eqValue(fake.calls, "slug")).toEqual([CANONICAL_SLUG]);
+  });
+
+  it("returns the single project for the canonical slug in the requested locale", async () => {
     const fake = createFakeSupabase({ tables: { projects: [projectRow()] } });
 
     const result = await fetchPublishedProjectBySlug(
       fake.client,
-      "warsztat-spoleczny",
+      CANONICAL_SLUG,
       "pl"
     );
 
@@ -182,24 +191,28 @@ describe("fetchPublishedProjectBySlug", () => {
     if (result.kind !== "ok") return;
     expect(result.items).toHaveLength(1);
     expect(result.items[0]!.title).toBe("Warsztat spoleczny (PL)");
+    expect(result.items[0]!.slug).toBe(CANONICAL_SLUG);
     expect(result.items[0]!.isFallback).toBe(false);
   });
 
-  it("returns empty — not a fallback resolution — when only another locale owns the slug", async () => {
-    const fake = createFakeSupabase({ tables: { projects: [projectRow()] } });
+  it("returns empty when the requested locale has no translation", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        projects: [projectRow({ project_translations: [EN_TRANSLATION] })]
+      }
+    });
 
     expect(
-      await fetchPublishedProjectBySlug(fake.client, "community-workshop", "pl")
+      await fetchPublishedProjectBySlug(fake.client, CANONICAL_SLUG, "pl")
     ).toEqual({ kind: "empty" });
   });
 
   it("returns empty for a draft slug even when the payload leaks the row", async () => {
     const draft = projectRow({
       id: "00000000-0000-4000-8000-000000000202",
+      slug: "sample-draft-project",
       status: "draft",
-      project_translations: [
-        { ...EN_TRANSLATION, slug: "sample-draft-project" }
-      ]
+      project_translations: [EN_TRANSLATION]
     });
     const fake = createFakeSupabase({
       tables: { projects: [projectRow(), draft] }

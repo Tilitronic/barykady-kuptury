@@ -33,9 +33,7 @@ function memberRow(
     sort_order: sortOrder,
     portrait_path: portraitPath,
     updated_at: "2026-01-05T12:00:00Z",
-    team_member_translations: [
-      { locale: "en", slug: name.toLowerCase(), role: null, bio: null }
-    ]
+    team_member_translations: [{ locale: "en", role: null, bio: null }]
   };
 }
 

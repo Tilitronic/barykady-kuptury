@@ -4,9 +4,11 @@ import { eventProjectPath } from "@/features/events/projectLink";
 import type { EventProjectLink } from "@/features/events/api";
 
 /**
- * The single implementation of the T-019 strict-slug rule for event→project
- * links (T-024 page + T-025 homepage both consume it): the URL always
- * contains its own locale's slug, so an English stand-in links under /en.
+ * T-038/D-24: the project slug is canonical for every locale. The prefix
+ * follows the language whose text is actually rendered — a same-locale event
+ * project stays on the current prefix, while an English fallback title links
+ * under /en because strict detail resolution 404s a locale without a
+ * translation. The slug never changes.
  */
 
 function link(overrides: Partial<EventProjectLink> = {}): EventProjectLink {
@@ -30,7 +32,7 @@ describe("eventProjectPath", () => {
     expect(eventProjectPath(link(), "pl")).toBe("/pl/projects/sample-project");
   });
 
-  it("moves an English stand-in under the English prefix", () => {
+  it("links an English fallback title under the English owning locale", () => {
     expect(eventProjectPath(link({ isFallback: true }), "uk")).toBe(
       "/en/projects/sample-project"
     );

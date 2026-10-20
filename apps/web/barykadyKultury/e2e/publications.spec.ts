@@ -25,6 +25,7 @@ const DRAFT_TITLE = "Draft Publication Must Not Leak";
 const PUBLICATIONS_FIXTURE = [
   {
     id: "00000000-0000-4000-8000-000000000401",
+    slug: "sample-publication",
     status: "published",
     language: "en",
     publication_date: "2026-02-01",
@@ -34,21 +35,18 @@ const PUBLICATIONS_FIXTURE = [
     publication_translations: [
       {
         locale: "en",
-        slug: "sample-publication",
         title: FILE_TITLE,
         abstract: "A fictional abstract for local fixtures (EN).",
         authors: "Sample Author (Fictional)"
       },
       {
         locale: "pl",
-        slug: "przykladowa-publikacja",
         title: "Przykladowa publikacja (fikcyjna)",
         abstract: "Fikcyjne streszczenie (PL).",
         authors: "Przykladowy autor (fikcyjny)"
       },
       {
         locale: "uk",
-        slug: "zrazkova-publikatsiia",
         title: "Zrazkova publikatsiia (fiktyvna)",
         abstract: "Fiktyvne reziume (UK).",
         authors: "Zrazkovyi avtor (fiktyvnyi)"
@@ -72,7 +70,10 @@ const PUBLICATIONS_FIXTURE = [
     ]
   },
   {
+    // Published with only an English translation: the canonical slug resolves
+    // the row, then the strict locale rule renders the 404 (T-038).
     id: "00000000-0000-4000-8000-000000000402",
+    slug: "sample-external-publication",
     status: "published",
     language: "en",
     publication_date: null,
@@ -82,7 +83,6 @@ const PUBLICATIONS_FIXTURE = [
     publication_translations: [
       {
         locale: "en",
-        slug: "sample-external-publication",
         title: EXTERNAL_TITLE,
         abstract: null,
         authors: null
@@ -92,6 +92,7 @@ const PUBLICATIONS_FIXTURE = [
   },
   {
     id: "00000000-0000-4000-8000-000000000499",
+    slug: "draft-publication-leak",
     status: "draft",
     language: "en",
     publication_date: null,
@@ -101,7 +102,6 @@ const PUBLICATIONS_FIXTURE = [
     publication_translations: [
       {
         locale: "en",
-        slug: "draft-publication-leak",
         title: DRAFT_TITLE,
         abstract: "DRAFT ABSTRACT",
         authors: null
@@ -179,6 +179,66 @@ test.describe("publications", () => {
     await expectNoSeriousViolations(page);
   });
 
+  test("links an English-only fallback card under /en from the Polish listing", async ({
+    page
+  }) => {
+    // C1 regression: the fixture has an English-only publication, so a Polish
+    // listing card renders English text. Strict resolution 404s a Polish URL
+    // for it, so the card must link under the owning locale (/en).
+    await gotoWithPublications(page);
+    await page.goto("/pl/publications");
+
+    const fallbackCard = page.locator(".publication-card", {
+      hasText: EXTERNAL_TITLE
+    });
+    await expect(fallbackCard).toBeVisible();
+    await expect(
+      fallbackCard.locator(".publication-card__fallback")
+    ).toBeVisible();
+
+    await page.getByRole("link", { name: EXTERNAL_TITLE }).click();
+
+    await expect(page).toHaveURL(
+      /\/en\/publications\/sample-external-publication$/
+    );
+    await expect(
+      page.getByRole("heading", { level: 1, name: EXTERNAL_TITLE })
+    ).toBeVisible();
+    await expect(
+      page.locator(".publication-files__external-link")
+    ).toHaveAttribute(
+      "href",
+      "https://example.org/fictional-sample-publication"
+    );
+  });
+
+  test("language switch keeps the canonical slug and renders the target-locale title", async ({
+    page
+  }) => {
+    // D-24: the same slug serves every locale; only the prefix changes.
+    await gotoWithPublications(page);
+    await page.goto("/en/publications/sample-publication");
+
+    await expect(
+      page.getByRole("heading", { level: 1, name: FILE_TITLE })
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Language English EN" }).click();
+    await page.getByRole("button", { name: "Polski PL" }).click();
+
+    await expect(page).toHaveURL(/\/pl\/publications\/sample-publication$/);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "Przykladowa publikacja (fikcyjna)"
+      })
+    ).toBeVisible();
+    await expect(page.getByText("Fikcyjne streszczenie (PL).")).toBeVisible();
+    await expect(page.locator(".publication-files__link")).toHaveCount(2);
+
+    await expectNoSeriousViolations(page);
+  });
+
   test("an anonymous file download responds 200 with application/pdf", async ({
     page
   }) => {
@@ -203,7 +263,7 @@ test.describe("publications", () => {
   }) => {
     await gotoWithPublications(page);
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto("/pl/publications/przykladowa-publikacja");
+    await page.goto("/pl/publications/sample-publication");
 
     const links = page.locator(".publication-files__link");
     await expect(links).toHaveCount(2);
@@ -251,6 +311,30 @@ test.describe("publications", () => {
     await expect(page.locator("body")).not.toContainText("DRAFT ABSTRACT");
 
     await expectNoSeriousViolations(page);
+  });
+
+  test("renders the translated 404 when the requested locale has no translation", async ({
+    page
+  }) => {
+    // The canonical slug resolves the English-only publication, then strict
+    // resolution renders the 404 instead of substituting English (T-038).
+    await gotoWithPublications(page);
+    await page.goto("/pl/publications/sample-external-publication");
+
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Nie znaleziono strony"
+    );
+    await expect(page.locator("body")).not.toContainText(EXTERNAL_TITLE);
+  });
+
+  test("renders the translated 404 for an unknown slug", async ({ page }) => {
+    await gotoWithPublications(page);
+    await page.goto("/pl/publications/unknown-publication");
+
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Nie znaleziono strony"
+    );
+    await expect(page.locator("body")).not.toContainText(FILE_TITLE);
   });
 
   test("the download list is keyboard operable", async ({ page }) => {

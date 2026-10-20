@@ -52,8 +52,10 @@ function guardFor(status: AuthStatus) {
 /** Runs the guard and returns its navigation decision. */
 async function decide(status: AuthStatus, to: RouteLocationNormalized) {
   const guard = guardFor(status);
-  const next = vi.fn();
-  return guard(to, makeTo({ path: "/" }), next);
+  // Vue Router still passes a third `next` callback; the guard returns its
+  // decision directly, so this records that the legacy callback stays unused.
+  const legacyNextCallback = vi.fn();
+  return guard(to, makeTo({ path: "/" }), legacyNextCallback);
 }
 
 describe("anonymous visitors", () => {

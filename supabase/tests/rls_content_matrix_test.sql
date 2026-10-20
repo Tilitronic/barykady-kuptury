@@ -36,23 +36,23 @@ insert into public.site_pages (id, page_key, status, sort_order, published_at) v
   ('a1000000-0000-4000-8000-000000000002', 'rls-draft-page', 'draft', 2, null),
   ('a1000000-0000-4000-8000-000000000003', 'rls-admin-target-page', 'published', 3, now());
 
-insert into public.site_page_translations (id, page_id, locale, slug, title) values
+insert into public.site_page_translations (id, page_id, locale, title) values
   ('a1100000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000001', 'en',
-   'rls-page-published', 'RLS Published Page (fictional)'),
+   'RLS Published Page (fictional)'),
   ('a1100000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000002', 'en',
-   'rls-page-draft', 'RLS Draft Page (fictional)');
+   'RLS Draft Page (fictional)');
 
 -- Projects: published (anon-visible), draft, and an admin translation target.
-insert into public.projects (id, status, published_at) values
-  ('a2000000-0000-4000-8000-000000000001', 'published', now()),
-  ('a2000000-0000-4000-8000-000000000002', 'draft', null),
-  ('a2000000-0000-4000-8000-000000000003', 'published', now());
+insert into public.projects (id, slug, status, published_at) values
+  ('a2000000-0000-4000-8000-000000000001', 'rls-project-published', 'published', now()),
+  ('a2000000-0000-4000-8000-000000000002', 'rls-project-draft', 'draft', null),
+  ('a2000000-0000-4000-8000-000000000003', 'rls-project-admin-target', 'published', now());
 
-insert into public.project_translations (id, project_id, locale, slug, title) values
+insert into public.project_translations (id, project_id, locale, title) values
   ('a2100000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000001', 'en',
-   'rls-project-published', 'RLS Published Project (fictional)'),
+   'RLS Published Project (fictional)'),
   ('a2100000-0000-4000-8000-000000000002', 'a2000000-0000-4000-8000-000000000002', 'en',
-   'rls-project-draft', 'RLS Draft Project (fictional)');
+   'RLS Draft Project (fictional)');
 
 -- Team members: published, draft, and an admin translation target.
 insert into public.team_members (id, name, status, sort_order, published_at) values
@@ -60,23 +60,23 @@ insert into public.team_members (id, name, status, sort_order, published_at) val
   ('a3000000-0000-4000-8000-000000000002', 'RLS Draft Person (fictional)', 'draft', 2, null),
   ('a3000000-0000-4000-8000-000000000003', 'RLS Admin Target Person (fictional)', 'published', 3, now());
 
-insert into public.team_member_translations (id, member_id, locale, slug, role) values
+insert into public.team_member_translations (id, member_id, locale, role) values
   ('a3100000-0000-4000-8000-000000000001', 'a3000000-0000-4000-8000-000000000001', 'en',
-   'rls-member-published', 'RLS Published Role (fictional)'),
+   'RLS Published Role (fictional)'),
   ('a3100000-0000-4000-8000-000000000002', 'a3000000-0000-4000-8000-000000000002', 'en',
-   'rls-member-draft', 'RLS Draft Role (fictional)');
+   'RLS Draft Role (fictional)');
 
 -- Publications: published, draft, and an admin target for translations/files.
-insert into public.publications (id, status, publication_date, published_at) values
-  ('a4000000-0000-4000-8000-000000000001', 'published', '2026-01-01', now()),
-  ('a4000000-0000-4000-8000-000000000002', 'draft', null, null),
-  ('a4000000-0000-4000-8000-000000000003', 'published', '2026-01-02', now());
+insert into public.publications (id, slug, status, publication_date, published_at) values
+  ('a4000000-0000-4000-8000-000000000001', 'rls-publication-published', 'published', '2026-01-01', now()),
+  ('a4000000-0000-4000-8000-000000000002', 'rls-publication-draft', 'draft', null, null),
+  ('a4000000-0000-4000-8000-000000000003', 'rls-publication-admin-target', 'published', '2026-01-02', now());
 
-insert into public.publication_translations (id, publication_id, locale, slug, title) values
+insert into public.publication_translations (id, publication_id, locale, title) values
   ('a4100000-0000-4000-8000-000000000001', 'a4000000-0000-4000-8000-000000000001', 'en',
-   'rls-publication-published', 'RLS Published Publication (fictional)'),
+   'RLS Published Publication (fictional)'),
   ('a4100000-0000-4000-8000-000000000002', 'a4000000-0000-4000-8000-000000000002', 'en',
-   'rls-publication-draft', 'RLS Draft Publication (fictional)');
+   'RLS Draft Publication (fictional)');
 
 insert into public.publication_files (id, publication_id, locale, label, storage_path) values
   ('a4200000-0000-4000-8000-000000000001', 'a4000000-0000-4000-8000-000000000001', 'en',
@@ -86,34 +86,34 @@ insert into public.publication_files (id, publication_id, locale, label, storage
 
 -- Organization documents: published, draft, and an admin translation target.
 insert into public.organization_documents
-  (id, status, document_type, language, storage_path, sort_order, published_at)
+  (id, slug, status, document_type, language, storage_path, sort_order, published_at)
 values
-  ('a5000000-0000-4000-8000-000000000001', 'published', 'statute', 'en',
+  ('a5000000-0000-4000-8000-000000000001', 'rls-document-published', 'published', 'statute', 'en',
    'fixtures/rls/statute-published.pdf', 1, now()),
-  ('a5000000-0000-4000-8000-000000000002', 'draft', 'statute', 'en',
+  ('a5000000-0000-4000-8000-000000000002', 'rls-document-draft', 'draft', 'statute', 'en',
    'fixtures/rls/statute-draft.pdf', 2, null),
-  ('a5000000-0000-4000-8000-000000000003', 'published', 'report', 'en',
+  ('a5000000-0000-4000-8000-000000000003', 'rls-document-admin-target', 'published', 'report', 'en',
    'fixtures/rls/report-admin-target.pdf', 3, now());
 
-insert into public.organization_document_translations (id, document_id, locale, slug, title) values
+insert into public.organization_document_translations (id, document_id, locale, title) values
   ('a5100000-0000-4000-8000-000000000001', 'a5000000-0000-4000-8000-000000000001', 'en',
-   'rls-document-published', 'RLS Published Document (fictional)'),
+   'RLS Published Document (fictional)'),
   ('a5100000-0000-4000-8000-000000000002', 'a5000000-0000-4000-8000-000000000002', 'en',
-   'rls-document-draft', 'RLS Draft Document (fictional)');
+   'RLS Draft Document (fictional)');
 
 -- T-017 text documents: null file columns, body on the translation. Access stays
 -- status/parent-based, so the published/draft read rules must be unchanged.
 insert into public.organization_documents
-  (id, status, document_type, language, storage_path, sort_order, published_at)
+  (id, slug, status, document_type, language, storage_path, sort_order, published_at)
 values
-  ('a5000000-0000-4000-8000-000000000005', 'published', 'regulations', null, null, 5, now()),
-  ('a5000000-0000-4000-8000-000000000006', 'draft', 'regulations', null, null, 6, null);
+  ('a5000000-0000-4000-8000-000000000005', 'rls-document-text-published', 'published', 'regulations', null, null, 5, now()),
+  ('a5000000-0000-4000-8000-000000000006', 'rls-document-text-draft', 'draft', 'regulations', null, null, 6, null);
 
-insert into public.organization_document_translations (id, document_id, locale, slug, title, body) values
+insert into public.organization_document_translations (id, document_id, locale, title, body) values
   ('a5100000-0000-4000-8000-000000000005', 'a5000000-0000-4000-8000-000000000005', 'en',
-   'rls-document-text-published', 'RLS Published Text Document (fictional)', '## § 1\n\nFixture body.'),
+   'RLS Published Text Document (fictional)', '## § 1\n\nFixture body.'),
   ('a5100000-0000-4000-8000-000000000006', 'a5000000-0000-4000-8000-000000000006', 'en',
-   'rls-document-text-draft', 'RLS Draft Text Document (fictional)', '## § 1\n\nDraft body.');
+   'RLS Draft Text Document (fictional)', '## § 1\n\nDraft body.');
 
 -- Event mappings: unlinked, linked to a published project, linked to a draft.
 insert into public.calendar_event_links (id, calendar_id, google_event_id, project_id) values
@@ -166,7 +166,7 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.projects where id = 'a2000000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a published project');
 select is((select count(*) from public.projects where id = 'a2000000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a draft project');
-select throws_ok($sql$ insert into public.projects (id, status) values ('a2000000-0000-4000-8000-0000000000f1', 'draft') $sql$, '42501', NULL, 'anon insert denied on projects');
+select throws_ok($sql$ insert into public.projects (id, slug, status) values ('a2000000-0000-4000-8000-0000000000f1', 'rls-anon-project', 'draft') $sql$, '42501', NULL, 'anon insert denied on projects');
 select throws_ok($sql$ update public.projects set status = 'archived' where id = 'a2000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on projects');
 select throws_ok($sql$ delete from public.projects where id = 'a2000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on projects');
 reset role;
@@ -174,7 +174,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.projects where id = 'a2000000-0000-4000-8000-000000000001'), 1::bigint, 'non-admin authenticated reads a published project');
-select throws_ok($sql$ insert into public.projects (id, status) values ('a2000000-0000-4000-8000-0000000000f2', 'draft') $sql$, '42501', NULL, 'non-admin insert denied on projects');
+select throws_ok($sql$ insert into public.projects (id, slug, status) values ('a2000000-0000-4000-8000-0000000000f2', 'rls-nonadmin-project', 'draft') $sql$, '42501', NULL, 'non-admin insert denied on projects');
 with u as (update public.projects set status = 'archived' where id = 'a2000000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no projects rows');
 with d as (delete from public.projects where id = 'a2000000-0000-4000-8000-000000000001' returning 1)
@@ -184,7 +184,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.projects where id = 'a2000000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a draft project');
-insert into public.projects (id, status) values ('a2000000-0000-4000-8000-000000000004', 'draft');
+insert into public.projects (id, slug, status) values ('a2000000-0000-4000-8000-000000000004', 'rls-admin-project', 'draft');
 select is((select count(*) from public.projects where id = 'a2000000-0000-4000-8000-000000000004'), 1::bigint, 'admin insert succeeds on projects');
 update public.projects set status = 'archived' where id = 'a2000000-0000-4000-8000-000000000004';
 select is((select status::text from public.projects where id = 'a2000000-0000-4000-8000-000000000004'), 'archived', 'admin update succeeds on projects');
@@ -229,14 +229,14 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.publications where id = 'a4000000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a published publication');
 select is((select count(*) from public.publications where id = 'a4000000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a draft publication');
-select throws_ok($sql$ insert into public.publications (id, status) values ('a4000000-0000-4000-8000-0000000000f1', 'draft') $sql$, '42501', NULL, 'anon insert denied on publications');
+select throws_ok($sql$ insert into public.publications (id, slug, status) values ('a4000000-0000-4000-8000-0000000000f1', 'rls-anon-publication', 'draft') $sql$, '42501', NULL, 'anon insert denied on publications');
 select throws_ok($sql$ update public.publications set sort_order = 99 where id = 'a4000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on publications');
 select throws_ok($sql$ delete from public.publications where id = 'a4000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on publications');
 reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
-select throws_ok($sql$ insert into public.publications (id, status) values ('a4000000-0000-4000-8000-0000000000f2', 'draft') $sql$, '42501', NULL, 'non-admin insert denied on publications');
+select throws_ok($sql$ insert into public.publications (id, slug, status) values ('a4000000-0000-4000-8000-0000000000f2', 'rls-nonadmin-publication', 'draft') $sql$, '42501', NULL, 'non-admin insert denied on publications');
 with u as (update public.publications set sort_order = 99 where id = 'a4000000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no publications rows');
 with d as (delete from public.publications where id = 'a4000000-0000-4000-8000-000000000001' returning 1)
@@ -246,7 +246,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.publications where id = 'a4000000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a draft publication');
-insert into public.publications (id, status) values ('a4000000-0000-4000-8000-000000000004', 'draft');
+insert into public.publications (id, slug, status) values ('a4000000-0000-4000-8000-000000000004', 'rls-admin-publication', 'draft');
 select is((select count(*) from public.publications where id = 'a4000000-0000-4000-8000-000000000004'), 1::bigint, 'admin insert succeeds on publications');
 update public.publications set status = 'archived' where id = 'a4000000-0000-4000-8000-000000000004';
 select is((select status::text from public.publications where id = 'a4000000-0000-4000-8000-000000000004'), 'archived', 'admin update succeeds on publications');
@@ -262,14 +262,14 @@ select is((select count(*) from public.organization_documents where id = 'a50000
 select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a draft organization_document');
 select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000005'), 1::bigint, 'anon reads a published text organization_document');
 select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000006'), 0::bigint, 'anon cannot read a draft text organization_document');
-select throws_ok($sql$ insert into public.organization_documents (id, document_type, language, storage_path) values ('a5000000-0000-4000-8000-0000000000f1', 'statute', 'en', 'fixtures/rls/anon-statute.pdf') $sql$, '42501', NULL, 'anon insert denied on organization_documents');
+select throws_ok($sql$ insert into public.organization_documents (id, slug, document_type, language, storage_path) values ('a5000000-0000-4000-8000-0000000000f1', 'rls-anon-statute', 'statute', 'en', 'fixtures/rls/anon-statute.pdf') $sql$, '42501', NULL, 'anon insert denied on organization_documents');
 select throws_ok($sql$ update public.organization_documents set sort_order = 99 where id = 'a5000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on organization_documents');
 select throws_ok($sql$ delete from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on organization_documents');
 reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
-select throws_ok($sql$ insert into public.organization_documents (id, document_type, language, storage_path) values ('a5000000-0000-4000-8000-0000000000f2', 'statute', 'en', 'fixtures/rls/nonadmin-statute.pdf') $sql$, '42501', NULL, 'non-admin insert denied on organization_documents');
+select throws_ok($sql$ insert into public.organization_documents (id, slug, document_type, language, storage_path) values ('a5000000-0000-4000-8000-0000000000f2', 'rls-nonadmin-statute', 'statute', 'en', 'fixtures/rls/nonadmin-statute.pdf') $sql$, '42501', NULL, 'non-admin insert denied on organization_documents');
 with u as (update public.organization_documents set sort_order = 99 where id = 'a5000000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no organization_documents rows');
 with d as (delete from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000001' returning 1)
@@ -279,7 +279,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a draft organization_document');
-insert into public.organization_documents (id, status, document_type, language, storage_path) values ('a5000000-0000-4000-8000-000000000004', 'draft', 'statute', 'en', 'fixtures/rls/admin-statute.pdf');
+insert into public.organization_documents (id, slug, status, document_type, language, storage_path) values ('a5000000-0000-4000-8000-000000000004', 'rls-admin-statute', 'draft', 'statute', 'en', 'fixtures/rls/admin-statute.pdf');
 select is((select count(*) from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000004'), 1::bigint, 'admin insert succeeds on organization_documents');
 update public.organization_documents set status = 'archived' where id = 'a5000000-0000-4000-8000-000000000004';
 select is((select status::text from public.organization_documents where id = 'a5000000-0000-4000-8000-000000000004'), 'archived', 'admin update succeeds on organization_documents');
@@ -298,14 +298,14 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.site_page_translations where id = 'a1100000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a translation of a published site_page');
 select is((select count(*) from public.site_page_translations where id = 'a1100000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a translation of a draft site_page');
-select throws_ok($sql$ insert into public.site_page_translations (id, page_id, locale, slug, title) values ('a1100000-0000-4000-8000-0000000000f1', 'a1000000-0000-4000-8000-000000000001', 'pl', 'rls-anon-page-translation', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on site_page_translations');
+select throws_ok($sql$ insert into public.site_page_translations (id, page_id, locale, title) values ('a1100000-0000-4000-8000-0000000000f1', 'a1000000-0000-4000-8000-000000000001', 'pl', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on site_page_translations');
 select throws_ok($sql$ update public.site_page_translations set needs_review = true where id = 'a1100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on site_page_translations');
 select throws_ok($sql$ delete from public.site_page_translations where id = 'a1100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on site_page_translations');
 reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
-select throws_ok($sql$ insert into public.site_page_translations (id, page_id, locale, slug, title) values ('a1100000-0000-4000-8000-0000000000f2', 'a1000000-0000-4000-8000-000000000001', 'pl', 'rls-nonadmin-page-translation', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on site_page_translations');
+select throws_ok($sql$ insert into public.site_page_translations (id, page_id, locale, title) values ('a1100000-0000-4000-8000-0000000000f2', 'a1000000-0000-4000-8000-000000000001', 'pl', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on site_page_translations');
 with u as (update public.site_page_translations set needs_review = true where id = 'a1100000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no site_page_translations rows');
 with d as (delete from public.site_page_translations where id = 'a1100000-0000-4000-8000-000000000001' returning 1)
@@ -315,7 +315,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.site_page_translations where id = 'a1100000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a translation of a draft site_page');
-insert into public.site_page_translations (id, page_id, locale, slug, title) values ('a1100000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000003', 'en', 'rls-page-admin-insert', 'RLS Admin Page Insert (fictional)');
+insert into public.site_page_translations (id, page_id, locale, title) values ('a1100000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000003', 'en', 'RLS Admin Page Insert (fictional)');
 select is((select count(*) from public.site_page_translations where id = 'a1100000-0000-4000-8000-000000000003'), 1::bigint, 'admin insert succeeds on site_page_translations');
 update public.site_page_translations set needs_review = true where id = 'a1100000-0000-4000-8000-000000000003';
 select is((select needs_review from public.site_page_translations where id = 'a1100000-0000-4000-8000-000000000003'), true, 'admin update succeeds on site_page_translations');
@@ -329,7 +329,7 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.project_translations where id = 'a2100000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a translation of a published project');
 select is((select count(*) from public.project_translations where id = 'a2100000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a translation of a draft project');
-select throws_ok($sql$ insert into public.project_translations (id, project_id, locale, slug, title) values ('a2100000-0000-4000-8000-0000000000f1', 'a2000000-0000-4000-8000-000000000001', 'pl', 'rls-anon-project-translation', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on project_translations');
+select throws_ok($sql$ insert into public.project_translations (id, project_id, locale, title) values ('a2100000-0000-4000-8000-0000000000f1', 'a2000000-0000-4000-8000-000000000001', 'pl', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on project_translations');
 select throws_ok($sql$ update public.project_translations set needs_review = true where id = 'a2100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on project_translations');
 select throws_ok($sql$ delete from public.project_translations where id = 'a2100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on project_translations');
 reset role;
@@ -337,7 +337,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.project_translations where id = 'a2100000-0000-4000-8000-000000000001'), 1::bigint, 'non-admin authenticated reads a translation of a published project');
-select throws_ok($sql$ insert into public.project_translations (id, project_id, locale, slug, title) values ('a2100000-0000-4000-8000-0000000000f2', 'a2000000-0000-4000-8000-000000000001', 'pl', 'rls-nonadmin-project-translation', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on project_translations');
+select throws_ok($sql$ insert into public.project_translations (id, project_id, locale, title) values ('a2100000-0000-4000-8000-0000000000f2', 'a2000000-0000-4000-8000-000000000001', 'pl', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on project_translations');
 with u as (update public.project_translations set needs_review = true where id = 'a2100000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no project_translations rows');
 with d as (delete from public.project_translations where id = 'a2100000-0000-4000-8000-000000000001' returning 1)
@@ -347,7 +347,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.project_translations where id = 'a2100000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a translation of a draft project');
-insert into public.project_translations (id, project_id, locale, slug, title) values ('a2100000-0000-4000-8000-000000000003', 'a2000000-0000-4000-8000-000000000003', 'en', 'rls-project-admin-insert', 'RLS Admin Project Insert (fictional)');
+insert into public.project_translations (id, project_id, locale, title) values ('a2100000-0000-4000-8000-000000000003', 'a2000000-0000-4000-8000-000000000003', 'en', 'RLS Admin Project Insert (fictional)');
 select is((select count(*) from public.project_translations where id = 'a2100000-0000-4000-8000-000000000003'), 1::bigint, 'admin insert succeeds on project_translations');
 update public.project_translations set needs_review = true where id = 'a2100000-0000-4000-8000-000000000003';
 select is((select needs_review from public.project_translations where id = 'a2100000-0000-4000-8000-000000000003'), true, 'admin update succeeds on project_translations');
@@ -361,14 +361,14 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.team_member_translations where id = 'a3100000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a translation of a published team_member');
 select is((select count(*) from public.team_member_translations where id = 'a3100000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a translation of a draft team_member');
-select throws_ok($sql$ insert into public.team_member_translations (id, member_id, locale, slug, role) values ('a3100000-0000-4000-8000-0000000000f1', 'a3000000-0000-4000-8000-000000000001', 'pl', 'rls-anon-member-translation', 'Anon role (fictional)') $sql$, '42501', NULL, 'anon insert denied on team_member_translations');
+select throws_ok($sql$ insert into public.team_member_translations (id, member_id, locale, role) values ('a3100000-0000-4000-8000-0000000000f1', 'a3000000-0000-4000-8000-000000000001', 'pl', 'Anon role (fictional)') $sql$, '42501', NULL, 'anon insert denied on team_member_translations');
 select throws_ok($sql$ update public.team_member_translations set needs_review = true where id = 'a3100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on team_member_translations');
 select throws_ok($sql$ delete from public.team_member_translations where id = 'a3100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on team_member_translations');
 reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
-select throws_ok($sql$ insert into public.team_member_translations (id, member_id, locale, slug, role) values ('a3100000-0000-4000-8000-0000000000f2', 'a3000000-0000-4000-8000-000000000001', 'pl', 'rls-nonadmin-member-translation', 'Nonadmin role (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on team_member_translations');
+select throws_ok($sql$ insert into public.team_member_translations (id, member_id, locale, role) values ('a3100000-0000-4000-8000-0000000000f2', 'a3000000-0000-4000-8000-000000000001', 'pl', 'Nonadmin role (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on team_member_translations');
 with u as (update public.team_member_translations set needs_review = true where id = 'a3100000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no team_member_translations rows');
 with d as (delete from public.team_member_translations where id = 'a3100000-0000-4000-8000-000000000001' returning 1)
@@ -378,7 +378,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.team_member_translations where id = 'a3100000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a translation of a draft team_member');
-insert into public.team_member_translations (id, member_id, locale, slug, role) values ('a3100000-0000-4000-8000-000000000003', 'a3000000-0000-4000-8000-000000000003', 'en', 'rls-member-admin-insert', 'RLS Admin Role (fictional)');
+insert into public.team_member_translations (id, member_id, locale, role) values ('a3100000-0000-4000-8000-000000000003', 'a3000000-0000-4000-8000-000000000003', 'en', 'RLS Admin Role (fictional)');
 select is((select count(*) from public.team_member_translations where id = 'a3100000-0000-4000-8000-000000000003'), 1::bigint, 'admin insert succeeds on team_member_translations');
 update public.team_member_translations set needs_review = true where id = 'a3100000-0000-4000-8000-000000000003';
 select is((select needs_review from public.team_member_translations where id = 'a3100000-0000-4000-8000-000000000003'), true, 'admin update succeeds on team_member_translations');
@@ -392,14 +392,14 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.publication_translations where id = 'a4100000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a translation of a published publication');
 select is((select count(*) from public.publication_translations where id = 'a4100000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a translation of a draft publication');
-select throws_ok($sql$ insert into public.publication_translations (id, publication_id, locale, slug, title) values ('a4100000-0000-4000-8000-0000000000f1', 'a4000000-0000-4000-8000-000000000001', 'pl', 'rls-anon-publication-translation', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on publication_translations');
+select throws_ok($sql$ insert into public.publication_translations (id, publication_id, locale, title) values ('a4100000-0000-4000-8000-0000000000f1', 'a4000000-0000-4000-8000-000000000001', 'pl', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on publication_translations');
 select throws_ok($sql$ update public.publication_translations set needs_review = true where id = 'a4100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on publication_translations');
 select throws_ok($sql$ delete from public.publication_translations where id = 'a4100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on publication_translations');
 reset role;
 
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
-select throws_ok($sql$ insert into public.publication_translations (id, publication_id, locale, slug, title) values ('a4100000-0000-4000-8000-0000000000f2', 'a4000000-0000-4000-8000-000000000001', 'pl', 'rls-nonadmin-publication-translation', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on publication_translations');
+select throws_ok($sql$ insert into public.publication_translations (id, publication_id, locale, title) values ('a4100000-0000-4000-8000-0000000000f2', 'a4000000-0000-4000-8000-000000000001', 'pl', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on publication_translations');
 with u as (update public.publication_translations set needs_review = true where id = 'a4100000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no publication_translations rows');
 with d as (delete from public.publication_translations where id = 'a4100000-0000-4000-8000-000000000001' returning 1)
@@ -409,7 +409,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.publication_translations where id = 'a4100000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a translation of a draft publication');
-insert into public.publication_translations (id, publication_id, locale, slug, title) values ('a4100000-0000-4000-8000-000000000003', 'a4000000-0000-4000-8000-000000000003', 'en', 'rls-publication-admin-insert', 'RLS Admin Publication Insert (fictional)');
+insert into public.publication_translations (id, publication_id, locale, title) values ('a4100000-0000-4000-8000-000000000003', 'a4000000-0000-4000-8000-000000000003', 'en', 'RLS Admin Publication Insert (fictional)');
 select is((select count(*) from public.publication_translations where id = 'a4100000-0000-4000-8000-000000000003'), 1::bigint, 'admin insert succeeds on publication_translations');
 update public.publication_translations set needs_review = true where id = 'a4100000-0000-4000-8000-000000000003';
 select is((select needs_review from public.publication_translations where id = 'a4100000-0000-4000-8000-000000000003'), true, 'admin update succeeds on publication_translations');
@@ -455,7 +455,7 @@ select set_config('request.jwt.claims', $json${"role":"anon"}$json$, true);
 set local role anon;
 select is((select count(*) from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000001'), 1::bigint, 'anon reads a translation of a published organization_document');
 select is((select count(*) from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000002'), 0::bigint, 'anon cannot read a translation of a draft organization_document');
-select throws_ok($sql$ insert into public.organization_document_translations (id, document_id, locale, slug, title) values ('a5100000-0000-4000-8000-0000000000f1', 'a5000000-0000-4000-8000-000000000001', 'pl', 'rls-anon-document-translation', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on organization_document_translations');
+select throws_ok($sql$ insert into public.organization_document_translations (id, document_id, locale, title) values ('a5100000-0000-4000-8000-0000000000f1', 'a5000000-0000-4000-8000-000000000001', 'pl', 'Anon insert (fictional)') $sql$, '42501', NULL, 'anon insert denied on organization_document_translations');
 select throws_ok($sql$ update public.organization_document_translations set needs_review = true where id = 'a5100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon update denied on organization_document_translations');
 select throws_ok($sql$ delete from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000001' $sql$, '42501', NULL, 'anon delete denied on organization_document_translations');
 reset role;
@@ -463,7 +463,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000001'), 1::bigint, 'non-admin authenticated reads a translation of a published organization_document');
-select throws_ok($sql$ insert into public.organization_document_translations (id, document_id, locale, slug, title) values ('a5100000-0000-4000-8000-0000000000f2', 'a5000000-0000-4000-8000-000000000001', 'pl', 'rls-nonadmin-document-translation', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on organization_document_translations');
+select throws_ok($sql$ insert into public.organization_document_translations (id, document_id, locale, title) values ('a5100000-0000-4000-8000-0000000000f2', 'a5000000-0000-4000-8000-000000000001', 'pl', 'Nonadmin insert (fictional)') $sql$, '42501', NULL, 'non-admin insert denied on organization_document_translations');
 with u as (update public.organization_document_translations set needs_review = true where id = 'a5100000-0000-4000-8000-000000000001' returning 1)
 select is((select count(*) from u), 0::bigint, 'non-admin update affects no organization_document_translations rows');
 with d as (delete from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000001' returning 1)
@@ -473,7 +473,7 @@ reset role;
 select set_config('request.jwt.claims', $json${"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated","app_metadata":{"role":"admin"}}$json$, true);
 set local role authenticated;
 select is((select count(*) from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000002'), 1::bigint, 'admin reads a translation of a draft organization_document');
-insert into public.organization_document_translations (id, document_id, locale, slug, title) values ('a5100000-0000-4000-8000-000000000003', 'a5000000-0000-4000-8000-000000000003', 'en', 'rls-document-admin-insert', 'RLS Admin Document Insert (fictional)');
+insert into public.organization_document_translations (id, document_id, locale, title) values ('a5100000-0000-4000-8000-000000000003', 'a5000000-0000-4000-8000-000000000003', 'en', 'RLS Admin Document Insert (fictional)');
 select is((select count(*) from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000003'), 1::bigint, 'admin insert succeeds on organization_document_translations');
 update public.organization_document_translations set needs_review = true where id = 'a5100000-0000-4000-8000-000000000003';
 select is((select needs_review from public.organization_document_translations where id = 'a5100000-0000-4000-8000-000000000003'), true, 'admin update succeeds on organization_document_translations');

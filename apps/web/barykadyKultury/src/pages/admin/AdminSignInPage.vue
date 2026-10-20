@@ -1,6 +1,6 @@
 <template>
   <!--
-    Admin sign-in (T-026). Invited administrators only.
+    Admin sign-in. Invited administrators only.
 
     Deliberate omissions, recorded per the ticket:
       * NO registration link — accounts are provisioned through trusted
@@ -122,10 +122,15 @@ import {
   REDIRECT_QUERY_KEY
 } from "@/features/auth/adminGuard";
 import { useAuth, type SignInFailureReason } from "@/features/auth/authStore";
-import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
+import {
+  DEFAULT_LOCALE,
+  isLocale,
+  LOCALE_ROUTE_PATTERN,
+  type Locale
+} from "@/features/i18n/locales";
 
 /**
- * T-026 — email + password sign-in against the auth store seam.
+ * Email + password sign-in against the auth store seam.
  *
  * Validation is deliberately minimal (required + shape): the authoritative
  * answer comes from Supabase Auth, and the error mapping keeps provider
@@ -181,17 +186,22 @@ function failureMessage(reason: SignInFailureReason): string {
 }
 
 /**
- * Only same-site absolute paths may be used as post-sign-in targets.
- * "//host" (protocol-relative) and anything with a scheme is dropped — the
- * redirect query is attacker-influenceable via the URL bar.
+ * Only admin-shell paths under a supported locale prefix are valid post-sign-in
+ * targets. External, protocol-relative, and non-admin internal paths are all
+ * dropped because the redirect query is attacker-influenceable via the URL
+ * bar; a newly authenticated admin must never land on attacker-chosen content.
  */
-function isSafeInternalPath(value: string): boolean {
-  return value.startsWith("/") && !value.startsWith("//");
+const ADMIN_REDIRECT_PATTERN = new RegExp(
+  `^/(?:${LOCALE_ROUTE_PATTERN})/admin(?=[/?#]|$)`
+);
+
+function isAdminRedirectTarget(value: string): boolean {
+  return ADMIN_REDIRECT_PATTERN.test(value);
 }
 
 async function goToDestination(): Promise<void> {
   const requested = route.query[REDIRECT_QUERY_KEY];
-  if (typeof requested === "string" && isSafeInternalPath(requested)) {
+  if (typeof requested === "string" && isAdminRedirectTarget(requested)) {
     await router.push(requested);
   } else {
     await router.push(
@@ -223,10 +233,10 @@ async function onSubmit(): Promise<void> {
   }
 
   pending.value = true;
-  const result = await signIn(email.value, password.value);
+  const signInResult = await signIn(email.value, password.value);
   pending.value = false;
 
-  if (result.ok) {
+  if (signInResult.ok) {
     messageKind.value = "success";
     formMessage.value = t("admin.signIn.success");
     await goToDestination();
@@ -234,7 +244,7 @@ async function onSubmit(): Promise<void> {
   }
 
   messageKind.value = "error";
-  formMessage.value = failureMessage(result.reason);
+  formMessage.value = failureMessage(signInResult.reason);
   // Secrets do not linger after a failed attempt on a shared machine.
   password.value = "";
   passwordInput.value?.focus();

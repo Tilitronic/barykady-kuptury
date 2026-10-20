@@ -243,6 +243,23 @@ export function readStatus() {
 }
 
 /**
+ * Refuses to run demo tooling against a non-loopback Supabase API.
+ *
+ * Demo data, demo users and generated assets are local-only. This fail-closed
+ * guard makes an accidental hosted target require a deliberate code change,
+ * rather than trusting an operator to notice a stray `supabase status`.
+ */
+export function assertLoopbackApiUrl(apiUrl) {
+  const { hostname } = new URL(apiUrl);
+  if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(hostname)) {
+    throw new Error(
+      `refusing to run demo tooling against a non-local Supabase API ` +
+        `(${apiUrl}). Demo data and demo users are local-only.`
+    );
+  }
+}
+
+/**
  * Ensures the stack is running; `supabase start` is idempotent, so this is safe
  * both on a clean checkout and on an already-running stack.
  */

@@ -140,8 +140,11 @@ export const routes: RouteRecordRaw[] = [
         }
       },
       // About → Documents → in-app regulation reader (T-017, D-12).
-      // The slug is locale-specific (regulamin/regulations/rehlament); the
-      // reader keeps it stable while switching the content language in place.
+      // Canonical root slug (D-24): one slug is shared by every locale, so a
+      // language switch is a pure prefix swap. The reader resolves the
+      // published row by slug regardless of which translations exist, then
+      // renders the requested locale or English with the D-12 fallback note;
+      // unknown and draft slugs still 404.
       {
         path: "about/documents/:slug",
         name: "about-document",
@@ -177,9 +180,11 @@ export const routes: RouteRecordRaw[] = [
           }
         }
       },
-      // Projects → detail (T-019). The slug is locale-specific and resolves
-      // strictly against the requested locale: an unknown or foreign slug
-      // renders 404 content in-page, never a cross-locale match.
+      // Projects → detail (T-019, D-24). One canonical slug is shared by every
+      // locale; language switching only swaps the prefix. Resolution is strict:
+      // the row must be published and have a translation for the requested
+      // locale, otherwise the page renders 404 content in-page — never a
+      // cross-locale match.
       {
         path: "projects/:slug",
         name: "project-detail",
@@ -215,9 +220,11 @@ export const routes: RouteRecordRaw[] = [
           }
         }
       },
-      // Publications → detail (T-020). The slug is locale-specific and
-      // resolves strictly against the requested locale: an unknown or
-      // foreign slug renders 404 content in-page, never a cross-locale match.
+      // Publications → detail (T-020, D-24). One canonical slug is shared by
+      // every locale; language switching only swaps the prefix. Resolution is
+      // strict: the row must be published and have a translation for the
+      // requested locale, otherwise the page renders 404 content in-page —
+      // never a cross-locale match.
       {
         path: "publications/:slug",
         name: "publication-detail",

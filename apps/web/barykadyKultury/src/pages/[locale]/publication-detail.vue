@@ -1,13 +1,22 @@
 <template>
   <!--
-    Strict (locale, slug) resolution (T-019 precedent): an unknown or foreign
-    slug — including any draft slug — renders the same translated 404 content
-    as the locale catch-all, never another locale's publication. RLS already
-    hides drafts anonymously; this is the app-layer complement.
+    Canonical root slug (T-038/D-24): the URL segment is shared by every
+    locale and the requested locale must supply a translation. An unknown,
+    former-localized or draft slug renders the same translated 404 content as
+    the locale catch-all. RLS already hides drafts anonymously; this is the
+    app-layer complement.
   -->
-  <div v-if="result.kind === 'empty'" class="publication-not-found">
+  <div v-if="publicationResult.kind === 'empty'" class="publication-not-found">
     <h1 class="publication-not-found__title">{{ t("notFound.title") }}</h1>
     <p class="publication-not-found__message">{{ t("notFound.message") }}</p>
+    <p class="publication-not-found__back">
+      <RouterLink
+        :to="listPath"
+        class="publication-not-found__back-link focus-ring"
+      >
+        {{ t("publications.detail.back") }}
+      </RouterLink>
+    </p>
   </div>
 
   <article v-else class="publication-detail">
@@ -23,14 +32,14 @@
     <h1 class="publication-detail__title">{{ headingText }}</h1>
 
     <div
-      v-if="result.kind === 'loading'"
+      v-if="publicationResult.kind === 'loading'"
       class="publication-detail__state"
       role="status"
     >
       {{ t("content.loading") }}
     </div>
     <div
-      v-else-if="result.kind === 'unavailable'"
+      v-else-if="publicationResult.kind === 'unavailable'"
       class="publication-detail__state"
     >
       {{ t("content.unavailable") }}
@@ -40,8 +49,7 @@
         No fallback note here: strict (locale, slug) resolution means the
         rendered row is always the requested locale's own translation, so
         `isFallback` is unreachable on this page. Visible fallback surfacing
-        lives on the listing card, where the resolver can substitute English
-        (T-020 review, Standards Suggestion — the dead branch was removed).
+        lives on the listing card, where the resolver can substitute English.
       -->
       <p v-if="publication.abstract" class="publication-detail__abstract">
         {{ publication.abstract }}
@@ -82,15 +90,15 @@ import { formatDate } from "@/features/i18n/format";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
- * Publication detail page (T-020).
+ * Publication detail page.
  *
- * One logical publication resolved strictly by (requestedLocale, slug):
- * full abstract, authors, date, then each `publication_files` row as a
- * distinct language/version download (labelled with language, type and size)
- * or the single external URL — and NO action when there is neither. The
- * abstract is plain authored text (PRD §4 metadata), so it renders in a
- * paragraph; rich text is not needed and was not added (AGENTS.md rule 7).
- * PublicLayout provides the shell.
+ * One logical publication resolved by its canonical root slug plus the
+ * requested locale's translation (T-038/D-24): full abstract, authors, date,
+ * then each `publication_files` row as a distinct language/version download
+ * (labelled with language, type and size) or the single external URL — and NO
+ * action when there is neither. The abstract is plain authored text (PRD §4
+ * metadata), so it renders in a paragraph; rich text is not needed and was not
+ * added (AGENTS.md rule 7). PublicLayout provides the shell.
  */
 const { t } = useI18n();
 const route = useRoute();
@@ -105,10 +113,12 @@ const requestedSlug = computed<string>(() => {
   return typeof slug === "string" ? slug : "";
 });
 
-const { result } = usePublication(requestedSlug, currentLocale);
+const { publicationResult } = usePublication(requestedSlug, currentLocale);
 
 const publication = computed<PublicationView | null>(() =>
-  result.value.kind === "ok" ? (result.value.items[0] ?? null) : null
+  publicationResult.value.kind === "ok"
+    ? (publicationResult.value.items[0] ?? null)
+    : null
 );
 
 const headingText = computed(
@@ -192,5 +202,19 @@ const formattedDate = computed(() => {
 .publication-not-found__message {
   margin: 0;
   color: var(--color-text-muted);
+}
+
+.publication-not-found__back {
+  margin: 1.5rem 0 0;
+  font-size: var(--font-size-small);
+}
+
+.publication-not-found__back-link {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.publication-not-found__back-link:hover {
+  text-decoration: underline;
 }
 </style>

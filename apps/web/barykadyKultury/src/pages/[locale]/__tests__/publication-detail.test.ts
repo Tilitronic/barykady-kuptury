@@ -6,15 +6,17 @@ import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 import { mountWithPlugins } from "@/test-utils/mount";
 
 /**
- * Spec axis (T-020): the detail renders one h1, full abstract, authors, date,
- * and each language file as a distinct labelled download — or the external
- * link — or NO action. Strict (locale, slug): draft/foreign/unknown slugs
- * render the translated 404 content (T-019 precedent).
+ * Spec axis (T-020, canonical slug by T-038/D-24): the detail renders one h1,
+ * full abstract, authors, date, and each language file as a distinct labelled
+ * download — or the external link — or NO action. One canonical slug serves
+ * every locale; an unknown, former-localized or draft slug renders the
+ * translated 404 content, and a missing requested-locale translation does too.
  */
+
+const CANONICAL_SLUG = "sample-publication";
 
 const EN_TRANSLATION = {
   locale: "en",
-  slug: "sample-publication",
   title: "Sample Publication (EN)",
   abstract: "Abstract (EN)",
   authors: "Author One"
@@ -22,7 +24,6 @@ const EN_TRANSLATION = {
 
 const PL_TRANSLATION = {
   locale: "pl",
-  slug: "przykladowa-publikacja",
   title: "Przykladowa publikacja (PL)",
   abstract: "Streszczenie (PL)",
   authors: "Autor Dwaj"
@@ -48,6 +49,7 @@ const FILES = [
 function publishedRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "00000000-0000-4000-8000-000000000401",
+    slug: CANONICAL_SLUG,
     status: "published",
     language: "en",
     publication_date: "2026-02-01",
@@ -93,15 +95,11 @@ async function flushPromises() {
 }
 
 describe("publication detail", () => {
-  it("renders the localized publication with one h1 and both file versions", async () => {
+  it("renders the requested-locale publication through the canonical slug", async () => {
     const fake = createFakeSupabase({
       tables: { publications: [publishedRow()] }
     });
-    const wrapper = await mountDetail(
-      fake.client,
-      "pl",
-      "przykladowa-publikacja"
-    );
+    const wrapper = await mountDetail(fake.client, "pl", CANONICAL_SLUG);
 
     expect(wrapper.findAll("h1")).toHaveLength(1);
     expect(wrapper.get("h1").text()).toBe("Przykladowa publikacja (PL)");
@@ -125,7 +123,7 @@ describe("publication detail", () => {
     const fake = createFakeSupabase({
       tables: { publications: [publishedRow()] }
     });
-    const wrapper = await mountDetail(fake.client, "en", "sample-publication");
+    const wrapper = await mountDetail(fake.client, "en", CANONICAL_SLUG);
 
     const back = wrapper.get(".publication-detail__back-link");
     expect(back.attributes("href")).toBe("/en/publications");
@@ -146,7 +144,7 @@ describe("publication detail", () => {
         ]
       }
     });
-    const wrapper = await mountDetail(fake.client, "en", "sample-publication");
+    const wrapper = await mountDetail(fake.client, "en", CANONICAL_SLUG);
 
     const link = wrapper.get(".publication-files__external-link");
     expect(link.attributes("target")).toBe("_blank");
@@ -167,7 +165,7 @@ describe("publication detail", () => {
         ]
       }
     });
-    const wrapper = await mountDetail(fake.client, "en", "sample-publication");
+    const wrapper = await mountDetail(fake.client, "en", CANONICAL_SLUG);
 
     expect(wrapper.find(".publication-files__link").exists()).toBe(false);
     expect(wrapper.find(".publication-files__external-link").exists()).toBe(
@@ -179,15 +177,10 @@ describe("publication detail", () => {
 
   it("renders the requested-locale translation as-is — never a silent English mix-in", async () => {
     // The uk row exists (title only; abstract/authors are optional), so the
-    // strict (uk, slug) match renders Ukrainian text and omits the absent
-    // fields. English never stands in while the requested locale is usable
-    // (selectTranslation rule: never a silent mix), and with
-    // PUBLICATION_REQUIRED_FIELDS = [title] + the DB non-blank title
-    // constraint, an isFallback detail is unreachable — the listing card
-    // covers visible fallback surfacing.
+    // requested-locale translation renders Ukrainian text and omits the absent
+    // fields. English never stands in while the requested locale is usable.
     const ukTitleOnly = {
       locale: "uk",
-      slug: "zrazkova-publikatsiia",
       title: "Зразкова публікація",
       abstract: null,
       authors: null
@@ -201,34 +194,56 @@ describe("publication detail", () => {
         ]
       }
     });
-    const wrapper = await mountDetail(
-      fake.client,
-      "uk",
-      "zrazkova-publikatsiia"
-    );
+    const wrapper = await mountDetail(fake.client, "uk", CANONICAL_SLUG);
 
     expect(wrapper.get("h1").text()).toBe("Зразкова публікація");
     expect(wrapper.text()).not.toContain("Abstract (EN)");
     expect(wrapper.find(".publication-detail__abstract").exists()).toBe(false);
   });
 
-  it("renders the 404 content — not the publication — when an English slug is used on a Polish URL", async () => {
+  it("renders the 404 content — not the publication — when the requested locale has no translation", async () => {
     const fake = createFakeSupabase({
-      tables: { publications: [publishedRow()] }
+      tables: {
+        publications: [
+          publishedRow({ publication_translations: [EN_TRANSLATION] })
+        ]
+      }
     });
-    const wrapper = await mountDetail(fake.client, "pl", "sample-publication");
+    const wrapper = await mountDetail(fake.client, "pl", CANONICAL_SLUG);
 
     expect(wrapper.get("h1").text()).toBe("Nie znaleziono strony");
     expect(wrapper.text()).not.toContain("Sample Publication (EN)");
   });
 
+  it("gives the 404 branch a localized way back to the listing", async () => {
+    const fake = createFakeSupabase({ tables: { publications: [] } });
+    const wrapper = await mountDetail(fake.client, "en", "no-such-publication");
+
+    const back = wrapper.get(".publication-not-found__back-link");
+    expect(back.attributes("href")).toBe("/en/publications");
+    expect(back.text()).toBe("Back to publications");
+  });
+
+  it("renders the 404 content for a former localized slug", async () => {
+    const fake = createFakeSupabase({
+      tables: { publications: [publishedRow()] }
+    });
+    const wrapper = await mountDetail(
+      fake.client,
+      "pl",
+      "przykladowa-publikacja"
+    );
+
+    expect(wrapper.get("h1").text()).toBe("Nie znaleziono strony");
+    expect(wrapper.text()).not.toContain("Przykladowa publikacja (PL)");
+  });
+
   it("renders the 404 content for a draft slug even when the payload leaks it", async () => {
     const draft = publishedRow({
       id: "00000000-0000-4000-8000-000000000499",
+      slug: "draft-leak",
       status: "draft",
-      publication_translations: [
-        { ...EN_TRANSLATION, slug: "draft-leak", title: "DRAFT LEAK" }
-      ]
+      publication_translations: [{ ...EN_TRANSLATION, title: "DRAFT LEAK" }]
     });
     const fake = createFakeSupabase({
       tables: { publications: [publishedRow(), draft] }

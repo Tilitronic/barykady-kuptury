@@ -209,7 +209,7 @@ describe("submission lifecycle", () => {
     );
   });
 
-  it("honours the preserved redirect target after a successful sign-in", async () => {
+  it("honours an allowed admin redirect target after a successful sign-in", async () => {
     configureAuth(fakeAuth());
 
     const wrapper = await mountSignIn(
@@ -227,11 +227,55 @@ describe("submission lifecycle", () => {
     );
   });
 
-  it("refuses an external redirect value (protocol-relative or absolute URL)", async () => {
+  it("keeps the query and hash of an allowed admin redirect target", async () => {
+    configureAuth(fakeAuth());
+
+    const wrapper = await mountSignIn(
+      "/en/admin/sign-in?redirect=%2Fen%2Fadmin%2Faccess-denied%3Ftab%3D1%23top"
+    );
+    await wrapper.get("#admin-email").setValue("admin@demo.local");
+    await wrapper.get("#admin-password").setValue("hunter2");
+    await wrapper.get("form").trigger("submit");
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(wrapper.vm.$router.currentRoute.value.fullPath).toBe(
+      "/en/admin/access-denied?tab=1#top"
+    );
+  });
+
+  it("refuses a protocol-relative redirect value", async () => {
     configureAuth(fakeAuth());
 
     const wrapper = await mountSignIn(
       "/en/admin/sign-in?redirect=%2F%2Fevil.example%2Fadmin"
+    );
+    await wrapper.get("#admin-email").setValue("admin@demo.local");
+    await wrapper.get("#admin-password").setValue("hunter2");
+    await wrapper.get("form").trigger("submit");
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(wrapper.vm.$router.currentRoute.value.path).toBe("/en/admin");
+  });
+
+  it("refuses an absolute external redirect value", async () => {
+    configureAuth(fakeAuth());
+
+    const wrapper = await mountSignIn(
+      "/en/admin/sign-in?redirect=https%3A%2F%2Fevil.example%2Fadmin"
+    );
+    await wrapper.get("#admin-email").setValue("admin@demo.local");
+    await wrapper.get("#admin-password").setValue("hunter2");
+    await wrapper.get("form").trigger("submit");
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(wrapper.vm.$router.currentRoute.value.path).toBe("/en/admin");
+  });
+
+  it("refuses an internal path outside the admin shell", async () => {
+    configureAuth(fakeAuth());
+
+    const wrapper = await mountSignIn(
+      "/en/admin/sign-in?redirect=%2Fen%2Fprojects"
     );
     await wrapper.get("#admin-email").setValue("admin@demo.local");
     await wrapper.get("#admin-password").setValue("hunter2");

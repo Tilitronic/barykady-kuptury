@@ -1,10 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import {
-  DEFAULT_LOCALE,
-  SUPPORTED_LOCALES,
-  type Locale
-} from "@/features/i18n/locales";
+import { SUPPORTED_LOCALES, type Locale } from "@/features/i18n/locales";
 import { selectTranslation } from "@/shared/content/selectTranslation";
 import {
   fromRows,
@@ -38,7 +34,6 @@ export interface OrganizationDocumentRowWithTranslations extends OrganizationDoc
 /** A locale-tagged translation projection shared by the listing and reader. */
 export interface OrganizationDocumentTranslation {
   readonly locale: Locale;
-  readonly slug: string;
   readonly title: string;
   readonly description: string | null;
   readonly body: string | null;
@@ -95,7 +90,7 @@ export const READER_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof OrganizationDocumentTranslation)[];
 
 const DOCUMENT_SELECT =
-  "id, status, document_type, language, publication_date, storage_path, mime_type, file_size_bytes, sort_order, updated_at, organization_document_translations(locale, slug, title, description, body)";
+  "id, slug, status, document_type, language, publication_date, storage_path, mime_type, file_size_bytes, sort_order, updated_at, organization_document_translations(locale, title, description, body)";
 
 /** Navigation order for locales, so the switcher order never depends on rows. */
 const LOCALE_ORDER: readonly Locale[] = SUPPORTED_LOCALES;
@@ -128,7 +123,6 @@ function toTranslation(
 ): OrganizationDocumentTranslation {
   return {
     locale: row.locale,
-    slug: row.slug,
     title: row.title,
     description: row.description,
     body: row.body
@@ -157,7 +151,7 @@ export function mapDocument(
   return {
     id: row.id,
     status: row.status,
-    slug: selected.value.slug,
+    slug: row.slug,
     title: selected.value.title,
     description: selected.value.description,
     documentType: row.document_type,
@@ -193,49 +187,21 @@ export function mapDocumentReader(
 }
 
 /**
- * Finds the document whose translations match `slug`.
+ * Finds the published document reachable at the canonical root `slug`.
  *
- * Slugs are unique per locale, so a match is (locale, slug). The requested
- * locale is preferred; when it has no such slug the English slug is tried
- * (docs/PRODUCT_REQUIREMENTS.md §2.6 — English is the documented fallback).
- * Never a pl↔uk substitution.
+ * T-038/D-24 keeps the root slug as the only identity: resolution matches a
+ * published row by slug alone. Documents intentionally retain D-12 behavior —
+ * the reader then resolves requested locale → English and flags the fallback,
+ * so a missing requested translation still renders readable text rather than a
+ * 404. Unknown, draft and archived rows stay unresolved.
  */
 export function findDocumentBySlug(
   rows: readonly OrganizationDocumentRowWithTranslations[],
-  slug: string,
-  locale: Locale
+  slug: string
 ): OrganizationDocumentRowWithTranslations | null {
-  const matches = (candidate: Locale): boolean =>
-    rows.some(row =>
-      row.organization_document_translations.some(
-        translation =>
-          translation.locale === candidate && translation.slug === slug
-      )
-    );
-
-  if (matches(locale)) {
-    return (
-      rows.find(row =>
-        row.organization_document_translations.some(
-          translation =>
-            translation.locale === locale && translation.slug === slug
-        )
-      ) ?? null
-    );
-  }
-
-  if (locale !== DEFAULT_LOCALE && matches(DEFAULT_LOCALE)) {
-    return (
-      rows.find(row =>
-        row.organization_document_translations.some(
-          translation =>
-            translation.locale === DEFAULT_LOCALE && translation.slug === slug
-        )
-      ) ?? null
-    );
-  }
-
-  return null;
+  return (
+    rows.find(row => row.status === "published" && row.slug === slug) ?? null
+  );
 }
 
 /** The document reader's resolved translation plus its fallback flag. */
@@ -247,10 +213,11 @@ export interface SelectedDocumentTranslation {
 /**
  * Resolves the translation a reader should render.
  *
- * Initial load (`allowFallback: true`, the default) follows the shared rule:
- * requested locale → English, flagged as a fallback. An explicit language switch
- * passes `allowFallback: false`: the chosen locale is rendered or nothing is —
- * never a silent substitution (docs/PRODUCT_REQUIREMENTS.md §2.6).
+ * The default (`allowFallback: true`) follows the documented D-12 rule:
+ * requested locale → English, flagged as a fallback. Callers that must render
+ * an exact locale can pass `allowFallback: false`; the reader itself navigates
+ * on an in-view switch, so each render is a fresh requested→English resolution
+ * and never silently substitutes a different non-default locale.
  */
 export function selectReaderTranslation(
   reader: OrganizationDocumentReader,
@@ -271,14 +238,22 @@ export function selectReaderTranslation(
     : null;
 }
 
-/** Published documents with every translation, or an explicit state. */
+/**
+ * Published documents with every translation. `slug` narrows to the canonical
+ * root identity for the reader; the listing omits it.
+ */
 async function fetchPublishedDocumentRows(
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<Database>,
+  slug?: string
 ): Promise<ContentResult<OrganizationDocumentRowWithTranslations>> {
-  const query = supabase.from("organization_documents");
-  const { data, error } = await query
+  let query = supabase
+    .from("organization_documents")
     .select(DOCUMENT_SELECT)
-    .eq("status", "published")
+    .eq("status", "published");
+
+  if (slug !== undefined) query = query.eq("slug", slug);
+
+  const { data, error } = await query
     .order("sort_order", { ascending: true })
     .overrideTypes<
       OrganizationDocumentRowWithTranslations[],
@@ -304,25 +279,22 @@ export async function fetchPublishedDocuments(
 }
 
 /**
- * The published document reachable at `slug` for a reader, in a single result.
+ * The published document reachable at the canonical `slug`, in one query.
  *
- * Slug resolution happens in process against the published rows because
- * embedded-resource filtering cannot both select the parent by a translation
- * column and return all of its translations in one PostgREST request. The
- * published document set is small by construction, so this stays a single query
- * (docs/architecture.md §3: one module owns the query shape).
+ * The slug lives on the parent row (T-038/D-24) and every translation is
+ * embedded, so locale resolution belongs to the reader
+ * (`selectReaderTranslation`) rather than to this fetch.
  */
 export async function fetchPublishedDocumentBySlug(
   supabase: SupabaseClient<Database> | null,
-  slug: string,
-  locale: Locale
+  slug: string
 ): Promise<ContentResult<OrganizationDocumentReader>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedDocumentRows(supabase);
+  const rows = await fetchPublishedDocumentRows(supabase, slug);
   if (rows.kind !== "ok") return rows;
 
-  const row = findDocumentBySlug(rows.items, slug, locale);
+  const row = findDocumentBySlug(rows.items, slug);
   if (!row) return { kind: "empty" };
 
   return { kind: "ok", items: [mapDocumentReader(row)] };

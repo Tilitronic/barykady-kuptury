@@ -17,7 +17,7 @@ function projectView(
   return {
     id: "00000000-0000-4000-8000-000000000201",
     status: "published",
-    slug: "warsztat-spoleczny",
+    slug: "community-workshop",
     title: "Warsztat społeczny",
     summary: "Podsumowanie projektu.",
     body: "Treść projektu.",
@@ -49,12 +49,12 @@ async function mountCard(
 }
 
 describe("ProjectCard", () => {
-  it("links the title to the localized slug as a real anchor", async () => {
+  it("links the title to the canonical slug as a real anchor", async () => {
     const wrapper = await mountCard(projectView());
 
     const link = wrapper.get(".project-card__link");
     expect(link.element.tagName).toBe("A");
-    expect(link.attributes("href")).toBe("/pl/projects/warsztat-spoleczny");
+    expect(link.attributes("href")).toBe("/pl/projects/community-workshop");
     expect(wrapper.get(".project-card__title").text()).toBe(
       "Warsztat społeczny"
     );
@@ -67,7 +67,7 @@ describe("ProjectCard", () => {
       locale: "pl",
       props: {
         project: projectView(),
-        href: "/pl/projects/warsztat-spoleczny",
+        href: "/pl/projects/community-workshop",
         locale: "pl",
         headingLevel: 3
       },

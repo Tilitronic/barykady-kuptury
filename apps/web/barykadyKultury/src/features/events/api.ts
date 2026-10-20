@@ -29,6 +29,7 @@ type ProjectTranslationRow =
 
 /** The embedded project of a link (to-one relation). */
 interface LinkedProject {
+  readonly slug: string;
   readonly status: ProjectStatus;
   readonly project_translations: readonly ProjectTranslationRow[];
 }
@@ -53,7 +54,7 @@ export const EVENT_LINK_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof ProjectTranslationRow)[];
 
 const EVENT_LINK_SELECT =
-  "calendar_id, google_event_id, project_id, projects(status, project_translations(locale, slug, title))";
+  "calendar_id, google_event_id, project_id, projects(status, slug, project_translations(locale, title))";
 
 /** Maps one joined row to a domain model, or `null` when no public link exists. */
 export function mapEventProjectLink(
@@ -75,7 +76,7 @@ export function mapEventProjectLink(
     calendarId: row.calendar_id,
     googleEventId: row.google_event_id,
     projectId: row.project_id,
-    slug: selected.value.slug,
+    slug: project.slug,
     title: selected.value.title,
     isFallback: selected.isFallback
   };

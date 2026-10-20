@@ -36,7 +36,7 @@ function calendarEvent(
 
 function linkRow(
   googleEventId: string,
-  slug: string,
+  canonicalSlug: string,
   title: string,
   locale = "en"
 ) {
@@ -45,8 +45,9 @@ function linkRow(
     google_event_id: googleEventId,
     project_id: "00000000-0000-4000-8000-000000000201",
     projects: {
+      slug: canonicalSlug,
       status: "published",
-      project_translations: [{ locale, slug, title }]
+      project_translations: [{ locale, title }]
     }
   };
 }
@@ -169,23 +170,25 @@ describe("events page", () => {
     expect(wrapper.findAll("h1")).toHaveLength(1);
   });
 
-  it("links a same-locale project under the current locale and a fallback under English", async () => {
+  it("links a project under the rendering text's owning locale with its canonical slug", async () => {
     stubFetch(() => okBody([calendarEvent({ id: "ev-1" })]));
     const fake = createFakeSupabase({
       tables: {
         calendar_event_links: [
-          linkRow("ev-1", "przykladowy-projekt", "Przykladowy projekt", "pl")
+          linkRow("ev-1", "sample-project", "Przykladowy projekt", "pl")
         ]
       }
     });
     const wrapper = await mountPage(fake.client, "pl");
 
     expect(wrapper.get(".event-card__project").attributes("href")).toBe(
-      "/pl/projects/przykladowy-projekt"
+      "/pl/projects/sample-project"
     );
 
-    // Now the same project only carries an English translation: the link must
-    // point at the English prefix, never a dead Polish URL.
+    // Now the same project only carries an English translation: the title
+    // falls back to English, and because strict detail resolution 404s a
+    // locale without a translation the link moves under /en. The slug stays
+    // canonical; only the prefix follows the rendered text.
     const enOnly = createFakeSupabase({
       tables: {
         calendar_event_links: [
@@ -194,11 +197,11 @@ describe("events page", () => {
             google_event_id: "ev-1",
             project_id: "00000000-0000-4000-8000-000000000201",
             projects: {
+              slug: "sample-project",
               status: "published",
               project_translations: [
                 {
                   locale: "en",
-                  slug: "sample-project",
                   title: "Sample Project"
                 }
               ]

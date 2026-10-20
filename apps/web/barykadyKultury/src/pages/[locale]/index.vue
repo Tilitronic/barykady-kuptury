@@ -215,10 +215,10 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
  * to markup, so one failure — a calendar 502, an unpublished page — can
  * never blank the others (PRODUCT_REQUIREMENTS.md §5). Ordering rules are
  * NOT re-implemented here: featured/recent ordering is
- * `featuredProjects()` (T-015), and the nearest-upcoming sort is the T-024
- * hook's. The project links follow the strict-slug rule through the shared
- * `eventProjectPath`/T-019 precedent. PublicLayout provides the shell — do
- * NOT add AppShell here.
+ * `featuredProjects()`, and the nearest-upcoming sort belongs to the events
+ * hook. Project links use the canonical slug under the rendering text's owning
+ * locale prefix (English for fallback rows). PublicLayout provides the shell —
+ * do NOT add AppShell here.
  */
 const { t } = useI18n();
 const route = useRoute();
@@ -233,7 +233,7 @@ const currentLocale = computed<Locale>(() => {
 
 const { result: missionResult } = useSitePage("home", currentLocale);
 const { result: eventsResult } = useEvents(currentLocale);
-const { result: projectsResult } = useProjects(currentLocale);
+const { projectsResult } = useProjects(currentLocale);
 
 const page = computed(() =>
   missionResult.value.kind === "ok" ? missionResult.value.items[0] : null
@@ -268,6 +268,10 @@ const exploreItems = computed(() =>
 );
 
 function projectPath(project: ProjectSummaryView): string {
+  // Owning-locale rule: the slug is canonical (never localized), but strict
+  // detail resolution 404s a requested locale with no translation. A card
+  // rendering English fallback text therefore links under /en; only a card
+  // whose text is in the active locale keeps the active prefix.
   const owningLocale = project.isFallback
     ? DEFAULT_LOCALE
     : currentLocale.value;
