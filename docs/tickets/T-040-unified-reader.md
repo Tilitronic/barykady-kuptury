@@ -3,7 +3,7 @@
 **Session:** 10 · **Lane:** public reader/accessibility · **Owner:** @designer + @coder (data)
 **Reviewers:** @reviewer + @architector (content model/SEO) + @designer (a11y sign-off)
 **Depends on:** T-017, T-020, T-039 (PageToc), T-038 · **Blocks:** T-041, T-042, T-027/T-029/T-030 admin preview
-**Decisions:** D-27 (`?lang=`), D-28 (import formats), D-30 (source files)
+**Decisions:** D-27 (`?lang=`), D-30 (source files), D-32 (AST), D-36 (assets), D-37 (validation/projection), D-38 (reader fallback)
 
 ## Outcome
 
@@ -22,6 +22,22 @@ locale when available, else English, else the first available translation.
 
 ## Content model
 
+- Schema design (arc-3, 2026-10-20): `body_ast jsonb` + `body_ast_version
+  smallint` on both translation tables; `body text` on
+  `publication_translations` (plain-text projection for search); root source
+  columns (`source_provider` enum, `source_path`, `source_mime`,
+  `source_external_id`, `source_synced_at`,
+  `allow_original_download` default false); `content_assets` table
+  (owner XOR document/publication, locale, storage_path, MIME, width/height,
+  sha256) with published-owner read RLS; private `content-sources` bucket.
+- Write-time DB function/trigger validates AST v1 (version coupling, node/prop
+  allowlist, link schemes, heading levels, table semantics, image alt/asset
+  ownership) and projects `body` plain text. Client prechecks for UX only.
+- AST image nodes use `{assetId, alt, caption, decorative}`; the renderer
+  resolves the asset to the Supabase Storage origin. No remote URLs.
+- Reader fallback (D-38): row must be published + canonical slug; translation =
+  requested `?lang` if available, else UI locale, else EN, else first available;
+  normalize the URL.
 - Content is stored as a versioned, project-owned **ReaderDocument AST**:
   `body_ast jsonb` + `body_ast_version smallint` on each translation, plus a
   plain-text `body` projection used by the existing search RPC. Never store
@@ -38,7 +54,10 @@ locale when available, else English, else the first available translation.
 - The reader model exposes `availableLocales` and per-locale
   `{ title, bodyAst }`; documents keep their existing translation model.
 - AST validation on write (DB constraint/trigger or a small server check):
-  version, node kinds, URL schemes, image alt completeness.
+  version, node kinds, link targets, image alt completeness. Allowed link
+  targets: `http://`, `https://`, `mailto:`, fragment `#…`, same-origin
+  absolute path `/…`; protocol-relative `//…` and `javascript:`/`data:` are
+  rejected. DB and renderer must enforce the same set.
 - Reading state: `?lang=<en|pl|uk>` selects the content language; it is
   shareable and does **not** alter the route locale. Invalid/unavailable
   `?lang=` falls back to the default rule and is replaced in the URL.
@@ -136,3 +155,22 @@ pnpm demo:reset && pnpm demo:check
 ## Log
 
 - (author) start:
+- (session 11, backend) Migration `20261020160000_reader_ast.sql`: AST/version
+  columns, publication `body`, source metadata, `content_assets` + RLS,
+  private `content-sources` bucket, write-time AST validation/projection
+  triggers, publication body in search. `src/features/reader/{types,
+  resolveReaderLocale,api,useReaderDocument}`. Verified: db reset, 395 pgTAP
+  (94 AST), 949 unit, typecheck, lint.
+- (session 11, UI) `LongFormReader`, AST renderer (headings/lists/tables/images/
+  blockquotes/code/footnotes), `ReaderToc` (reuses PageToc), `ReaderControls`,
+  `?lang=` content language independent of UI locale, document/publication
+  integration, legacy plain-text fallback, i18n and E2E.
+- (review fixes) DB/renderer link contract aligned (http/https/mailto, `#`,
+  same-origin `/`; no `//`); D-38 publication detail fallback for metadata/files;
+  TOC hierarchy/sticky/collapse; visible reading-language label; mobile controls
+  above the article; publication authors/date; content `lang`; fallback/unsupported
+  copy; UI-locale switch drops stale `?lang`; slider persistence/announce/labels;
+  footnote landmark; 16 px baseline; 200% zoom + reduced-motion E2E.
+- Verification: 1009 unit, 130 E2E, 397 pgTAP, typecheck, lint, build,
+  base-seed idempotency, demo:check, live smoke (legacy document, `?lang=pl`
+  content-only switch, controls, no 200% overflow, publication detail).
