@@ -352,4 +352,21 @@ test.describe("publications", () => {
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toContain("application/pdf");
   });
+
+  // T-039 (D-25): year sections behind the TOC; `#undated` for dateless rows.
+  test("groups publications by year with a working TOC", async ({ page }) => {
+    await gotoWithPublications(page);
+    await page.goto("/en/publications");
+
+    await expect(
+      page.getByRole("heading", { level: 2, name: "2026" })
+    ).toBeVisible();
+    const toc = page.getByRole("navigation", { name: "On this page" });
+    await expect(toc.getByRole("link", { name: "2026" })).toHaveAttribute(
+      "href",
+      "#2026"
+    );
+
+    await expectNoSeriousViolations(page);
+  });
 });

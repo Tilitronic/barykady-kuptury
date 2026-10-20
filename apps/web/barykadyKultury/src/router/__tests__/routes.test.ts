@@ -82,3 +82,41 @@ describe("admin route table (T-026)", () => {
     );
   });
 });
+
+/**
+ * T-039 (D-25): the About list routes are removed and redirect to the
+ * consolidated page's anchored sections, preserving the locale. The reader
+ * route is canonical and untouched.
+ */
+describe("about consolidation redirects (T-039)", () => {
+  it("sends /en/about/team to /en/about#team", async () => {
+    const router = createTestRouter();
+    await router.push("/en/about/team");
+
+    expect(router.currentRoute.value.path).toBe("/en/about");
+    expect(router.currentRoute.value.hash).toBe("#team");
+  });
+
+  it("sends /uk/about/documents to /uk/about#documents (locale preserved)", async () => {
+    const router = createTestRouter();
+    await router.push("/uk/about/documents");
+
+    expect(router.currentRoute.value.path).toBe("/uk/about");
+    expect(router.currentRoute.value.hash).toBe("#documents");
+  });
+
+  it("keeps the document reader route canonical", () => {
+    const resolved = createTestRouter().resolve(
+      "/pl/about/documents/regulations"
+    );
+
+    expect(resolved.name).toBe("about-document");
+  });
+
+  it("no longer registers the removed list route names", () => {
+    const router = createTestRouter();
+
+    expect(router.hasRoute("about-team")).toBe(false);
+    expect(router.hasRoute("about-documents")).toBe(false);
+  });
+});

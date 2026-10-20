@@ -111,10 +111,18 @@ test.describe("About page", () => {
       "About us"
     );
 
+    // T-039 (D-25): one page — body sections + Team + Documents.
     const h2Texts = await page
       .getByRole("heading", { level: 2 })
       .allInnerTexts();
-    expect(h2Texts).toEqual(["Mission", "History", "Values", "Aims"]);
+    expect(h2Texts).toEqual([
+      "Mission",
+      "History",
+      "Values",
+      "Aims",
+      "Team",
+      "Documents"
+    ]);
 
     await expect(
       page.getByText("To expand Ukrainian culture beyond borders")
@@ -123,10 +131,17 @@ test.describe("About page", () => {
     await expect(page.getByText("Identity")).toBeVisible();
     await expect(page.getByText("cultural bridge")).toBeVisible();
 
-    const activeSubNav = page.locator(
-      ".about-page__subnav-link[aria-current='page']"
+    // The sub-navigation is gone; the TOC carries the section anchors.
+    expect(await page.locator(".about-page__subnav").count()).toBe(0);
+    const toc = page.getByRole("navigation", { name: "On this page" });
+    await expect(toc.getByRole("link", { name: "Mission" })).toHaveAttribute(
+      "href",
+      "#mission"
     );
-    await expect(activeSubNav).toHaveText("Organization");
+    await expect(toc.getByRole("link", { name: "Documents" })).toHaveAttribute(
+      "href",
+      "#documents"
+    );
 
     await checkA11y(page);
   });
@@ -153,5 +168,36 @@ test.describe("About page", () => {
       page.getByText("To expand Ukrainian culture beyond borders")
     ).toBeVisible();
     await checkA11y(page);
+  });
+
+  test("the removed list routes redirect to the anchored sections (D-25)", async ({
+    page
+  }) => {
+    await gotoAbout(page);
+
+    await page.goto("/en/about/team");
+    await expect(page).toHaveURL(/\/en\/about#team$/);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Team" })
+    ).toBeVisible();
+
+    await page.goto("/pl/about/documents");
+    await expect(page).toHaveURL(/\/pl\/about#documents$/);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Dokumenty" })
+    ).toBeVisible();
+  });
+
+  test("a deep link focuses the section heading after data loads", async ({
+    page
+  }) => {
+    await gotoAbout(page);
+
+    await page.goto("/en/about#aims");
+
+    // The heading of the target section owns focus (not just the scroll).
+    const aimsHeading = page.getByRole("heading", { level: 2, name: "Aims" });
+    await expect(aimsHeading).toBeVisible();
+    await expect(aimsHeading).toBeFocused();
   });
 });

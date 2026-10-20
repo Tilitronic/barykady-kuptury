@@ -85,8 +85,10 @@ async function mountReader(
         component: DocumentReader
       },
       {
-        path: "/:locale(en|pl|uk)/about/documents",
-        name: "about-documents",
+        // m8 (T-039 review): the back link targets the consolidated About
+        // anchor directly — the old list URL is a redirect hop.
+        path: "/:locale(en|pl|uk)/about",
+        name: "about",
         component: { template: "<div />" }
       }
     ]
@@ -261,7 +263,7 @@ describe("document reader", () => {
 
     expect(wrapper.text()).toContain("This document is not available.");
     expect(wrapper.get(".document-reader__back-link").attributes("href")).toBe(
-      "/en/about/documents"
+      "/en/about#documents"
     );
   });
 

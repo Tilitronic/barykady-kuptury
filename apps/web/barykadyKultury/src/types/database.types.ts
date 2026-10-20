@@ -541,6 +541,23 @@ export type Database = {
         Args: { p_status: Database["public"]["Enums"]["content_status"] };
         Returns: boolean;
       };
+      search_published_content: {
+        Args: {
+          result_kinds?: string[];
+          result_limit?: number;
+          result_locale: Database["public"]["Enums"]["content_locale"];
+          search_query: string;
+        };
+        Returns: {
+          entity_id: string;
+          excerpt: string;
+          kind: string;
+          page_key: string;
+          rank: number;
+          slug: string;
+          title: string;
+        }[];
+      };
     };
     Enums: {
       content_locale: "en" | "pl" | "uk";

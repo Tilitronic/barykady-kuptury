@@ -37,10 +37,6 @@
       </ul>
     </div>
 
-    <p v-else-if="result.kind === 'empty'" class="events-page__state">
-      {{ t("events.empty") }}
-    </p>
-
     <!--
       Calendar failure is isolated to this section: the layout's header, nav
       and footer stay functional, and the page offers both a retry and the
@@ -74,28 +70,84 @@
       </p>
     </div>
 
-    <template v-else>
-      <!--
-        D-14 (open) default: calendar content is shown as-is because the wire
-        carries no language field; this note — once for the whole list, never
-        per event — tells readers details come from the organizer.
-      -->
-      <p class="events-page__note" role="note">
-        {{ t("events.languageNote") }}
-      </p>
-      <!-- D8: role="list" restores VoiceOver's list semantics after
-           `list-style: none`. tabindex="-1" lets a successful retry move
-           focus here so keyboard users land on the result (M1). -->
-      <ul ref="listRef" class="events-list" role="list" tabindex="-1">
-        <EventCard
-          v-for="event in events"
-          :key="event.id"
-          :event="event"
-          :locale="currentLocale"
-          :project-href="projectPath(event)"
-        />
-      </ul>
-    </template>
+    <!--
+      T-039 (D-25): three anchored sections behind the TOC.
+        #upcoming  — the sorted upcoming list; cards carry stable
+                     `event-<googleEventId>` ids for search deep links.
+        #past      — honest state: the reviewed calendar adapter is
+                     upcoming-only (past `from` clamps to now), so past
+                     events are not available on this site yet. The section
+                     and its anchor exist for the search contract.
+        #calendar  — what the list is fed from + the contact route for
+                     questions (no invented calendar URL, D-07 open).
+    -->
+    <div v-else class="events-page__layout">
+      <PageToc :items="tocItems" :ariaLabel="t('toc.onThisPage')" />
+
+      <div class="events-page__content">
+        <section id="upcoming" class="events-page__section">
+          <h2 class="events-page__section-title" tabindex="-1">
+            {{ t("events.upcoming") }}
+          </h2>
+
+          <!--
+            D-14 (open) default: calendar content is shown as-is because the
+            wire carries no language field; this note — once for the whole
+            list, never per event — tells readers details come from the
+            organizer.
+          -->
+          <p class="events-page__note" role="note">
+            {{ t("events.languageNote") }}
+          </p>
+
+          <p v-if="events.length === 0" class="events-page__state">
+            {{ t("events.empty") }}
+          </p>
+          <!-- D8: role="list" restores VoiceOver's list semantics after
+               `list-style: none`. tabindex="-1" lets a successful retry move
+               focus here so keyboard users land on the result (M1). -->
+          <ul
+            v-else
+            ref="listRef"
+            class="events-list"
+            role="list"
+            tabindex="-1"
+          >
+            <EventCard
+              v-for="event in events"
+              :key="event.id"
+              :event="event"
+              :locale="currentLocale"
+              :project-href="projectPath(event)"
+              :heading-level="3"
+              :anchor-id="`event-${event.id}`"
+            />
+          </ul>
+        </section>
+
+        <section id="past" class="events-page__section">
+          <h2 class="events-page__section-title" tabindex="-1">
+            {{ t("events.past") }}
+          </h2>
+          <p class="events-page__state">{{ t("events.pastEmpty") }}</p>
+        </section>
+
+        <section id="calendar" class="events-page__section">
+          <h2 class="events-page__section-title" tabindex="-1">
+            {{ t("events.calendar") }}
+          </h2>
+          <p class="events-page__state">
+            {{ t("events.calendarNote") }}
+            <RouterLink
+              class="events-page__calendar-link focus-ring"
+              :to="contactPath"
+            >
+              {{ t("events.contactFallback") }}
+            </RouterLink>
+          </p>
+        </section>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -106,12 +158,15 @@ import { QSkeleton } from "quasar";
 import { useI18n } from "vue-i18n";
 
 import EventCard from "@/components/events/EventCard.vue";
+import PageToc from "@/components/navigation/PageToc.vue";
+import type { TocItem } from "@/components/navigation/PageToc.vue";
 import { eventProjectPath } from "@/features/events/projectLink";
 import { useEvents, type EventView } from "@/features/events/useEvents";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
+import { watchDeepLink } from "@/shared/content/deepLink";
 
 /**
- * Events listing (T-024).
+ * Events listing (T-024 → sectioned by T-039).
  *
  * The `useEvents` hook owns the calendar fetch, the Supabase link query and
  * their join; this page only maps states to markup and computes the project
@@ -172,6 +227,22 @@ const liveMessage = computed(() => {
   }
 });
 
+/*
+ * m10 (T-039 review): `#past` stays a rendered section (the search contract
+ * links to it), but it is NOT in the TOC while it can only ever show the
+ * "not published yet" state — a TOC entry that leads to a permanent notice
+ * is a dead affordance. When the adapter ships past events, add the entry.
+ */
+const tocItems = computed<readonly TocItem[]>(() => [
+  { id: "upcoming", label: t("events.upcoming") },
+  { id: "calendar", label: t("events.calendar") }
+]);
+
+watchDeepLink({
+  hash: () => route.hash,
+  isReady: () => result.value.kind !== "loading"
+});
+
 const contactPath = computed(() => `/${currentLocale.value}/contact`);
 
 function projectPath(event: EventView): string | null {
@@ -190,6 +261,42 @@ function projectPath(event: EventView): string | null {
   max-width: 65ch;
   margin: 0;
   color: var(--color-text-muted);
+}
+
+/* TOC grid + anchor offset — see the About page comment for the contract. */
+.events-page__layout {
+  display: grid;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .events-page__layout {
+    grid-template-columns: 14rem minmax(0, 1fr);
+  }
+}
+
+.events-page__content {
+  min-width: 0;
+}
+
+.events-page__section {
+  scroll-margin-top: 5rem;
+  margin-block-end: 3rem;
+}
+
+.events-page__section-title {
+  margin: 0 0 1rem;
+  font-size: var(--font-size-h2);
+}
+
+.events-page__calendar-link {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
+.events-page__calendar-link:hover {
+  text-decoration: none;
 }
 
 /**

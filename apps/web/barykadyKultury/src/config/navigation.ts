@@ -35,18 +35,3 @@ export const mainNavItems: NavItem[] = [
   { labelKey: "events", path: "events", routeName: "events" },
   { labelKey: "publications", path: "publications", routeName: "publications" }
 ];
-
-/**
- * About sub-navigation items.
- * Rendered by the About landing page secondary nav and AppFooter.
- * The landing page itself is the first item.
- */
-export const aboutSubNavItems: NavItem[] = [
-  { labelKey: "aboutOrg", path: "about", routeName: "about" },
-  { labelKey: "team", path: "about/team", routeName: "about-team" },
-  {
-    labelKey: "documents",
-    path: "about/documents",
-    routeName: "about-documents"
-  }
-];

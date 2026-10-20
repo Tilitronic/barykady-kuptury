@@ -1,5 +1,5 @@
 <template>
-  <li class="event-card">
+  <li class="event-card" :id="anchorId">
     <component :is="`h${headingLevel}`" class="event-card__title">
       {{ event.title }}
     </component>
@@ -107,8 +107,14 @@ const props = withDefaults(
      * listing pages keep the default h2 outline.
      */
     headingLevel?: 2 | 3;
+    /**
+     * T-039: stable DOM id `event-<googleEventId>` so search and shared
+     * links can deep-link into `/{locale}/events#event-…`. Optional: the
+     * homepage's compact list renders cards without ids.
+     */
+    anchorId?: string | undefined;
   }>(),
-  { headingLevel: 2 }
+  { headingLevel: 2, anchorId: undefined }
 );
 
 const { t } = useI18n();

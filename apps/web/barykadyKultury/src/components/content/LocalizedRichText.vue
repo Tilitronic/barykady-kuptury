@@ -1,7 +1,11 @@
 <script lang="ts">
-import { defineComponent, h } from "vue";
+import { defineComponent, h, type PropType } from "vue";
 
-import { renderRichText } from "@/shared/content/richText";
+import {
+  renderBlocks,
+  renderRichText,
+  type BlockNode
+} from "@/shared/content/richText";
 
 /**
  * Safe rich-text renderer for organization content.
@@ -10,6 +14,10 @@ import { renderRichText } from "@/shared/content/richText";
  * to Vue VNodes. No `v-html`, no raw HTML rendering, and no sanitizer
  * dependency: the parser only recognizes the documented subset and treats
  * everything else (including `<script>` and `javascript:` links) as inert text.
+ *
+ * T-039: pages that parse the body once for section grouping (About) pass the
+ * already-sanitized `blocks` AST instead of re-serializing to a string —
+ * the rendering path and its guarantees stay identical.
  */
 export default defineComponent({
   name: "LocalizedRichText",
@@ -17,6 +25,11 @@ export default defineComponent({
     content: {
       type: String,
       default: ""
+    },
+    /** Pre-parsed blocks (mutually exclusive with `content`; wins if set). */
+    blocks: {
+      type: Array as PropType<readonly BlockNode[] | undefined>,
+      default: undefined
     },
     lang: {
       type: String,
@@ -42,16 +55,23 @@ export default defineComponent({
     }
   },
   setup(props) {
-    return () =>
-      h(
+    return () => {
+      const options = {
+        newTabLabel: props.newTabLabel,
+        labelLang: props.labelLang,
+        headingOffset: props.headingOffset
+      };
+      const children =
+        props.blocks !== undefined
+          ? renderBlocks(props.blocks, options)
+          : renderRichText(props.content, options);
+
+      return h(
         "div",
         { class: "localized-rich-text", lang: props.lang },
-        renderRichText(props.content, {
-          newTabLabel: props.newTabLabel,
-          labelLang: props.labelLang,
-          headingOffset: props.headingOffset
-        })
+        children
       );
+    };
   }
 });
 </script>

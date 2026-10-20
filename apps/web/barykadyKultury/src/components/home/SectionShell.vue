@@ -1,5 +1,5 @@
 <template>
-  <section class="section-shell" :aria-labelledby="headingId">
+  <section class="section-shell" :id="id" :aria-labelledby="headingId">
     <header class="section-shell__head">
       <h2 :id="headingId" class="section-shell__title">{{ title }}</h2>
       <RouterLink
@@ -34,6 +34,12 @@ import { RouterLink } from "vue-router";
  */
 defineProps<{
   title: string;
+  /**
+   * T-039 review (C1): stable section anchor (`mission`, `upcoming`,
+   * `featured`, `explore`) so header-search navigation results and shared
+   * hashes land on the homepage section instead of the page top.
+   */
+  id?: string;
   intro?: string | null;
   viewAllTo?: string | null;
   viewAllLabel?: string | null;

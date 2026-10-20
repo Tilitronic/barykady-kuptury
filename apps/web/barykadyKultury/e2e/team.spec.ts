@@ -5,9 +5,9 @@ import { mockSupabaseRest } from "./support/mocks";
 import { test } from "./support/network-guard";
 
 /**
- * T-018 — About: team (docs/tickets/T-018-about-team.md).
- *
- * No approved team data exists yet, so the shipped state today is the
+ * T-018 → T-039 — the team surface is now the `#team` section of the
+ * consolidated About page (D-25); `/en/about/team` redirects there. No
+ * approved team data exists yet, so the shipped state today is the
  * translated empty state with nothing fabricated (DESIGN_SYSTEM.md §3). The
  * fixture-driven journey proves the card grid renders name/role/bio in
  * `sort_order` once members exist, using mocked Supabase REST reads only
@@ -84,7 +84,11 @@ test.describe("team page", () => {
     await mockSupabaseRest(page);
     await page.goto("/en/about/team");
 
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Team");
+    // D-25: the old list route redirects to the anchored About section.
+    await expect(page).toHaveURL(/\/en\/about#team$/);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Team" })
+    ).toBeVisible();
     await expect(
       page.getByText("No team members are published yet.")
     ).toBeVisible();

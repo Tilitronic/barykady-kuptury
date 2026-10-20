@@ -52,20 +52,6 @@ declare module 'vue-router/auto-routes' {
       { locale: ParamValue<false> },
       | never
     >,
-    '/[locale]/about-documents': RouteRecordInfo<
-      '/[locale]/about-documents',
-      '/:locale/about-documents',
-      { locale: ParamValue<true> },
-      { locale: ParamValue<false> },
-      | never
-    >,
-    '/[locale]/about-team': RouteRecordInfo<
-      '/[locale]/about-team',
-      '/:locale/about-team',
-      { locale: ParamValue<true> },
-      { locale: ParamValue<false> },
-      | never
-    >,
     '/[locale]/contact': RouteRecordInfo<
       '/[locale]/contact',
       '/:locale/contact',
@@ -182,22 +168,6 @@ declare module 'vue-router/auto-routes' {
     'src/pages/[locale]/about-document.vue': {
       routes:
         | '/[locale]/about-document'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/[locale]/about-documents.vue': {
-      routes:
-        | '/[locale]/about-documents'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/[locale]/about-team.vue': {
-      routes:
-        | '/[locale]/about-team'
       views:
         | never
       pathParamNames:

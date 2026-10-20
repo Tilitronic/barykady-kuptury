@@ -1,10 +1,10 @@
 <template>
   <li class="publication-card">
-    <h2 class="publication-card__title">
+    <component :is="`h${headingLevel}`" class="publication-card__title">
       <RouterLink :to="href" class="publication-card__link focus-ring">
         {{ publication.title }}
       </RouterLink>
-    </h2>
+    </component>
 
     <p v-if="publication.abstract" class="publication-card__abstract">
       {{ publication.abstract }}
@@ -63,7 +63,18 @@ import {
  * availability indicator are text, not color-only signals
  * (docs/DESIGN_SYSTEM.md §6).
  */
-const props = defineProps<{ publication: PublicationView; href: string }>();
+const props = withDefaults(
+  defineProps<{
+    publication: PublicationView;
+    href: string;
+    /**
+     * T-039: card title outline level — the year-sectioned listing passes 3
+     * under its section h2; the default keeps the standalone h2 outline.
+     */
+    headingLevel?: 2 | 3;
+  }>(),
+  { headingLevel: 2 }
+);
 
 const { t, locale } = useI18n();
 

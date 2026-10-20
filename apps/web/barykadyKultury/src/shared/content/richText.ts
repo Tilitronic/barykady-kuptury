@@ -126,15 +126,17 @@ export function parseInline(text: string): readonly InlineNode[] {
 }
 
 function trimInline(nodes: readonly InlineNode[]): readonly InlineNode[] {
-  const firstTextIndex = nodes.findIndex(node => node.kind === "text");
-  const lastTextIndex = nodes.findLastIndex(node => node.kind === "text");
-
+  // Only the true edges are trimmed. The previous version trimmed the first
+  // and last *text* node even when neighbours followed it, so a space before
+  // a trailing link ("See [docs]") or after a leading strong was silently
+  // dropped — T-039 section titles exposed the bug ("Our bold mission"
+  // flattened to "Our boldmission"). Interior whitespace is meaningful.
   return nodes.map((node, index) => {
     if (node.kind !== "text") return node;
 
     let value = node.value;
-    if (index === firstTextIndex) value = value.trimStart();
-    if (index === lastTextIndex) value = value.trimEnd();
+    if (index === 0) value = value.trimStart();
+    if (index === nodes.length - 1) value = value.trimEnd();
 
     return { kind: "text", value };
   });
@@ -286,4 +288,16 @@ export function renderRichText(
   if (!input || input.trim().length === 0) return [];
 
   return parseRichText(input).children.map(node => renderBlock(node, options));
+}
+
+/**
+ * Renders blocks that were already parsed (and therefore already sanitized)
+ * by `parseRichText` — the seam T-039 uses so the About page can group the
+ * body into sections without re-parsing or bypassing the restricted subset.
+ */
+export function renderBlocks(
+  blocks: readonly BlockNode[],
+  options: RenderRichTextOptions = {}
+): VNode[] {
+  return blocks.map(node => renderBlock(node, options));
 }

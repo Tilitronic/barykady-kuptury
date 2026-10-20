@@ -143,19 +143,88 @@ describe("publications listing", () => {
     );
   });
 
-  it("keeps exactly one h1 and one h2 per card", async () => {
+  it("keeps one h1, year-section h2s, and card titles stepped down to h3", async () => {
     const fake = createFakeSupabase({
       tables: { publications: [publishedRow()] }
     });
     const wrapper = await mountListing(fake.client, "en");
 
     expect(wrapper.findAll("h1")).toHaveLength(1);
-    expect(wrapper.findAll("h2")).toHaveLength(1);
+    // T-039 outline: h1 → year h2 section → card h3.
+    const sectionHeadings = wrapper.findAll("section h2");
+    expect(sectionHeadings.map(h => h.text())).toEqual(["2026"]);
+    expect(wrapper.get(".publication-card__title").element.tagName).toBe("H3");
   });
 
   it("shows the unavailable state without a client", async () => {
     const wrapper = await mountListing(null, "en");
 
     expect(wrapper.text()).toContain("temporarily unavailable");
+  });
+
+  describe("T-039 year grouping", () => {
+    function datedRow(year: string, slug: string, title: string) {
+      return {
+        ...publishedRow(),
+        id: `00000000-0000-4000-8000-0000000003${slug}`,
+        slug,
+        publication_date: `${year}-05-01`,
+        publication_translations: [
+          { ...publishedRow().publication_translations[0], title }
+        ]
+      };
+    }
+
+    it("groups by year descending with an #undated bucket last", async () => {
+      const fake = createFakeSupabase({
+        tables: {
+          publications: [
+            datedRow("2025", "p-2025", "Report 2025"),
+            publishedRow(), // 2026
+            {
+              ...publishedRow(),
+              id: "x-undated",
+              slug: "p-undated",
+              publication_date: null
+            }
+          ]
+        }
+      });
+      const wrapper = await mountListing(fake.client, "en");
+
+      const sectionIds = wrapper
+        .findAll("section")
+        .map(section => section.attributes("id"));
+      expect(sectionIds).toEqual(["2026", "2025", "undated"]);
+
+      const tocLinks = wrapper
+        .findAll(".page-toc__desktop a")
+        .map(link => link.attributes("href"));
+      expect(tocLinks).toEqual(["#2026", "#2025", "#undated"]);
+    });
+
+    it("omits #undated when every publication carries a date", async () => {
+      const fake = createFakeSupabase({
+        tables: { publications: [publishedRow()] }
+      });
+      const wrapper = await mountListing(fake.client, "en");
+
+      expect(wrapper.find("section#undated").exists()).toBe(false);
+      const tocLinks = wrapper
+        .findAll(".page-toc__desktop a")
+        .map(link => link.attributes("href"));
+      expect(tocLinks).toEqual(["#2026"]);
+    });
+
+    it("translates the undated label per locale", async () => {
+      const fake = createFakeSupabase({
+        tables: {
+          publications: [{ ...publishedRow(), publication_date: null }]
+        }
+      });
+      const wrapper = await mountListing(fake.client, "pl");
+
+      expect(wrapper.get("section#undated h2").text()).toBe("Bez daty");
+    });
   });
 });

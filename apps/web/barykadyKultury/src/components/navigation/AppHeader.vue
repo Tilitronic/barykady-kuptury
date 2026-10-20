@@ -81,6 +81,15 @@
         in its accessible name (WCAG 2.5.3).
       -->
       <div class="app-header__controls">
+        <!--
+          T-039 (D-26): site search leads the controls cluster — it is an
+          action, the theme/language pair are settings. One instance serves
+          BOTH placements because this cluster is the same DOM inline on
+          desktop and stacked in the mobile drawer (CSS swap), so the drawer
+          requirement holds without a second trigger. The global "/" and
+          Ctrl/Cmd+K shortcuts reach it from anywhere, drawer closed included.
+        -->
+        <SiteSearch />
         <ThemeToggle />
         <LanguageSwitcher />
       </div>
@@ -107,12 +116,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import BrandLogo from "@/components/brand/BrandLogo.vue";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import SiteSearch from "@/components/search/SiteSearch.vue";
 import ThemeToggle from "@/components/ThemeToggle.vue";
 import { mainNavItems, type NavItem } from "@/config/navigation";
 import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
@@ -177,6 +187,21 @@ function closeMenu(): void {
   });
 }
 
+/*
+ * M1 (T-039 review): navigating away — including search-result activation
+ * from inside the drawer — must not leave the drawer open over the new page.
+ * The watcher only flips the flag: focus is NOT moved to the trigger (the
+ * router just moved it to the destination page; stealing it back would
+ * break the "focus lands in the new page" contract, see SiteSearch's
+ * deep-link focus and DESIGN_SYSTEM.md §6).
+ */
+watch(
+  () => route.fullPath,
+  () => {
+    isMenuOpen.value = false;
+  }
+);
+
 /**
  * Handle keyboard events on the panel element.
  * Escape closes the menu and returns focus — no focus trap required (T-011
@@ -195,8 +220,9 @@ function handleNavKeydown(event: KeyboardEvent): void {
  * Determines whether a nav item corresponds to the current page.
  *
  * Uses route.name for matching so the check is independent of locale prefix.
- * About-family routes (about, about-team, about-documents) all mark the
- * "About us" top-level link as active when any About sub-route is current.
+ * T-039 (D-25): the About list routes are gone; the only remaining sub-route
+ * is the document reader (`about-document`), which still marks "About us"
+ * active via the `about-` prefix test below.
  */
 function isActivePage(item: NavItem): boolean {
   const name = String(route.name ?? "");
@@ -343,13 +369,22 @@ function isActivePage(item: NavItem): boolean {
     padding: 0;
   }
 
+  /*
+    T-039 review m9: the search trigger (+36 px button + ~4 px gap) joins
+    the cluster. The first pass compressed nav links to 0.125rem padding,
+    which read as a word cloud in uk; this re-tune keeps the v3.2 0.25rem
+    half-step (−24 px recovered), tightens the cluster gap to 0.125rem and
+    the cluster padding to 0.125rem (−6 px), and the 2.25rem trigger
+    (≥ 24 px AA target) costs 40 px. uk clearance at 1280 measures ≈ 26 px
+    — above the 16 px requirement without the word-cloud effect.
+  */
   .app-header__nav-link {
-    padding: 0 0.375rem;
+    padding: 0 0.25rem;
   }
 
   .app-header__controls {
-    gap: 0.25rem;
-    padding-left: 0.25rem;
+    gap: 0.125rem;
+    padding-left: 0.125rem;
   }
 }
 

@@ -99,7 +99,12 @@ describe("projects listing", () => {
     });
     const wrapper = await mountListing(fake.client, "pl");
 
-    expect(wrapper.findAll(".project-card")).toHaveLength(1);
+    // T-039: the ranked project appears in BOTH #featured and #all (the
+    // ticket defines #all as every published project); drafts stay out.
+    expect(wrapper.get("section#all").findAll(".project-card")).toHaveLength(1);
+    expect(
+      wrapper.get("section#featured").findAll(".project-card")
+    ).toHaveLength(1);
     expect(wrapper.text()).toContain("Przykładowy warsztat społeczny (PL)");
     expect(wrapper.text()).not.toContain("DRAFT LEAK");
   });
@@ -145,17 +150,83 @@ describe("projects listing", () => {
     expect(img.attributes("alt")).toBe("");
   });
 
-  it("keeps exactly one h1 and one h2 per card", async () => {
+  it("keeps one h1, section h2s, and card titles stepped down to h3", async () => {
+    // T-039 outline: h1 → Featured/All h2 → card h3 (was h1 → card h2).
     const fake = createFakeSupabase({ tables: { projects: [publishedRow()] } });
     const wrapper = await mountListing(fake.client, "en");
 
     expect(wrapper.findAll("h1")).toHaveLength(1);
-    expect(wrapper.findAll("h2")).toHaveLength(1);
+    expect(wrapper.findAll("h2").map(h => h.text())).toEqual([
+      "Featured",
+      "All projects"
+    ]);
+    expect(wrapper.get(".project-card__title").element.tagName).toBe("H3");
   });
 
   it("shows the unavailable state without a client", async () => {
     const wrapper = await mountListing(null, "en");
 
     expect(wrapper.text()).toContain("temporarily unavailable");
+  });
+
+  describe("T-039 sectioning", () => {
+    function rankedRow(rank: number | null, slug: string, title: string) {
+      return {
+        ...publishedRow(),
+        id: `00000000-0000-4000-8000-0000000002${rank ?? 9}`,
+        slug,
+        featured_rank: rank,
+        project_translations: [{ ...EN_TRANSLATION, title }]
+      };
+    }
+
+    it("orders #featured by rank ascending, non-contiguous ranks included", async () => {
+      const fake = createFakeSupabase({
+        tables: {
+          projects: [
+            rankedRow(5, "p-five", "Fifth"),
+            rankedRow(null, "p-plain", "Plain"),
+            rankedRow(1, "p-one", "First"),
+            rankedRow(2, "p-two", "Second")
+          ]
+        }
+      });
+      const wrapper = await mountListing(fake.client, "en");
+
+      const titles = wrapper
+        .get("section#featured")
+        .findAll(".project-card__title")
+        .map(t => t.text());
+      expect(titles).toEqual(["First", "Second", "Fifth"]);
+
+      expect(wrapper.get("section#all").findAll(".project-card")).toHaveLength(
+        4
+      );
+    });
+
+    it("omits #featured (and its TOC entry) when no project is ranked", async () => {
+      const fake = createFakeSupabase({
+        tables: { projects: [rankedRow(null, "p-plain", "Plain")] }
+      });
+      const wrapper = await mountListing(fake.client, "en");
+
+      expect(wrapper.find("section#featured").exists()).toBe(false);
+      const tocLinks = wrapper
+        .findAll(".page-toc__desktop a")
+        .map(link => link.attributes("href"));
+      expect(tocLinks).toEqual(["#all"]);
+    });
+
+    it("lists both sections in the TOC when featured exist", async () => {
+      const fake = createFakeSupabase({
+        tables: { projects: [publishedRow()] }
+      });
+      const wrapper = await mountListing(fake.client, "en");
+
+      const tocLinks = wrapper
+        .findAll(".page-toc__desktop a")
+        .map(link => link.attributes("href"));
+      expect(tocLinks).toEqual(["#featured", "#all"]);
+    });
   });
 });

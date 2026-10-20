@@ -1,33 +1,42 @@
 <template>
-  <div class="about-documents-page">
-    <h1 class="about-documents-page__title">{{ t("aboutDocuments.title") }}</h1>
+  <!--
+    DocumentsSection — the T-017 documents listing as an anchored About
+    section (T-039, D-25). The old `/about/documents` route redirects here;
+    the READER route `/about/documents/:slug` is untouched (SEO + sharing).
 
-    <div
+    Text documents link to the reader under the active locale (D-12: the
+    reader itself falls back to English with a note); file documents keep
+    their metadata-only state — T-029 owns the file action.
+  -->
+  <section id="documents" class="documents-section">
+    <h2 class="documents-section__heading" tabindex="-1">
+      {{ t("aboutDocuments.title") }}
+    </h2>
+
+    <p
       v-if="result.kind === 'loading'"
-      class="about-documents-page__state"
+      class="documents-section__state"
       role="status"
     >
       {{ t("content.loading") }}
-    </div>
-    <div
-      v-else-if="result.kind === 'empty'"
-      class="about-documents-page__state"
-    >
+    </p>
+    <p v-else-if="result.kind === 'empty'" class="documents-section__state">
       {{ t("aboutDocuments.empty") }}
-    </div>
-    <div
+    </p>
+    <p
       v-else-if="result.kind === 'unavailable'"
-      class="about-documents-page__state"
+      class="documents-section__state"
+      role="alert"
     >
       {{ t("content.unavailable") }}
-    </div>
-    <ul v-else class="documents-list">
+    </p>
+    <ul v-else class="documents-section__list">
       <li
         v-for="document in documents"
         :key="document.id"
         class="documents-list__item"
       >
-        <h2 class="documents-list__title">
+        <h3 class="documents-list__title">
           <RouterLink
             v-if="isTextDocument(document)"
             :to="readerPath(document)"
@@ -36,7 +45,7 @@
             {{ document.title }}
           </RouterLink>
           <template v-else>{{ document.title }}</template>
-        </h2>
+        </h3>
 
         <p v-if="document.description" class="documents-list__description">
           {{ document.description }}
@@ -55,36 +64,30 @@
         </p>
       </li>
     </ul>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import { type OrganizationDocument } from "@/features/documents/api";
 import { useDocuments } from "@/features/documents/useDocuments";
 import { formatDate } from "@/features/i18n/format";
-import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
+import type { Locale } from "@/features/i18n/locales";
 
 /**
- * About → Documents listing (T-017).
- *
- * A document with readable text links to the in-app reader; a file-based
- * document renders as plain metadata for now (T-029 adds the admin upload and
- * the file action). Optional metadata is omitted rather than rendered empty
- * (docs/PRODUCT_REQUIREMENTS.md §5). PublicLayout provides the shell.
+ * T-039 — extracted from `about-documents.vue` without behavior change
+ * (card markup, reader links, type-label fallback, UTC date rule all
+ * preserved). Section headings step down to h3: the About page owns h1 and
+ * section h2s (heading hierarchy, DESIGN_SYSTEM.md §6).
  */
 const { t, te } = useI18n();
-const route = useRoute();
 
-const currentLocale = computed<Locale>(() => {
-  const { locale } = route.params as { locale?: unknown };
-  return isLocale(locale) ? locale : DEFAULT_LOCALE;
-});
+const props = defineProps<{ locale: Locale }>();
 
-const { result } = useDocuments(currentLocale);
+const { result } = useDocuments(computed(() => props.locale));
 
 const documents = computed<readonly OrganizationDocument[]>(() =>
   result.value.kind === "ok" ? result.value.items : []
@@ -96,7 +99,7 @@ function isTextDocument(document: OrganizationDocument): boolean {
 }
 
 function readerPath(document: OrganizationDocument): string {
-  return `/${currentLocale.value}/about/documents/${document.slug}`;
+  return `/${props.locale}/about/documents/${document.slug}`;
 }
 
 /**
@@ -110,7 +113,7 @@ function documentTypeLabel(documentType: string): string {
 
 function formattedDate(value: string): string {
   // Date-only values are formatted in UTC so the day never shifts by timezone.
-  return formatDate(new Date(value), currentLocale.value, {
+  return formatDate(new Date(value), props.locale, {
     dateStyle: "medium",
     timeZone: "UTC"
   });
@@ -118,18 +121,18 @@ function formattedDate(value: string): string {
 </script>
 
 <style scoped>
-.about-documents-page__title {
-  max-width: 65ch;
-  margin: 0 0 1.5rem;
+.documents-section__heading {
+  margin: 0 0 1.25rem;
+  font-size: var(--font-size-h2);
 }
 
-.about-documents-page__state {
+.documents-section__state {
   max-width: 65ch;
   margin: 0;
   color: var(--color-text-muted);
 }
 
-.documents-list {
+.documents-section__list {
   max-width: 65ch;
   margin: 0;
   padding: 0;

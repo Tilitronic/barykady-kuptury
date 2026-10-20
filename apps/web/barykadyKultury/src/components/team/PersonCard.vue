@@ -20,7 +20,9 @@
       </span>
     </div>
 
-    <h2 class="team-card__name">{{ member.name }}</h2>
+    <component :is="`h${headingLevel}`" class="team-card__name">
+      {{ member.name }}
+    </component>
 
     <p v-if="member.role" class="team-card__role">{{ member.role }}</p>
     <p v-if="member.bio" class="team-card__bio">{{ member.bio }}</p>
@@ -63,10 +65,19 @@ import type { TeamMember } from "@/features/team/api";
  * approved photo exists. Text is never truncated — longer Polish and
  * Ukrainian copy simply grows the card.
  */
-const props = defineProps<{
-  member: TeamMember;
-  portraitUrl: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    member: TeamMember;
+    portraitUrl: string | null;
+    /**
+     * T-039: the card name's outline level. Standalone listings keep the
+     * default h2; the consolidated About page nests cards under a section
+     * h2 and passes 3 (same convention as EventCard's headingLevel).
+     */
+    headingLevel?: 2 | 3;
+  }>(),
+  { headingLevel: 2 }
+);
 
 const { t } = useI18n();
 

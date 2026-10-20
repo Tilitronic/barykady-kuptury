@@ -160,7 +160,9 @@ const headingText = computed(
   () => selection.value?.translation.title ?? t("aboutDocuments.title")
 );
 
-const listPath = computed(() => `/${currentLocale.value}/about/documents`);
+// m8 (T-039 review): point directly at the consolidated About anchor —
+// the old list URL is now a redirect hop with no value for the reader.
+const listPath = computed(() => `/${currentLocale.value}/about#documents`);
 
 function isAvailable(locale: Locale): boolean {
   return reader.value?.availableLocales.includes(locale) ?? false;

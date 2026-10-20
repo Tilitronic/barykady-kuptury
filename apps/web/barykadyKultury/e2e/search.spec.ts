@@ -1,0 +1,337 @@
+import { expect, type Page } from "@playwright/test";
+
+import { test } from "./support/network-guard";
+import { checkA11y } from "./support/a11y";
+import {
+  mockCalendarEvents,
+  mockSearchRpc,
+  mockSupabaseRest,
+  type SearchRpcRowFixture
+} from "./support/mocks";
+import { CALENDAR_EVENTS_FIXTURE } from "./fixtures/calendar-events";
+
+/**
+ * T-039 search-UI lane — header search journeys (D-26).
+ *
+ * Two sources at once: instant Navigation rows (static registry, no network)
+ * above debounced Content rows (RPC + calendar). Everything runs against the
+ * existing mocked seams; no live Supabase or Google Calendar
+ * (docs/TESTING.md §2).
+ */
+
+const SEARCH_ROWS: SearchRpcRowFixture[] = [
+  {
+    kind: "document",
+    entity_id: "d1",
+    title: "Regulations of the Ordinary Association",
+    excerpt: "Membership rules of the association.",
+    slug: "regulations",
+    page_key: null,
+    rank: 3
+  },
+  {
+    kind: "project",
+    entity_id: "p1",
+    title: "Sample Community Workshop",
+    excerpt: "A recurring open workshop series.",
+    slug: "sample-community-workshop",
+    page_key: null,
+    rank: 2
+  },
+  {
+    kind: "publication",
+    entity_id: "pub1",
+    title: "Annual Cultural Report",
+    excerpt: "The association's year in review.",
+    slug: "annual-report",
+    page_key: null,
+    rank: 2
+  },
+  {
+    kind: "team",
+    entity_id: "t1",
+    title: "Anna Kowalska",
+    excerpt: "Chair of the board.",
+    slug: null,
+    page_key: null,
+    rank: 1
+  }
+];
+
+async function openSearch(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Search the site" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+}
+
+async function typeQuery(page: Page, text: string): Promise<void> {
+  await page.getByRole("combobox").fill(text);
+}
+
+test.describe("site search", () => {
+  test.beforeEach(async ({ page }) => {
+    // The publications table answers the header's years query (T-039 review:
+    // real years, never invented) as well as any list reads.
+    await mockSupabaseRest(page, {
+      responses: { publications: [{ publication_date: "2026-02-01" }] }
+    });
+    await mockSearchRpc(page, { rows: SEARCH_ROWS });
+    await mockCalendarEvents(page, { events: CALENDAR_EVENTS_FIXTURE });
+  });
+
+  test("navigation results render first and are instant", async ({ page }) => {
+    await page.goto("/en");
+    await openSearch(page);
+    await typeQuery(page, "about");
+
+    const nav = page.getByTestId("search-section-navigation");
+    await expect(nav.getByRole("option").first()).toBeVisible();
+    await expect(nav.getByText("About us")).toBeVisible();
+
+    // DOM order is the contract: Navigation before Content.
+    const order = await page.evaluate(() => {
+      const groups = [
+        ...document.querySelectorAll("[data-testid^='search-section-']")
+      ];
+      return groups.map(g => g.getAttribute("data-testid"));
+    });
+    expect(order).toEqual([
+      "search-section-navigation",
+      "search-section-content"
+    ]);
+
+    // Type badge is text, never color alone.
+    await expect(
+      nav.getByRole("option").first().getByText("Page")
+    ).toBeVisible();
+
+    await checkA11y(page);
+  });
+
+  test("content results link to document, project, publication and team", async ({
+    page
+  }) => {
+    await page.goto("/en");
+    await openSearch(page);
+    await typeQuery(page, "report");
+
+    const content = page.getByTestId("search-section-content");
+    await expect(content.getByText("Annual Cultural Report")).toBeVisible();
+    await expect(content.getByText("Document")).toBeVisible();
+    await expect(content.getByText("Team member")).toBeVisible();
+
+    // Document row opens the reader; team rows open the anchored section.
+    await content
+      .getByRole("option", { name: /Regulations of the Ordinary Association/ })
+      .click();
+    await expect(page).toHaveURL(/\/en\/about\/documents\/regulations$/);
+
+    await page.goto("/en");
+    await openSearch(page);
+    await typeQuery(page, "anna");
+    await page.getByRole("option", { name: /Anna Kowalska/ }).click();
+    await expect(page).toHaveURL(/\/en\/about#team$/);
+  });
+
+  test("events come from the calendar feed", async ({ page }) => {
+    await page.goto("/en");
+    await openSearch(page);
+    await typeQuery(page, "timed");
+
+    const content = page.getByTestId("search-section-content");
+    await expect(content.getByText("Sample timed event")).toBeVisible();
+    await expect(
+      content.getByTestId("search-kind").filter({ hasText: "Event" })
+    ).toBeVisible();
+  });
+
+  test("the chip auto-sets from the route and filters the sources", async ({
+    page
+  }) => {
+    // Projects page → Projects chip pressed; RPC receives the kind filter.
+    await page.goto("/en/projects");
+    await openSearch(page);
+    await expect(page.getByTestId("search-chip-projects")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    await typeQuery(page, "sample");
+    const content = page.getByTestId("search-section-content");
+    await expect(content.getByText("Sample Community Workshop")).toBeVisible();
+    await expect(content.getByText("Annual Cultural Report")).toHaveCount(0);
+
+    // Publications page → Publications chip.
+    await page.goto("/en/publications");
+    await openSearch(page);
+    await expect(page.getByTestId("search-chip-publications")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    // Events page → Events chip: calendar rows only, no RPC kinds needed.
+    await page.goto("/en/events");
+    await openSearch(page);
+    await expect(page.getByTestId("search-chip-events")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    await typeQuery(page, "timed");
+    await expect(
+      page.getByTestId("search-section-content").getByText("Sample timed event")
+    ).toBeVisible();
+  });
+
+  test("a user chip override replaces the route default", async ({ page }) => {
+    await page.goto("/en/projects");
+    await openSearch(page);
+
+    await page.getByTestId("search-chip-all").click();
+    await expect(page.getByTestId("search-chip-all")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    await expect(page.getByTestId("search-chip-projects")).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    await typeQuery(page, "report");
+    await expect(
+      page
+        .getByTestId("search-section-content")
+        .getByText("Annual Cultural Report")
+    ).toBeVisible();
+  });
+
+  test("content failure keeps navigation usable and offers retry", async ({
+    page
+  }) => {
+    await mockSearchRpc(page, { fail: true });
+    await page.goto("/en");
+    await openSearch(page);
+    await typeQuery(page, "about");
+
+    await expect(
+      page.getByTestId("search-section-navigation").getByText("About us")
+    ).toBeVisible();
+    await expect(
+      page
+        .getByTestId("search-section-content")
+        .getByText("Content results are unavailable.")
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("search-section-content").getByRole("button", {
+        name: "Try again"
+      })
+    ).toBeVisible();
+  });
+
+  test("keyboard-only: / opens, arrows traverse, Enter navigates, Esc restores focus", async ({
+    page
+  }) => {
+    await page.goto("/en");
+
+    // The shortcuts register when the header component mounts; wait for the
+    // trigger to exist before pressing "/" (the SPA boots after `load`).
+    await expect(
+      page.getByRole("button", { name: "Search the site" })
+    ).toBeAttached();
+
+    await page.keyboard.press("/");
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("combobox")).toBeFocused();
+
+    await page.keyboard.type("abo");
+    await page.keyboard.press("ArrowDown");
+    const activeId = await page
+      .getByRole("combobox")
+      .getAttribute("aria-activedescendant");
+    expect(activeId).toBeTruthy();
+    await expect(page.locator(`#${activeId}`)).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page).toHaveURL(/\/en\/about/);
+
+    // Esc path: reopen and close, focus returns to the trigger.
+    await page.keyboard.press("Control+k");
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Search the site" })
+    ).toBeFocused();
+  });
+
+  test("stays usable at 320 px and a result closes the drawer (M1)", async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto("/en");
+
+    // Open the drawer, trigger the search from inside it.
+    await page.getByTestId("menu-trigger").click();
+    await page.getByRole("button", { name: "Search the site" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    await page.getByRole("combobox").fill("about");
+    await expect(
+      page.getByTestId("search-section-navigation").getByText("About us")
+    ).toBeVisible();
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth
+    );
+    expect(overflow).toBe(false);
+
+    await checkA11y(page);
+
+    // Activate a result: navigation happens AND the drawer is gone over the
+    // new page (it used to linger behind the dialog).
+    await page
+      .getByTestId("search-section-navigation")
+      .getByRole("option", { name: /About us/ })
+      .click();
+    await expect(page).toHaveURL(/\/en\/about/);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByTestId("menu-trigger")).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
+  });
+
+  test("homepage section results land and focus the section heading (C1)", async ({
+    page
+  }) => {
+    await page.goto("/en");
+    await openSearch(page);
+    await typeQuery(page, "explore");
+
+    const homeRow = page
+      .getByTestId("search-section-navigation")
+      .getByRole("option", { name: /Explore/ });
+    await expect(homeRow).toBeVisible();
+    await homeRow.click();
+
+    await expect(page).toHaveURL(/\/en#explore$/);
+    await expect(page.locator("section#explore h2")).toBeFocused();
+  });
+
+  test("publication years from the data appear as navigation results", async ({
+    page
+  }) => {
+    // The years query hits the mocked publications table (2026 fixture rows).
+    await page.goto("/en");
+    await openSearch(page);
+    await typeQuery(page, "2026");
+
+    const yearRow = page
+      .getByTestId("search-section-navigation")
+      .getByRole("option", { name: /2026/ });
+    await expect(yearRow).toBeVisible();
+    await yearRow.click();
+    await expect(page).toHaveURL(/\/en\/publications#2026$/);
+  });
+});

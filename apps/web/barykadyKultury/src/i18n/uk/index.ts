@@ -15,6 +15,135 @@ const uk: MessageSchema = {
   common: {
     skipToContent: "Перейти до вмісту"
   },
+  /** Зміст об’єднаних сторінок (T-039, D-25). */
+  toc: {
+    onThisPage: "На цій сторінці"
+  },
+  /** Пошук у шапці (T-039, D-26). */
+  search: {
+    trigger: "Пошук по сайту",
+    dialogTitle: "Пошук по сайту",
+    inputLabel: "Пошук",
+    placeholder: "Шукайте сторінки, проєкти, публікації…",
+    close: "Закрити пошук",
+    hint: "Введіть принаймні два символи. Результати навігації з’являються миттєво.",
+    navSection: "Навігація",
+    contentSection: "Вміст",
+    loading: "Пошук…",
+    noContent: "Немає результатів вмісту.",
+    errorContent: "Результати контенту недоступні.",
+    errorEvents: "Результати подій недоступні.",
+    retry: "Спробувати ще раз",
+    counts: "Результати: навігація {navCount}, вміст {contentCount}",
+    filtersLabel: "Фільтрувати результати",
+    filters: {
+      all: "Усі",
+      pages: "Сторінки",
+      projects: "Проєкти",
+      publications: "Публікації",
+      documents: "Документи",
+      team: "Команда",
+      events: "Події"
+    },
+    navKinds: {
+      page: "Сторінка",
+      section: "Розділ"
+    },
+    contentKinds: {
+      page: "Сторінка",
+      project: "Проєкт",
+      publication: "Публікація",
+      document: "Документ",
+      team: "Учасник команди",
+      event: "Подія"
+    },
+    /** Тексти реєстру навігації (огляд T-039: індекс структурний). */
+    navEntries: {
+      home: {
+        title: "Головна",
+        description: "Головна сторінка та огляд організації"
+      },
+      about: {
+        title: "Про нас",
+        description: "Місія, історія, цінності, цілі, команда та документи"
+      },
+      projects: {
+        title: "Проєкти",
+        description: "Усі проєкти, спочатку вибрані"
+      },
+      publications: {
+        title: "Публікації",
+        description: "Звіти та матеріали за роками"
+      },
+      events: { title: "Події", description: "Майбутні події та календар" },
+      support: {
+        title: "Підтримайте нас",
+        description: "Способи підтримати асоціацію"
+      },
+      contact: { title: "Контакти", description: "Контактні дані асоціації" },
+      "about-mission": {
+        title: "Місія",
+        description: "Розділ місії на сторінці «Про нас»"
+      },
+      "about-history": {
+        title: "Історія",
+        description: "Розділ історії на сторінці «Про нас»"
+      },
+      "about-values": {
+        title: "Цінності",
+        description: "Розділ цінностей на сторінці «Про нас»"
+      },
+      "about-aims": {
+        title: "Цілі",
+        description: "Розділ цілів на сторінці «Про нас»"
+      },
+      "about-team": {
+        title: "Команда",
+        description: "Учасники команди на сторінці «Про нас»"
+      },
+      "about-documents": {
+        title: "Документи",
+        description: "Регламенти, звіти та офіційні файли"
+      },
+      "projects-featured": {
+        title: "Вибрані",
+        description: "Розділ вибраних проєктів на сторінці «Проєкти»"
+      },
+      "projects-all": {
+        title: "Усі проєкти",
+        description: "Усі опубліковані проєкти на сторінці «Проєкти»"
+      },
+      "events-upcoming": {
+        title: "Майбутні",
+        description: "Розділ майбутніх подій на сторінці «Події»"
+      },
+      "events-past": {
+        title: "Минулі",
+        description: "Розділ минулих подій на сторінці «Події»"
+      },
+      "events-calendar": {
+        title: "Календар",
+        description: "Інформація про календар на сторінці «Події»"
+      },
+      "home-mission": {
+        title: "Наша місія",
+        description: "Розділ місії на головній сторінці"
+      },
+      "home-upcoming": {
+        title: "Майбутні події",
+        description: "Майбутні події на головній сторінці"
+      },
+      "home-featured": {
+        title: "Вибрані проєкти",
+        description: "Вибрані проєкти на головній сторінці"
+      },
+      "home-explore": {
+        title: "Досліджуйте",
+        description: "Контакти, підтримка та інші посилання"
+      },
+      year: { description: "Публікації за {year} рік" }
+    }
+  },
   nav: {
     language: "Мова",
     changeLanguage: "Змінити мову",
@@ -26,10 +155,7 @@ const uk: MessageSchema = {
     support: "Підтримайте нас",
     projects: "Проєкти",
     events: "Події",
-    publications: "Публікації",
-    aboutOrg: "Організація",
-    team: "Команда",
-    documents: "Документи"
+    publications: "Публікації"
   },
   footer: {
     nav: "Навігація підвалу",
@@ -115,6 +241,13 @@ const uk: MessageSchema = {
   events: {
     title: "Події",
     description: "Майбутні події, організовані Barykady Kultury.",
+    upcoming: "Майбутні",
+    past: "Минулі",
+    calendar: "Календар",
+    pastEmpty:
+      "Минулі події тут ще не публікуються — стрічка календаря містить лише майбутні події.",
+    calendarNote:
+      "Цей список публікується з календаря подій організації. Маєте питання щодо події?",
     empty: "Наразі майбутніх подій немає. Загляньте до нас пізніше.",
     calendarUnavailable: "Календар подій тимчасово недоступний.",
     retry: "Спробувати ще раз",
@@ -131,6 +264,7 @@ const uk: MessageSchema = {
     title: "Публікації",
     description: "Публікації Barykady Kultury.",
     empty: "Наразі немає доступних публікацій.",
+    undated: "Без дати",
     detail: {
       back: "Назад до публікацій",
       filesHeading: "Доступні файли"
@@ -145,6 +279,8 @@ const uk: MessageSchema = {
     title: "Проєкти",
     description: "Проєкти організації Barykady Kultury.",
     empty: "Наразі немає доступних проєктів.",
+    featured: "Виділені",
+    all: "Усі проєкти",
     detail: {
       back: "Назад до проєктів"
     },

@@ -317,4 +317,69 @@ describe("events page", () => {
     expect(wrapper.find(".events-page__note").exists()).toBe(false);
     expect(wrapper.find(".events-page__contact").exists()).toBe(true);
   });
+
+  describe("T-039 sections and stable anchors", () => {
+    it("renders #upcoming, #past and #calendar with TOC entries", async () => {
+      stubFetch(() => okBody([calendarEvent({ id: "ev-1" })]));
+      const fake = createFakeSupabase({ tables: { calendar_event_links: [] } });
+      const wrapper = await mountPage(fake.client);
+
+      for (const id of ["upcoming", "past", "calendar"]) {
+        expect(wrapper.find(`section#${id}`).exists()).toBe(true);
+      }
+      const tocLinks = wrapper
+        .findAll(".page-toc__desktop a")
+        .map(link => link.attributes("href"));
+      // m10: #past stays a rendered section (search links) but is absent
+      // from the TOC while it can only show its not-published state.
+      expect(tocLinks).toEqual(["#upcoming", "#calendar"]);
+
+      // Past events are not available from the upcoming-only adapter; the
+      // section carries the honest translated state, not a fabricated list.
+      expect(wrapper.get("section#past").text()).toContain(
+        "Past events are not published here yet"
+      );
+    });
+
+    it("gives every event card a stable event-<googleEventId> anchor", async () => {
+      stubFetch(() =>
+        okBody([
+          calendarEvent({ id: "ev-1" }),
+          calendarEvent({ id: "ev-2", title: "Second" })
+        ])
+      );
+      const fake = createFakeSupabase({ tables: { calendar_event_links: [] } });
+      const wrapper = await mountPage(fake.client);
+
+      expect(wrapper.find("#event-ev-1").exists()).toBe(true);
+      expect(wrapper.find("#event-ev-2").exists());
+      expect(wrapper.get("#event-ev-1 .event-card__title").text()).toBe(
+        "Sample timed event"
+      );
+    });
+
+    it("steps card titles to h3 under the section h2 and keeps one h1", async () => {
+      stubFetch(() => okBody([calendarEvent({ id: "ev-1" })]));
+      const fake = createFakeSupabase({ tables: { calendar_event_links: [] } });
+      const wrapper = await mountPage(fake.client);
+
+      expect(wrapper.findAll("h1")).toHaveLength(1);
+      expect(wrapper.findAll("h2").map(h => h.text())).toEqual([
+        "Upcoming",
+        "Past",
+        "Calendar"
+      ]);
+      expect(wrapper.get(".event-card__title").element.tagName).toBe("H3");
+    });
+
+    it("the calendar section names the source and routes questions to contact", async () => {
+      stubFetch(() => okBody([calendarEvent({ id: "ev-1" })]));
+      const fake = createFakeSupabase({ tables: { calendar_event_links: [] } });
+      const wrapper = await mountPage(fake.client);
+
+      const calendar = wrapper.get("section#calendar");
+      expect(calendar.text()).toContain("published from the organisation");
+      expect(calendar.get("a").attributes("href")).toBe("/en/contact");
+    });
+  });
 });

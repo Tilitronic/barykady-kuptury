@@ -108,4 +108,30 @@ describe("AppHeader mobile navigation", () => {
     expect(activeLinks).toHaveLength(1);
     expect(activeLinks[0]!.attributes("href")).toContain("/projects");
   });
+
+  it("closes the drawer on route change without stealing focus to the trigger", async () => {
+    // M1 (T-039 review): a search result activated from inside the drawer
+    // navigates; the drawer must not stay open over the new page, and focus
+    // must stay where the navigation put it (not snap back to the trigger).
+    const { wrapper, router } = await mountHeader("/en");
+
+    const trigger = wrapper.get("[data-testid='menu-trigger']");
+    await trigger.trigger("click");
+    await nextTick();
+    expect(trigger.attributes("aria-expanded")).toBe("true");
+
+    // Focus something else entirely (stands in for the destination page).
+    const elsewhere = document.createElement("a");
+    elsewhere.href = "#main";
+    document.body.appendChild(elsewhere);
+    elsewhere.focus();
+
+    await router.push("/en/about");
+    await nextTick();
+
+    expect(trigger.attributes("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(elsewhere);
+
+    elsewhere.remove();
+  });
 });

@@ -278,3 +278,71 @@ export async function mockSupabaseAuth(
     });
   });
 }
+
+/* ── Search RPC (T-039) ──────────────────────────────────────────────────── */
+
+/** Matches the PostgREST RPC endpoint for the search function. */
+const SEARCH_RPC_GLOB = "**/rest/v1/rpc/search_published_content";
+
+/** One RPC row fixture — mirrors the frozen `SearchRpcRow` wire shape. */
+export interface SearchRpcRowFixture {
+  kind: string;
+  entity_id: string;
+  title: string;
+  excerpt: string | null;
+  slug: string | null;
+  page_key: string | null;
+  rank: number;
+}
+
+export interface MockSearchRpcOptions {
+  /** Rows the RPC "returns"; filtered client-side by the request's kinds. */
+  rows?: SearchRpcRowFixture[];
+  /** Respond 500 so the UI's content-error path is exercised. */
+  fail?: boolean;
+}
+
+/**
+ * Intercepts the `search_published_content` RPC. The handler parses the
+ * PostgREST JSON body and honours `result_kinds` exactly like the database
+ * function, so auto-filter journeys observe genuinely filtered fixtures —
+ * with no live project behind them (docs/TESTING.md §2).
+ */
+export async function mockSearchRpc(
+  page: Page,
+  options: MockSearchRpcOptions = {}
+): Promise<void> {
+  const { rows = [], fail = false } = options;
+
+  await page.route(SEARCH_RPC_GLOB, async (route: Route) => {
+    if (fail) {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "search unavailable (e2e mock)" })
+      });
+      return;
+    }
+
+    let kinds: string[] | null = null;
+    try {
+      const body = JSON.parse(route.request().postData() ?? "{}") as {
+        result_kinds?: string[];
+      };
+      kinds = body.result_kinds ?? null;
+    } catch {
+      kinds = null;
+    }
+
+    const matched =
+      kinds === null || kinds === undefined
+        ? rows
+        : rows.filter(row => kinds!.includes(row.kind));
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(matched)
+    });
+  });
+}

@@ -8,7 +8,11 @@
          muted lede — no invented copy. -->
     <p class="home__lede">{{ t("home.description") }}</p>
 
-    <SectionShell class="home-mission" :title="t('home.sections.mission')">
+    <SectionShell
+      id="mission"
+      class="home-mission"
+      :title="t('home.sections.mission')"
+    >
       <div
         v-if="missionResult.kind === 'loading'"
         class="home__state"
@@ -63,6 +67,7 @@
     </SectionShell>
 
     <SectionShell
+      id="upcoming"
       class="home-events"
       :title="t('home.sections.events')"
       :view-all-to="`/${currentLocale}/events`"
@@ -113,6 +118,7 @@
     </SectionShell>
 
     <SectionShell
+      id="featured"
       class="home-projects"
       :title="t('home.sections.projects')"
       :view-all-to="`/${currentLocale}/projects`"
@@ -160,7 +166,11 @@
       </ul>
     </SectionShell>
 
-    <SectionShell class="home-explore" :title="t('home.sections.explore')">
+    <SectionShell
+      id="explore"
+      class="home-explore"
+      :title="t('home.sections.explore')"
+    >
       <ul class="home-explore__list" role="list">
         <li v-for="item in exploreItems" :key="item.routeName">
           <!--
@@ -195,6 +205,7 @@ import EventCard from "@/components/events/EventCard.vue";
 import LocalizedRichText from "@/components/content/LocalizedRichText.vue";
 import ProjectCard from "@/components/projects/ProjectCard.vue";
 import SectionShell from "@/components/home/SectionShell.vue";
+import { watchDeepLink } from "@/shared/content/deepLink";
 import { mainNavItems } from "@/config/navigation";
 import { ctaInternalPath, ctaIsExternal, homeCta } from "@/config/cta";
 import { useSitePage } from "@/features/content/useSitePage";
@@ -222,6 +233,12 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
  */
 const { t } = useI18n();
 const route = useRoute();
+
+// T-039 review (C1): search results and shared hashes land on the homepage
+// sections. The section ids exist from the first render (each SectionShell
+// always renders, its own data state inside), so readiness is immediate —
+// the watcher only needs the hash.
+watchDeepLink({ hash: () => route.hash, isReady: () => true });
 
 /** Nearest upcoming events / featured projects shown on the home page. */
 const SECTION_CAP = 3;
@@ -280,6 +297,13 @@ function projectPath(project: ProjectSummaryView): string {
 </script>
 
 <style scoped>
+/*
+ * Anchor landing offset below the 3.75rem sticky header (WCAG 2.4.11);
+ * matches the area pages' 5rem contract.
+ */
+.home :deep(section[id]) {
+  scroll-margin-top: 5rem;
+}
 /*
  * M3 (T-025 review): the h1 joins the type scale — the same display tokens
  * `.text-display` uses (typography.css) — instead of ad-hoc clamp/leading,

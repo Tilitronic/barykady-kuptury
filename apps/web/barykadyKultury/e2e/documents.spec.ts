@@ -138,9 +138,12 @@ test.describe("documents reader", () => {
     await gotoWithDocuments(page);
     await page.goto("/en/about/documents");
 
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "Documents"
-    );
+    // D-25 (T-039): the list route redirects to the About `#documents`
+    // section; the reader journey starts from the card there.
+    await expect(page).toHaveURL(/\/en\/about#documents$/);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Documents" })
+    ).toBeVisible();
     await expect(page.getByText("Regulations", { exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: REGULATIONS_TITLE }).click();

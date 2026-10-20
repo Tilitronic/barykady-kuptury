@@ -15,6 +15,141 @@ const pl: MessageSchema = {
   common: {
     skipToContent: "Przejdź do treści"
   },
+  /** Spis treści scalonych stron (T-039, D-25). */
+  toc: {
+    onThisPage: "Na tej stronie"
+  },
+  /** Wyszukiwanie w nagłówku (T-039, D-26). */
+  search: {
+    trigger: "Szukaj w serwisie",
+    dialogTitle: "Szukaj w serwisie",
+    inputLabel: "Szukaj",
+    placeholder: "Szukaj stron, projektów, publikacji…",
+    close: "Zamknij wyszukiwanie",
+    hint: "Wpisz co najmniej dwa znaki. Wyniki nawigacji pojawiają się natychmiast.",
+    navSection: "Nawigacja",
+    contentSection: "Treści",
+    loading: "Wyszukiwanie…",
+    noContent: "Brak wyników treści.",
+    errorContent: "Wyniki treści są niedostępne.",
+    errorEvents: "Wyniki wydarzeń są niedostępne.",
+    retry: "Spróbuj ponownie",
+    counts: "Wyniki: nawigacja {navCount}, treści {contentCount}",
+    filtersLabel: "Filtruj wyniki",
+    filters: {
+      all: "Wszystko",
+      pages: "Strony",
+      projects: "Projekty",
+      publications: "Publikacje",
+      documents: "Dokumenty",
+      team: "Zespół",
+      events: "Wydarzenia"
+    },
+    navKinds: {
+      page: "Strona",
+      section: "Sekcja"
+    },
+    contentKinds: {
+      page: "Strona",
+      project: "Projekt",
+      publication: "Publikacja",
+      document: "Dokument",
+      team: "Członek zespołu",
+      event: "Wydarzenie"
+    },
+    /** Teksty rejestru nawigacji (przegląd T-039: kluster strukturalny). */
+    navEntries: {
+      home: {
+        title: "Strona główna",
+        description: "Strona główna i przegląd organizacji"
+      },
+      about: {
+        title: "O nas",
+        description: "Misja, historia, wartości, cele, zespół i dokumenty"
+      },
+      projects: {
+        title: "Projekty",
+        description: "Wszystkie projekty, najpierw wyróżnione"
+      },
+      publications: {
+        title: "Publikacje",
+        description: "Raporty i materiały według roku"
+      },
+      events: {
+        title: "Wydarzenia",
+        description: "Nadchodzące wydarzenia i kalendarz"
+      },
+      support: {
+        title: "Wesprzyj nas",
+        description: "Sposoby wsparcia stowarzyszenia"
+      },
+      contact: {
+        title: "Kontakt",
+        description: "Dane kontaktowe stowarzyszenia"
+      },
+      "about-mission": {
+        title: "Misja",
+        description: "Sekcja misji na stronie O nas"
+      },
+      "about-history": {
+        title: "Historia",
+        description: "Sekcja historii na stronie O nas"
+      },
+      "about-values": {
+        title: "Wartości",
+        description: "Sekcja wartości na stronie O nas"
+      },
+      "about-aims": {
+        title: "Cele",
+        description: "Sekcja celów na stronie O nas"
+      },
+      "about-team": {
+        title: "Zespół",
+        description: "Członkowie zespołu na stronie O nas"
+      },
+      "about-documents": {
+        title: "Dokumenty",
+        description: "Regulaminy, raporty i oficjalne pliki"
+      },
+      "projects-featured": {
+        title: "Wyróżnione",
+        description: "Sekcja wyróżnionych projektów na stronie Projekty"
+      },
+      "projects-all": {
+        title: "Wszystkie projekty",
+        description: "Wszystkie opublikowane projekty na stronie Projekty"
+      },
+      "events-upcoming": {
+        title: "Nadchodzące",
+        description: "Sekcja nadchodzących wydarzeń na stronie Wydarzenia"
+      },
+      "events-past": {
+        title: "Minione",
+        description: "Sekcja minionych wydarzeń na stronie Wydarzenia"
+      },
+      "events-calendar": {
+        title: "Kalendarz",
+        description: "Informacje o kalendarzu na stronie Wydarzenia"
+      },
+      "home-mission": {
+        title: "Nasza misja",
+        description: "Sekcja misji na stronie głównej"
+      },
+      "home-upcoming": {
+        title: "Nadchodzące wydarzenia",
+        description: "Nadchodzące wydarzenia na stronie głównej"
+      },
+      "home-featured": {
+        title: "Wyróżnione projekty",
+        description: "Wyróżnione projekty na stronie głównej"
+      },
+      "home-explore": {
+        title: "Odkrywaj",
+        description: "Kontakt, wsparcie i dalsze linki"
+      },
+      year: { description: "Publikacje z roku {year}" }
+    }
+  },
   nav: {
     language: "Język",
     changeLanguage: "Zmień język",
@@ -26,10 +161,7 @@ const pl: MessageSchema = {
     support: "Wesprzyj nas",
     projects: "Projekty",
     events: "Wydarzenia",
-    publications: "Publikacje",
-    aboutOrg: "Organizacja",
-    team: "Zespół",
-    documents: "Dokumenty"
+    publications: "Publikacje"
   },
   footer: {
     nav: "Nawigacja stopki",
@@ -116,6 +248,13 @@ const pl: MessageSchema = {
   events: {
     title: "Wydarzenia",
     description: "Nadchodzące wydarzenia organizowane przez Barykady Kultury.",
+    upcoming: "Nadchodzące",
+    past: "Minione",
+    calendar: "Kalendarz",
+    pastEmpty:
+      "Minione wydarzenia nie są tu jeszcze publikowane — kanał kalendarza zawiera wyłącznie wydarzenia nadchodzące.",
+    calendarNote:
+      "Ta lista pochodzi z kalendarza wydarzeń organizacji. Masz pytanie o wydarzenie?",
     empty: "Brak nadchodzących wydarzeń. Zapraszamy ponownie wkrótce.",
     calendarUnavailable: "Kalendarz wydarzeń jest czasowo niedostępny.",
     retry: "Spróbuj ponownie",
@@ -132,6 +271,7 @@ const pl: MessageSchema = {
     title: "Publikacje",
     description: "Publikacje Barykad Kultury.",
     empty: "Brak dostępnych publikacji.",
+    undated: "Bez daty",
     detail: {
       back: "Powrót do publikacji",
       filesHeading: "Dostępne pliki"
@@ -146,6 +286,8 @@ const pl: MessageSchema = {
     title: "Projekty",
     description: "Projekty realizowane przez stowarzyszenie Barykady Kultury.",
     empty: "Brak dostępnych projektów.",
+    featured: "Wyróżnione",
+    all: "Wszystkie projekty",
     detail: {
       back: "Powrót do projektów"
     },

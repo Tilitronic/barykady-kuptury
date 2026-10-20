@@ -129,13 +129,21 @@ test.describe("projects", () => {
       "Projects"
     );
 
+    // T-039 (D-25): the ranked project appears under #featured AND #all
+    // (#all is defined as every published project) — two cards, one project.
     const card = page.locator(".project-card");
-    await expect(card).toHaveCount(1);
+    await expect(card).toHaveCount(2);
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Featured" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "All projects" })
+    ).toBeVisible();
     await expect(page.locator("body")).not.toContainText(DRAFT_TITLE);
 
     await expectNoSeriousViolations(page);
 
-    await page.getByRole("link", { name: EN_TITLE }).click();
+    await page.getByRole("link", { name: EN_TITLE }).first().click();
 
     await expect(page).toHaveURL(/\/en\/projects\/sample-community-workshop$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(EN_TITLE);

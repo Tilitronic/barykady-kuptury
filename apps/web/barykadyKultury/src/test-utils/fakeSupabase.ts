@@ -23,6 +23,8 @@ export interface FakeSupabase {
   readonly client: SupabaseClient<Database>;
   /** Every builder call in order (`.from` excluded). */
   readonly calls: FakeQueryCall[];
+  /** Every `rpc()` call in order (T-039 search seam). */
+  readonly rpcCalls: { name: string; args: Record<string, unknown> }[];
 }
 
 export interface FakeSupabaseOptions {
@@ -30,6 +32,21 @@ export interface FakeSupabaseOptions {
   readonly tables?: Readonly<Record<string, readonly unknown[]>>;
   /** When set, every query resolves to this error and no rows. */
   readonly error?: { readonly message: string } | null;
+  /**
+   * The `{data, error}` envelope every `rpc()` call resolves with (T-039:
+   * `search_published_content` and the publications-years query share this
+   * fake). Defaults to `{ data: [], error: null }`.
+   */
+  readonly rpc?: {
+    readonly data?: unknown;
+    readonly error?: { readonly message: string } | null;
+  };
+  /**
+   * Per-table failures (T-039): tables listed here resolve to an error while
+   * others keep their `tables` fixture — the seam that proves one failing
+   * page section does not blank its siblings.
+   */
+  readonly tableErrors?: Readonly<Record<string, string>>;
 }
 
 interface FakeResult {
@@ -95,6 +112,11 @@ class FakeQueryBuilder implements PromiseLike<FakeResult> {
       return { data: null, error: this.options.error };
     }
 
+    const tableError = this.options.tableErrors?.[this.table];
+    if (tableError) {
+      return { data: null, error: { message: tableError } };
+    }
+
     return { data: this.options.tables?.[this.table] ?? [], error: null };
   }
 }
@@ -108,7 +130,29 @@ export function createFakeSupabase(
   options: FakeSupabaseOptions = {}
 ): FakeSupabase {
   const calls: FakeQueryCall[] = [];
+  const rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
   const from = (table: string) => new FakeQueryBuilder(table, options, calls);
+
+  /**
+   * RPC builder: records the call, mirrors `.abortSignal()` (the search API
+   * chains it) and is thenable like a PostgREST builder.
+   */
+  const rpc = (name: string, args: Record<string, unknown>) => {
+    rpcCalls.push({ name, args });
+    const result = {
+      data: options.rpc?.data ?? [],
+      error: options.rpc?.error ?? null
+    };
+    const builder = {
+      abortSignal: () => builder,
+      // oxlint-disable-next-line unicorn/no-thenable
+      then: <T1, T2>(
+        onfulfilled?: ((value: typeof result) => T1 | PromiseLike<T1>) | null,
+        onrejected?: ((reason: unknown) => T2 | PromiseLike<T2>) | null
+      ) => Promise.resolve(result).then(onfulfilled, onrejected)
+    };
+    return builder;
+  };
 
   // Read-side storage surface used by T-018: `getPublicUrl` is synchronous URL
   // derivation in the real client, so the fake only mirrors its shape with a
@@ -123,7 +167,7 @@ export function createFakeSupabase(
     })
   };
 
-  const client = { from, storage } as unknown as SupabaseClient<Database>;
+  const client = { from, storage, rpc } as unknown as SupabaseClient<Database>;
 
-  return { client, calls };
+  return { client, calls, rpcCalls };
 }

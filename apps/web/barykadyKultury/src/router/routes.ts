@@ -13,8 +13,6 @@ import ProjectsPage from "@/pages/[locale]/projects.vue";
 import ProjectDetailPage from "@/pages/[locale]/project-detail.vue";
 import ContactPage from "@/pages/[locale]/contact.vue";
 import AboutPage from "@/pages/[locale]/about.vue";
-import AboutTeamPage from "@/pages/[locale]/about-team.vue";
-import AboutDocumentsPage from "@/pages/[locale]/about-documents.vue";
 import AboutDocumentPage from "@/pages/[locale]/about-document.vue";
 import SupportPage from "@/pages/[locale]/support.vue";
 import EventsPage from "@/pages/[locale]/events.vue";
@@ -115,29 +113,26 @@ export const routes: RouteRecordRaw[] = [
           }
         }
       },
-      // About → Team
+      // About → Team / Documents: the list routes are GONE (T-039, D-25) —
+      // both redirect to the consolidated About page's anchored section,
+      // preserving the locale. Unnamed redirect records: `routeMeta.test.ts`
+      // skips records with `redirect`, so no pageMeta is required (the
+      // destination owns the document metadata).
       {
         path: "about/team",
-        name: "about-team",
-        component: AboutTeamPage,
-        meta: {
-          pageMeta: {
-            titleKey: "aboutTeam.title",
-            descriptionKey: "aboutTeam.description"
-          }
-        }
+        redirect: to => ({
+          // The record is a child of the locale parent, so `locale` is
+          // always present at runtime; the cast only feeds the union type.
+          path: `/${String((to.params as Record<string, unknown>).locale)}/about`,
+          hash: "#team"
+        })
       },
-      // About → Documents
       {
         path: "about/documents",
-        name: "about-documents",
-        component: AboutDocumentsPage,
-        meta: {
-          pageMeta: {
-            titleKey: "aboutDocuments.title",
-            descriptionKey: "aboutDocuments.description"
-          }
-        }
+        redirect: to => ({
+          path: `/${String((to.params as Record<string, unknown>).locale)}/about`,
+          hash: "#documents"
+        })
       },
       // About → Documents → in-app regulation reader (T-017, D-12).
       // Canonical root slug (D-24): one slug is shared by every locale, so a

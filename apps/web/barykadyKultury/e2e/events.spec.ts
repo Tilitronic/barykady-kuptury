@@ -322,4 +322,26 @@ test.describe("events", () => {
     );
     expect(overflow).toBe(false);
   });
+
+  // T-039 (D-25): section anchors + stable event card ids for search links.
+  test("sections, TOC, and the stable event anchor work", async ({ page }) => {
+    await mockSupabaseRest(page);
+    await mockCalendarEvents(page, { events: EVENTS_SHUFFLED });
+    await page.goto("/en/events");
+
+    const toc = page.getByRole("navigation", { name: "On this page" });
+    await expect(toc.getByRole("link", { name: "Upcoming" })).toBeVisible();
+    await expect(toc.getByRole("link", { name: "Calendar" })).toBeVisible();
+    // m10: #past is a rendered anchor target but no TOC entry while the
+    // adapter cannot return past events.
+    await expect(toc.getByRole("link", { name: "Past" })).toHaveCount(0);
+    await expect(page.locator("section#past")).toBeVisible();
+
+    // Stable card anchors: `event-<googleEventId>` from the fixture feed.
+    await expect(page.locator("#event-fixture-event-timed")).toBeVisible();
+
+    // Deep link lands with focus on the event card's heading.
+    await page.goto("/en/events#event-fixture-event-timed");
+    await expect(page.locator("#event-fixture-event-timed h3")).toBeFocused();
+  });
 });

@@ -21,6 +21,150 @@ const en = {
   common: {
     skipToContent: "Skip to main content"
   },
+  /** Table of contents for consolidated area pages (T-039, D-25). */
+  toc: {
+    onThisPage: "On this page"
+  },
+  /**
+   * Header site search (T-039, D-26): instant navigation results plus
+   * debounced Postgres/calendar content. All dialog chrome lives here —
+   * the search data layer ships machine codes only.
+   */
+  search: {
+    trigger: "Search the site",
+    dialogTitle: "Site search",
+    inputLabel: "Search",
+    placeholder: "Search pages, projects, publications…",
+    close: "Close search",
+    hint: "Type at least two characters. Navigation results appear instantly.",
+    navSection: "Navigation",
+    contentSection: "Content",
+    loading: "Searching…",
+    noContent: "No content results.",
+    errorContent: "Content results are unavailable.",
+    errorEvents: "Event results are unavailable.",
+    retry: "Try again",
+    /** Polite live region — never moves focus. */
+    counts: "{navCount} navigation and {contentCount} content results",
+    filtersLabel: "Filter results",
+    filters: {
+      all: "All",
+      pages: "Pages",
+      projects: "Projects",
+      publications: "Publications",
+      documents: "Documents",
+      team: "Team",
+      events: "Events"
+    },
+    navKinds: {
+      page: "Page",
+      section: "Section"
+    },
+    contentKinds: {
+      page: "Page",
+      project: "Project",
+      publication: "Publication",
+      document: "Document",
+      team: "Team member",
+      event: "Event"
+    },
+    /**
+     * Registry display text (T-039 review: the search index is structural;
+     * all labels resolve through these keys). Keys mirror the registry ids;
+     * the parity test in navigationIndex.test.ts fails on any missing pair.
+     */
+    navEntries: {
+      home: {
+        title: "Home",
+        description: "Homepage and organization overview"
+      },
+      about: {
+        title: "About us",
+        description: "Mission, history, values, aims, team and documents"
+      },
+      projects: {
+        title: "Projects",
+        description: "All projects, featured first"
+      },
+      publications: {
+        title: "Publications",
+        description: "Reports and materials by year"
+      },
+      events: {
+        title: "Events",
+        description: "Upcoming events and the calendar"
+      },
+      support: {
+        title: "Support us",
+        description: "Ways to support the association"
+      },
+      contact: {
+        title: "Contact",
+        description: "Contact details for the association"
+      },
+      "about-mission": {
+        title: "Mission",
+        description: "Mission section of the About page"
+      },
+      "about-history": {
+        title: "History",
+        description: "History section of the About page"
+      },
+      "about-values": {
+        title: "Values",
+        description: "Values section of the About page"
+      },
+      "about-aims": {
+        title: "Aims",
+        description: "Aims section of the About page"
+      },
+      "about-team": {
+        title: "Team",
+        description: "Team members on the About page"
+      },
+      "about-documents": {
+        title: "Documents",
+        description: "Regulations, reports and official files"
+      },
+      "projects-featured": {
+        title: "Featured",
+        description: "Featured projects section on the Projects page"
+      },
+      "projects-all": {
+        title: "All projects",
+        description: "Every published project on the Projects page"
+      },
+      "events-upcoming": {
+        title: "Upcoming",
+        description: "Upcoming events section on the Events page"
+      },
+      "events-past": {
+        title: "Past",
+        description: "Past events section on the Events page"
+      },
+      "events-calendar": {
+        title: "Calendar",
+        description: "Calendar information on the Events page"
+      },
+      "home-mission": {
+        title: "Our mission",
+        description: "Mission section on the homepage"
+      },
+      "home-upcoming": {
+        title: "Upcoming events",
+        description: "Upcoming events on the homepage"
+      },
+      "home-featured": {
+        title: "Featured projects",
+        description: "Featured projects on the homepage"
+      },
+      "home-explore": {
+        title: "Explore",
+        description: "Contact, support and further links"
+      },
+      year: { description: "Publications from {year}" }
+    }
+  },
   nav: {
     language: "Language",
     /**
@@ -39,11 +183,7 @@ const en = {
     support: "Support us",
     projects: "Projects",
     events: "Events",
-    publications: "Publications",
-    /** About sub-navigation items. */
-    aboutOrg: "Organization",
-    team: "Team",
-    documents: "Documents"
+    publications: "Publications"
   },
   footer: {
     /** Screen-reader label for the footer navigation landmark. */
@@ -162,6 +302,21 @@ const en = {
   events: {
     title: "Events",
     description: "Upcoming events organized by Barykady Kultury.",
+    /** T-039 area-page sections (TOC labels + headings). */
+    upcoming: "Upcoming",
+    past: "Past",
+    calendar: "Calendar",
+    /**
+     * Honest state for the past section: the reviewed calendar adapter is
+     * upcoming-only (past `from` is clamped to now), so past events are not
+     * available on this site yet. Do not remove the section — search and
+     * deep links reference `#past`.
+     */
+    pastEmpty:
+      "Past events are not published here yet — the calendar feed carries upcoming events only.",
+    /** `#calendar` section: where the list comes from + the question route. */
+    calendarNote:
+      "This list is published from the organisation's event calendar. Have a question about an event?",
     /** Listing state when the calendar holds no upcoming events (T-024). */
     empty: "No upcoming events right now — check back soon.",
     /** Calendar adapter failure — the rest of the page stays usable. */
@@ -192,6 +347,8 @@ const en = {
     description: "Publications by Barykady Kultury.",
     /** Listing state when no publication is published yet (T-020). */
     empty: "No publications are available yet.",
+    /** T-039: year grouping fallback for rows without `publication_date`. */
+    undated: "Undated",
     detail: {
       back: "Back to publications",
       filesHeading: "Available files"
@@ -208,6 +365,9 @@ const en = {
     description: "Projects run by the Barykady Kultury association.",
     /** Listing state when no project is published yet (T-019). */
     empty: "No projects are available yet.",
+    /** T-039 area-page sections (TOC labels + headings). */
+    featured: "Featured",
+    all: "All projects",
     detail: {
       back: "Back to projects"
     },

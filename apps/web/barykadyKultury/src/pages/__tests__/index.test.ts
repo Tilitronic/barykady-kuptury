@@ -162,6 +162,18 @@ afterEach(() => {
   ctaState.current = null;
 });
 
+describe("homepage section anchors (T-039 review C1)", () => {
+  it("renders the four stable section ids the search links to", async () => {
+    const { wrapper } = await mountHome({});
+
+    for (const id of ["mission", "upcoming", "featured", "explore"]) {
+      expect(wrapper.find(`section#${id}`).exists(), `section#${id}`).toBe(
+        true
+      );
+    }
+  });
+});
+
 describe("home page identity", () => {
   it("keeps the organization name as the single h1", async () => {
     stubFetch(okBody([]));
