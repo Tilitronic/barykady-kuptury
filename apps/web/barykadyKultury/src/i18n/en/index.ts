@@ -240,6 +240,22 @@ const en = {
     /** Accessible label for the social media links list. */
     socialNav: "Social media"
   },
+  /**
+   * T-043 — localized accessible/visible names for social platforms. Brand
+   * names stay in their official Latin form in every locale (the platforms'
+   * own UI convention); a platform without an entry falls back to the
+   * configured link label.
+   */
+  social: {
+    labels: {
+      facebook: "Facebook",
+      instagram: "Instagram",
+      telegram: "Telegram",
+      youtube: "YouTube",
+      twitter: "X (Twitter)",
+      linkedin: "LinkedIn"
+    }
+  },
   theme: {
     /**
      * Visible label of the dark-mode switch — the wrapping <label> makes it
@@ -282,6 +298,8 @@ const en = {
       "In the meantime, you can learn more about us or find ways to support us:",
     /** Prefilled subject line for the `mailto:` link. */
     emailSubject: "Message from the website",
+    /** T-043 — heading above the labeled social block on the Contact page. */
+    followUs: "Follow us",
     /** Labels for the contact definition list. */
     fields: {
       email: "Email",

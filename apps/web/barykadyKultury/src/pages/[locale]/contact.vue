@@ -33,6 +33,22 @@
         </li>
       </ul>
     </div>
+
+    <!--
+      T-043: labeled social block near the contact channels. The heading only
+      renders when at least one channel has a URL — with an empty config the
+      whole section is absent (SocialLinks itself renders nothing, D-05).
+    -->
+    <section
+      v-if="hasSocialLinks"
+      class="contact-page__social"
+      aria-labelledby="contact-follow-us"
+    >
+      <h2 id="contact-follow-us" class="contact-page__social-title">
+        {{ t("contact.followUs") }}
+      </h2>
+      <SocialLinks :links="organization.socialLinks" variant="labeled" />
+    </section>
   </div>
 </template>
 
@@ -42,6 +58,7 @@ import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import ContactChannels from "@/components/contact/ContactChannels.vue";
+import SocialLinks from "@/components/navigation/SocialLinks.vue";
 import { organization } from "@/config/organization";
 import { hasContactDetails } from "@/features/contact/contactDetails";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
@@ -65,6 +82,14 @@ const currentLocale = computed<Locale>(() => {
 
 const details = organization.contact;
 const hasChannels = hasContactDetails(details);
+
+/**
+ * T-043: same "non-empty URL = configured" rule as SocialLinks — the heading
+ * must not strand above an empty list (D-05: no placeholders).
+ */
+const hasSocialLinks = computed(() =>
+  organization.socialLinks.some(link => link.url.trim().length > 0)
+);
 </script>
 
 <style scoped>
@@ -102,5 +127,17 @@ const hasChannels = hasContactDetails(details);
 
 .contact-page__link:hover {
   text-decoration: none;
+}
+
+/* ── T-043: follow-us social block ─────────────────────────────────────── */
+
+.contact-page__social {
+  max-width: 65ch;
+  margin-top: 2.5rem;
+}
+
+.contact-page__social-title {
+  margin: 0 0 0.75rem;
+  font-size: var(--font-size-h2);
 }
 </style>

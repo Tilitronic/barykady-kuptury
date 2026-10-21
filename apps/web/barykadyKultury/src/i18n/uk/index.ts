@@ -208,6 +208,21 @@ const uk: MessageSchema = {
     privacyPolicy: "Політика конфіденційності",
     socialNav: "Соціальні мережі"
   },
+  /**
+   * T-043 — localized accessible/visible names for social platforms. Brand
+   * names stay in their official Latin form in every locale; a platform
+   * without an entry falls back to the configured link label.
+   */
+  social: {
+    labels: {
+      facebook: "Facebook",
+      instagram: "Instagram",
+      telegram: "Telegram",
+      youtube: "YouTube",
+      twitter: "X (Twitter)",
+      linkedin: "LinkedIn"
+    }
+  },
   theme: {
     darkMode: "Темний режим"
   },
@@ -232,6 +247,8 @@ const uk: MessageSchema = {
     guidance:
       "Тим часом ви можете дізнатися більше про нас або знайти способи підтримки:",
     emailSubject: "Повідомлення із сайту",
+    /** T-043 — heading above the labeled social block on the Contact page. */
+    followUs: "Підписуйтесь на нас",
     fields: {
       email: "Електронна пошта",
       phone: "Телефон",

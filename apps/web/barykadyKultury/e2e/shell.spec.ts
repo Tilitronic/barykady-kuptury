@@ -275,6 +275,106 @@ test.describe("shell — nav/controls overlap regression", () => {
   });
 });
 
+test.describe("shell — T-043 social links", () => {
+  const channels = [
+    { name: "Facebook", href: "https://www.facebook.com/BARYKADYKULTURY/" },
+    { name: "Instagram", href: "https://www.instagram.com/barykadykultury/" },
+    { name: "Telegram", href: "https://t.me/barykadykultury" }
+  ] as const;
+
+  test("desktop 1280 px: all three channels render inline in the header", async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/en");
+
+    // No drawer needed — the icon cluster is part of the visible bar.
+    await expect(page.getByTestId("menu-trigger")).toBeHidden();
+    const header = page.getByRole("banner");
+
+    for (const { name, href } of channels) {
+      const link = header.getByRole("link", { name, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute("href", href);
+      await expect(link).toHaveAttribute("target", "_blank");
+      await expect(link).toHaveAttribute("rel", /noopener/);
+
+      // 2.25rem square target (WCAG 2.5.8 minimum met with margin).
+      const box = await link.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.width).toBeGreaterThanOrEqual(36);
+      expect(box!.height).toBeGreaterThanOrEqual(36);
+    }
+
+    // Nothing spills outside the 1280 px viewport.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth
+    );
+    expect(overflow).toBe(false);
+
+    await checkA11y(page);
+  });
+
+  test("drawer at 320 px: every channel is reachable and fully on screen", async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto("/en");
+    await page.getByTestId("menu-trigger").click();
+
+    const header = page.getByRole("banner");
+    for (const { name, href } of channels) {
+      const link = header.getByRole("link", { name, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute("href", href);
+
+      const box = await link.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+    }
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth
+    );
+    expect(
+      overflow,
+      "horizontal overflow with social links in the drawer"
+    ).toBe(false);
+  });
+
+  test("footer carries the same channels with a localized list label", async ({
+    page
+  }) => {
+    await page.goto("/en");
+    const footer = page.getByRole("contentinfo");
+    const list = footer.getByRole("list", { name: "Social media" });
+    await expect(list).toBeVisible();
+    for (const { name, href } of channels) {
+      await expect(
+        list.getByRole("link", { name, exact: true })
+      ).toHaveAttribute("href", href);
+    }
+
+    // Icons are inline SVG, not the old "FB"/"IG" text abbreviations.
+    await expect(list.getByText("FB", { exact: true })).toHaveCount(0);
+
+    await page.goto("/pl");
+    await expect(
+      page
+        .getByRole("contentinfo")
+        .getByRole("list", { name: "Media społecznościowe" })
+    ).toBeVisible();
+
+    await page.goto("/uk");
+    await expect(
+      page
+        .getByRole("contentinfo")
+        .getByRole("list", { name: "Соціальні мережі" })
+    ).toBeVisible();
+  });
+});
+
 test.describe("shell — keyboard traversal", () => {
   test("logo link and nav links are keyboard-reachable after the skip link", async ({
     page

@@ -71,4 +71,57 @@ test.describe("contact page", () => {
       page.getByText("Контактні дані ще не опубліковано.")
     ).toBeVisible();
   });
+
+  // T-043 — labeled social block beside the contact channels: verified URLs
+  // only, visible platform names, new-tab hardening, localized heading.
+  test("shows the Follow us block with the three verified channels", async ({
+    page
+  }) => {
+    await page.goto("/en/contact");
+
+    const followUs = page.getByRole("heading", {
+      level: 2,
+      name: "Follow us"
+    });
+    await expect(followUs).toBeVisible();
+
+    const links = page.locator(".contact-page .social-links--labeled a");
+    await expect(links).toHaveCount(3);
+    await expect(links.nth(0)).toHaveAttribute(
+      "href",
+      "https://www.facebook.com/BARYKADYKULTURY/"
+    );
+    await expect(links.nth(1)).toHaveAttribute(
+      "href",
+      "https://www.instagram.com/barykadykultury/"
+    );
+    await expect(links.nth(2)).toHaveAttribute(
+      "href",
+      "https://t.me/barykadykultury"
+    );
+
+    for (const i of [0, 1, 2]) {
+      await expect(links.nth(i)).toHaveAttribute("target", "_blank");
+      await expect(links.nth(i)).toHaveAttribute("rel", /noopener/);
+    }
+
+    // Visible names (labeled variant), not just aria-labels.
+    await expect(
+      page.locator(".contact-page .social-links--labeled").getByText("Telegram")
+    ).toBeVisible();
+
+    await expectNoBlockingViolations(page);
+  });
+
+  test("localizes the Follow us heading", async ({ page }) => {
+    await page.goto("/pl/contact");
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Obserwuj nas" })
+    ).toBeVisible();
+
+    await page.goto("/uk/contact");
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Підписуйтесь на нас" })
+    ).toBeVisible();
+  });
 });

@@ -64,30 +64,41 @@
         :aria-label="t('search.dialogTitle')"
         @keydown="onDialogKeydown"
       >
-        <button
-          type="button"
-          class="site-search__close focus-ring"
-          :aria-label="t('search.close')"
-          @click="close"
-        >
-          ✕
-        </button>
+        <!--
+          Field row: input + close button as flex siblings in NORMAL FLOW.
+          The close button used to be position:absolute over the input's
+          reserved padding — user reports showed the glyphs overlapping at
+          narrow widths. A flex row makes overlap structurally impossible:
+          the input shrinks (flex: 1 1 auto; min-width: 0) and the close
+          target keeps its full 2.25rem box. DOM order = tab order:
+          input → close → chips (focus starts in the input on open).
+        -->
+        <div class="site-search__field">
+          <input
+            ref="inputRef"
+            v-model="search.query.value"
+            class="site-search__input focus-ring"
+            type="search"
+            role="combobox"
+            autocomplete="off"
+            :aria-label="t('search.inputLabel')"
+            :placeholder="t('search.placeholder')"
+            aria-controls="site-search-listbox"
+            aria-autocomplete="list"
+            :aria-expanded="options.length > 0 ? 'true' : 'false'"
+            :aria-activedescendant="activeOption?.id ?? undefined"
+            @keydown="onInputKeydown"
+          />
 
-        <input
-          ref="inputRef"
-          v-model="search.query.value"
-          class="site-search__input focus-ring"
-          type="search"
-          role="combobox"
-          autocomplete="off"
-          :aria-label="t('search.inputLabel')"
-          :placeholder="t('search.placeholder')"
-          aria-controls="site-search-listbox"
-          aria-autocomplete="list"
-          :aria-expanded="options.length > 0 ? 'true' : 'false'"
-          :aria-activedescendant="activeOption?.id ?? undefined"
-          @keydown="onInputKeydown"
-        />
+          <button
+            type="button"
+            class="site-search__close focus-ring"
+            :aria-label="t('search.close')"
+            @click="close"
+          >
+            ✕
+          </button>
+        </div>
 
         <div
           class="site-search__chips"
@@ -607,10 +618,17 @@ watch(
   }
 }
 
+/* ── Field row (input + close, normal flow) ──────────────────────────────── */
+
+.site-search__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .site-search__close {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  flex: 0 0 auto;
+  position: static;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -632,9 +650,11 @@ watch(
 /* ── Input ───────────────────────────────────────────────────────────────── */
 
 .site-search__input {
-  width: 100%;
+  /* Shrink instead of letting the glyphs run under the close button — the
+     old absolute close + padding-inline-end hack overlapped at 320 px. */
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 0.625rem 0.75rem;
-  padding-inline-end: 3.25rem; /* room for the close button */
   border: 1px solid var(--color-form-border);
   border-radius: 0.375rem;
   background: var(--color-form-bg);

@@ -262,6 +262,39 @@ describe("trigger and dialog lifecycle", () => {
     expect(openDialog()).toBeNull();
   });
 
+  // User-reported fix: the absolutely-positioned close button overlapped the
+  // input at narrow widths. The close control now sits in the normal flow
+  // beside the input inside a flex field row — never above it.
+  it("lays the input and close button out in a flex field row", async () => {
+    const { wrapper } = await setup();
+    await openViaTrigger(wrapper);
+
+    const field = q<HTMLElement>(".site-search__field");
+    const input = q<HTMLElement>('[role="combobox"]');
+    const close = q<HTMLElement>(".site-search__close");
+
+    expect(field).not.toBeNull();
+    expect(input).not.toBeNull();
+    expect(close).not.toBeNull();
+
+    // Both live inside the field row, as siblings in normal flow.
+    expect(input!.parentElement).toBe(field);
+    expect(close!.parentElement).toBe(field);
+
+    // DOM order is the tab order contract: input first, then close, then the
+    // chips group — keyboard traversal matches the visual row.
+    const dialog = openDialog()!;
+    const controls = [...dialog.querySelectorAll<HTMLElement>("input, button")];
+    expect(controls[0]).toBe(input);
+    expect(controls[1]).toBe(close);
+
+    // Close keeps its accessible label and its click-closes behavior.
+    expect(close!.getAttribute("aria-label")).toBe("Close search");
+    close!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushPromises();
+    expect(openDialog()).toBeNull();
+  });
+
   it("resets query and filter on close", async () => {
     const { wrapper, rpcFake } = await setup({
       rpc: { rows: [DOC_ROW] }

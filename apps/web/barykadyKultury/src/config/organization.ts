@@ -13,8 +13,14 @@
 
 /** A configured social media channel. */
 export interface SocialLink {
-  /** Platform identifier, also used for icon selection. */
-  platform: "facebook" | "instagram" | "youtube" | "twitter" | "linkedin";
+  /** Platform identifier, also used for icon selection (T-043 adds telegram). */
+  platform:
+    | "facebook"
+    | "instagram"
+    | "telegram"
+    | "youtube"
+    | "twitter"
+    | "linkedin";
   /** Human-readable accessible name for the icon-only link (DESIGN_SYSTEM.md §4). */
   label: string;
   /**
@@ -69,8 +75,8 @@ export interface OrganizationConfig {
   contact: ContactDetails;
   /**
    * Configured social media channels.
-   * D-05 OPEN — the list is empty until the project owner supplies real URLs.
-   * SocialLinks renders nothing when this list is empty or all URLs are empty.
+   * D-05: real URLs must be supplied by the project owner — never invent one.
+   * SocialLinks renders nothing when this list is empty or a URL is empty.
    */
   socialLinks: SocialLink[];
   /**
@@ -86,7 +92,8 @@ export interface OrganizationConfig {
  * D-04: `contact` is intentionally empty — the footer contact block and the
  *       Contact page stay hidden/empty until the NGO owner supplies verified
  *       data (T-021).
- * D-05: socialLinks is intentionally empty — the social block renders nothing.
+ * D-05: `socialLinks` carries the owner-verified Facebook, Instagram and
+ *       Telegram URLs (T-043); unverified platforms stay absent entirely.
  */
 export const organization: OrganizationConfig = {
   name: "Barykady Kultury",
@@ -101,7 +108,26 @@ export const organization: OrganizationConfig = {
     address: "",
     officeHours: ""
   },
-  // D-05 OPEN: render nothing until real URLs are supplied.
-  socialLinks: [],
+  // D-05 (T-043): owner-supplied official channels, page titles verified
+  // 2026-10-21 (Facebook "BARYKADY KULTURY", Instagram/Telegram
+  // "@barykadykultury"). These are the ONLY approved URLs — the no-invent
+  // rule stands for every other platform: an empty url renders nothing.
+  socialLinks: [
+    {
+      platform: "facebook",
+      label: "Barykady Kultury on Facebook",
+      url: "https://www.facebook.com/BARYKADYKULTURY/"
+    },
+    {
+      platform: "instagram",
+      label: "Barykady Kultury on Instagram",
+      url: "https://www.instagram.com/barykadykultury/"
+    },
+    {
+      platform: "telegram",
+      label: "Barykady Kultury on Telegram",
+      url: "https://t.me/barykadykultury"
+    }
+  ],
   privacyUrl: ""
 };

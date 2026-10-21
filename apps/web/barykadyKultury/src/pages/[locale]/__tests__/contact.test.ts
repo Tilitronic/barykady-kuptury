@@ -64,4 +64,48 @@ describe("contact page", () => {
       wrapper.findAll('button[type="submit"], input[type="submit"]')
     ).toHaveLength(0);
   });
+
+  describe("T-043: follow-us social block", () => {
+    it("renders a localized Follow us heading with the labeled variant", async () => {
+      const wrapper = await mountContact("en");
+
+      const heading = wrapper.findAll("h2").find(h => h.text() === "Follow us");
+      expect(heading).toBeTruthy();
+
+      // Labeled variant: visible platform names next to the icons.
+      const links = wrapper.findAll(".social-links--labeled a");
+      expect(links.map(l => l.text())).toEqual([
+        "Facebook",
+        "Instagram",
+        "Telegram"
+      ]);
+    });
+
+    it("links the verified channel URLs with new-tab hardening", async () => {
+      const wrapper = await mountContact("en");
+
+      const links = wrapper.findAll(".social-links--labeled a");
+      expect(links.map(l => l.attributes("href"))).toEqual([
+        "https://www.facebook.com/BARYKADYKULTURY/",
+        "https://www.instagram.com/barykadykultury/",
+        "https://t.me/barykadykultury"
+      ]);
+      for (const link of links) {
+        expect(link.attributes("target")).toBe("_blank");
+        expect(link.attributes("rel")).toContain("noopener");
+      }
+    });
+
+    it("localizes the Follow us heading (pl, uk)", async () => {
+      const pl = await mountContact("pl");
+      expect(pl.findAll("h2").some(h => h.text() === "Obserwuj nas")).toBe(
+        true
+      );
+
+      const uk = await mountContact("uk");
+      expect(
+        uk.findAll("h2").some(h => h.text() === "Підписуйтесь на нас")
+      ).toBe(true);
+    });
+  });
 });

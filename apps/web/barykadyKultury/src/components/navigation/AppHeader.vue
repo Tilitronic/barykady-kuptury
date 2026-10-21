@@ -90,6 +90,14 @@
           Ctrl/Cmd+K shortcuts reach it from anywhere, drawer closed included.
         -->
         <SiteSearch />
+        <!--
+          T-043: the verified social channels sit between the search action
+          and the theme/language settings — same DOM inline and in the drawer,
+          icon variant only (2.25rem targets). SocialLinks renders nothing
+          when no URL is configured, so a misconfigured org never leaves a
+          dead placeholder in the bar.
+        -->
+        <SocialLinks :links="organization.socialLinks" variant="icon" />
         <ThemeToggle />
         <LanguageSwitcher />
       </div>
@@ -123,7 +131,9 @@ import { useI18n } from "vue-i18n";
 import BrandLogo from "@/components/brand/BrandLogo.vue";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import SiteSearch from "@/components/search/SiteSearch.vue";
+import SocialLinks from "@/components/navigation/SocialLinks.vue";
 import ThemeToggle from "@/components/ThemeToggle.vue";
+import { organization } from "@/config/organization";
 import { mainNavItems, type NavItem } from "@/config/navigation";
 import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
 

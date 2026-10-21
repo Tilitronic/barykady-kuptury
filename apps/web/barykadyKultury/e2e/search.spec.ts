@@ -334,4 +334,48 @@ test.describe("site search", () => {
     await yearRow.click();
     await expect(page).toHaveURL(/\/en\/publications#2026$/);
   });
+
+  // User-reported fix: the old absolute close button overlapped the input's
+  // text at narrow widths. The field row is flex now — assert the bounding
+  // boxes never intersect at 320 px and the button still closes the dialog.
+  test("close button never overlaps the input at 320 px", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto("/en");
+
+    await page.getByTestId("menu-trigger").click();
+    await page.getByRole("button", { name: "Search the site" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    const input = page.getByRole("combobox");
+    const close = page.getByRole("button", { name: "Close search" });
+    await expect(input).toBeVisible();
+    await expect(close).toBeVisible();
+
+    const inputBox = await input.boundingBox();
+    const closeBox = await close.boundingBox();
+    expect(inputBox, "input has no box").not.toBeNull();
+    expect(closeBox, "close has no box").not.toBeNull();
+
+    const overlaps =
+      inputBox!.x < closeBox!.x + closeBox!.width &&
+      closeBox!.x < inputBox!.x + inputBox!.width &&
+      inputBox!.y < closeBox!.y + closeBox!.height &&
+      closeBox!.y < inputBox!.y + inputBox!.height;
+    expect(overlaps, "close button overlaps the input").toBe(false);
+    // Side by side: a real gap, not just non-intersection.
+    expect(closeBox!.x - (inputBox!.x + inputBox!.width)).toBeGreaterThan(0);
+
+    // Focus order from the input: Tab reaches close, then the chips.
+    await expect(input).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(close).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("search-chip-all")).toBeFocused();
+
+    // And it closes on click.
+    await close.click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    await checkA11y(page);
+  });
 });
