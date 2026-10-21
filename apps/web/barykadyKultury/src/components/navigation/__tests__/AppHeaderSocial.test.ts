@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { createMemoryHistory, createRouter } from "vue-router";
 
 import AppHeader from "@/components/navigation/AppHeader.vue";
-import { organization } from "@/config/organization";
+import { activeSocialLinks, organization } from "@/config/organization";
 import { routes } from "@/router/routes";
 import { createTestI18n } from "@/test-utils/mount";
 
@@ -95,7 +95,7 @@ describe("AppHeader social links", () => {
     const wrapper = await mountHeader();
     const count = wrapper.findAll(".app-header__controls .social-links a");
     expect(count.length).toBe(
-      organization.socialLinks.filter(l => l.url).length
+      activeSocialLinks(organization.socialLinks).length
     );
   });
 });

@@ -9,17 +9,21 @@ import type {
   ReaderDocumentModel,
   ReaderDocumentV1,
   ReaderEntityKind,
-  ReaderSourceProvider,
   ReaderTranslation
 } from "./types";
 
 /**
  * Reader data access (T-040).
  *
- * One published row (canonical slug, D-24) plus every translation, every
- * owner asset and the root source metadata. Locale selection is deliberately
- * NOT done here: D-38's requested → UI → EN → first fallback belongs to the
- * composable so a language switch never refetches the document.
+ * One published row (canonical slug, D-24) plus every translation and every
+ * owner asset. Locale selection is deliberately NOT done here: D-38's
+ * requested → UI → EN → first fallback belongs to the composable so a language
+ * switch never refetches the document.
+ *
+ * T-044 privacy: provider paths and external IDs are admin/server metadata
+ * (T-041/T-042 signed downloads). They must never be selected by a public
+ * reader query, so they are absent from the row types, SELECT lists and the
+ * returned model.
  *
  * RLS is the access boundary; the explicit `.eq("status", "published")` is a
  * second guard and makes the resolver's "row-level strictness" visible in the
@@ -33,12 +37,6 @@ type DocumentRow = {
   language: Database["public"]["Enums"]["content_locale"] | null;
   publication_date: string | null;
   updated_at: string;
-  source_provider: ReaderSourceProvider;
-  source_path: string | null;
-  source_mime: string | null;
-  source_external_id: string | null;
-  source_synced_at: string | null;
-  allow_original_download: boolean;
   organization_document_translations: DocumentTranslationRow[];
 };
 
@@ -58,12 +56,6 @@ type PublicationRow = {
   publication_date: string | null;
   external_url: string | null;
   updated_at: string;
-  source_provider: ReaderSourceProvider;
-  source_path: string | null;
-  source_mime: string | null;
-  source_external_id: string | null;
-  source_synced_at: string | null;
-  allow_original_download: boolean;
   publication_translations: PublicationTranslationRow[];
 };
 
@@ -94,12 +86,6 @@ const DOCUMENT_SELECT = [
   "language",
   "publication_date",
   "updated_at",
-  "source_provider",
-  "source_path",
-  "source_mime",
-  "source_external_id",
-  "source_synced_at",
-  "allow_original_download",
   "organization_document_translations(locale, title, description, body, body_ast, body_ast_version)"
 ].join(", ");
 
@@ -110,12 +96,6 @@ const PUBLICATION_SELECT = [
   "publication_date",
   "external_url",
   "updated_at",
-  "source_provider",
-  "source_path",
-  "source_mime",
-  "source_external_id",
-  "source_synced_at",
-  "allow_original_download",
   "publication_translations(locale, title, abstract, body, body_ast, body_ast_version)"
 ].join(", ");
 
@@ -182,24 +162,6 @@ function availableLocales(
   return SUPPORTED_LOCALES.filter(locale => readable.has(locale));
 }
 
-function mapSource(row: {
-  source_provider: ReaderSourceProvider;
-  source_path: string | null;
-  source_mime: string | null;
-  source_external_id: string | null;
-  source_synced_at: string | null;
-  allow_original_download: boolean;
-}) {
-  return {
-    provider: row.source_provider,
-    path: row.source_path,
-    mime: row.source_mime,
-    externalId: row.source_external_id,
-    syncedAt: row.source_synced_at,
-    allowOriginalDownload: row.allow_original_download
-  };
-}
-
 function mapAsset(row: AssetRow): ReaderAsset {
   return {
     id: row.id,
@@ -229,7 +191,6 @@ function mapDocument(
     translations,
     availableLocales: availableLocales(translations),
     assets: assets.map(mapAsset),
-    source: mapSource(row),
     documentType: row.document_type,
     language: row.language,
     publicationDate: row.publication_date,
@@ -253,7 +214,6 @@ function mapPublication(
     translations,
     availableLocales: availableLocales(translations),
     assets: assets.map(mapAsset),
-    source: mapSource(row),
     documentType: null,
     language: row.language,
     publicationDate: row.publication_date,

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, h, type PropType } from "vue";
+import { computed, defineComponent, h, type PropType } from "vue";
 
 import {
   renderBlocks,
@@ -55,23 +55,27 @@ export default defineComponent({
     }
   },
   setup(props) {
-    return () => {
+    // T-044/F6: parsing is the expensive part; memoize the VNodes on exactly the
+    // inputs that can change them. Unrelated re-renders (theme, locale chrome,
+    // parent updates) reuse the cached tree; the safe renderer is unchanged.
+    const children = computed(() => {
       const options = {
         newTabLabel: props.newTabLabel,
         labelLang: props.labelLang,
         headingOffset: props.headingOffset
       };
-      const children =
-        props.blocks !== undefined
-          ? renderBlocks(props.blocks, options)
-          : renderRichText(props.content, options);
 
-      return h(
+      return props.blocks !== undefined
+        ? renderBlocks(props.blocks, options)
+        : renderRichText(props.content, options);
+    });
+
+    return () =>
+      h(
         "div",
         { class: "localized-rich-text", lang: props.lang },
-        children
+        children.value
       );
-    };
   }
 });
 </script>

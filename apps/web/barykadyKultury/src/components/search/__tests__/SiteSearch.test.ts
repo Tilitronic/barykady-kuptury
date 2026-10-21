@@ -250,6 +250,28 @@ describe("trigger and dialog lifecycle", () => {
     expect(document.activeElement).toBe(trigger.element);
   });
 
+  // T-044 readability: focus restore must use the component's own trigger
+  // ref, not a global `document.querySelector("[data-testid=...]")` — the
+  // latter grabs the FIRST match in document order, so any other element
+  // carrying the same test id (decoy above) would steal the focus.
+  it("restores focus to its OWN trigger, not a same-testid element elsewhere", async () => {
+    const decoy = document.createElement("button");
+    decoy.setAttribute("data-testid", "site-search-trigger");
+    document.body.appendChild(decoy);
+
+    try {
+      const { wrapper } = await setup();
+      const trigger = await openViaTrigger(wrapper);
+
+      await pressGlobal("Escape");
+
+      expect(document.activeElement).toBe(trigger.element);
+      expect(document.activeElement).not.toBe(decoy);
+    } finally {
+      decoy.remove();
+    }
+  });
+
   it("closes on backdrop click", async () => {
     const { wrapper } = await setup();
     await openViaTrigger(wrapper);
@@ -543,12 +565,14 @@ describe("keyboard traversal", () => {
     await flushPromises();
     key(input, "Enter");
     await flushPromises();
-    await new Promise(resolve => setTimeout(resolve, 0));
+    // Route components are lazy (T-044 F1); wait for the dynamic import.
+    await vi.waitFor(() => {
+      expect(router.currentRoute.value.path).toBe("/en/about");
+    });
 
     expect(openDialog()).toBeNull();
     // First option for "regulations" is the nav "Documents" section entry
     // (keyword match in the frozen registry) → /en/about#documents.
-    expect(router.currentRoute.value.path).toBe("/en/about");
     expect(router.currentRoute.value.hash).toBe("#documents");
   });
 

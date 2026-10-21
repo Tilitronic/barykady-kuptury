@@ -30,6 +30,7 @@
         loading every page.
   -->
   <button
+    ref="triggerRef"
     type="button"
     class="site-search__trigger focus-ring"
     data-testid="site-search-trigger"
@@ -333,6 +334,10 @@ const FILTER_NAMES: readonly SiteSearchFilter[] = [
 ];
 
 const isOpen = ref(false);
+/** This instance's trigger button — focus returns here on close (T-044):
+ * a component-local ref, not a global testid query that could match another
+ * element (or another instance) elsewhere in the document. */
+const triggerRef = ref<HTMLButtonElement | null>(null);
 const dialogRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 
@@ -419,11 +424,7 @@ function close(): void {
   isOpen.value = false;
   document.body.style.overflow = previousBodyOverflow;
   search.reset();
-  void nextTick(() => {
-    document
-      .querySelector<HTMLElement>("[data-testid='site-search-trigger']")
-      ?.focus();
-  });
+  void nextTick(() => triggerRef.value?.focus());
 }
 
 function chooseFilter(name: SiteSearchFilter): void {

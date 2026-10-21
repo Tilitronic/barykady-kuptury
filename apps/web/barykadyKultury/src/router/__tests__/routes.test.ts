@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { RouteRecordRaw } from "vue-router";
 import { createMemoryHistory, createRouter } from "vue-router";
 
 import { routes } from "@/router/routes";
@@ -119,4 +120,42 @@ describe("about consolidation redirects (T-039)", () => {
     expect(router.hasRoute("about-team")).toBe(false);
     expect(router.hasRoute("about-documents")).toBe(false);
   });
+});
+
+/**
+ * T-044 F1 — route-level code splitting.
+ *
+ * The route table is the only place that may import a page. A static import
+ * drags every page (including the admin subtree) into the public entry chunk,
+ * so this gate asserts each `component` is a lazy loader (a function) rather
+ * than a resolved component object. Route names, paths, meta and redirects are
+ * unchanged by the split; the suites above keep guarding that contract.
+ */
+function collectRouteRecords(records: RouteRecordRaw[]): RouteRecordRaw[] {
+  return records.flatMap(record => [
+    record,
+    ...collectRouteRecords(record.children ?? [])
+  ]);
+}
+
+describe("route-level code splitting (T-044 F1)", () => {
+  // Redirect-only records carry no component; they are not split.
+  const componentRecords = collectRouteRecords(routes).filter(
+    record => "component" in record && record.component !== undefined
+  );
+
+  it("covers the whole table, including both layouts", () => {
+    // 12 public pages + 3 admin pages + 2 shell layouts + the global 404.
+    expect(componentRecords.length).toBeGreaterThanOrEqual(17);
+  });
+
+  it.each(componentRecords)(
+    "$name ($path) loads its component lazily",
+    record => {
+      expect(
+        typeof (record as { component?: unknown }).component,
+        `${String(record.name ?? record.path)} still imports its page eagerly`
+      ).toBe("function");
+    }
+  );
 });

@@ -8,7 +8,8 @@ import type { Database } from "@/types/database.types";
  * Reader data access (T-040). A typed fake implements only the query-builder
  * surface the module uses; no live Supabase, no network. The assertions pin
  * the published-only row read, the owner-specific asset read and the mapping
- * of AST/body/source metadata into the reader model.
+ * of AST/body metadata into the reader model, and that no private source
+ * columns are ever selected or exposed (T-044).
  */
 
 interface FakeCall {
@@ -113,13 +114,6 @@ function documentRow(overrides: Record<string, unknown> = {}) {
     language: null,
     publication_date: null,
     updated_at: "2026-10-20T12:00:00Z",
-    source_provider: "upload",
-    source_path: "sources/regulations.docx",
-    source_mime:
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    source_external_id: null,
-    source_synced_at: null,
-    allow_original_download: true,
     organization_document_translations: [
       {
         locale: "en",
@@ -158,12 +152,6 @@ function publicationRow(overrides: Record<string, unknown> = {}) {
     publication_date: "2026-02-01",
     external_url: "https://example.org/publication",
     updated_at: "2026-10-20T12:00:00Z",
-    source_provider: "google_doc",
-    source_path: null,
-    source_mime: null,
-    source_external_id: "drive-doc-123",
-    source_synced_at: "2026-10-19T08:00:00Z",
-    allow_original_download: false,
     publication_translations: [
       {
         locale: "en",
@@ -176,6 +164,16 @@ function publicationRow(overrides: Record<string, unknown> = {}) {
     ],
     ...overrides
   };
+}
+
+function selectText(
+  fake: ReturnType<typeof createFakeSupabase>,
+  table: string
+): string {
+  const select = fake.calls.find(
+    call => call.table === table && call.method === "select"
+  );
+  return typeof select?.args[0] === "string" ? select.args[0] : "";
 }
 
 const ASSET = {
@@ -221,7 +219,7 @@ describe("fetchReaderDocument", () => {
     expect(fake.calls).toHaveLength(0);
   });
 
-  it("reads a published document with translations, assets and source metadata", async () => {
+  it("reads a published document with translations and assets", async () => {
     const fake = createFakeSupabase({
       tables: {
         organization_documents: [documentRow()],
@@ -247,14 +245,11 @@ describe("fetchReaderDocument", () => {
       language: null,
       publicationDate: null,
       externalUrl: null,
-      availableLocales: ["en", "pl"],
-      source: {
-        provider: "upload",
-        path: "sources/regulations.docx",
-        externalId: null,
-        allowOriginalDownload: true
-      }
+      availableLocales: ["en", "pl"]
     });
+    // T-044: private provider paths/IDs must never reach the public payload.
+    expect(model).not.toHaveProperty("source");
+    expect(selectText(fake, "organization_documents")).not.toContain("source_");
     expect(model?.translations).toHaveLength(3);
     expect(model?.translations[0]).toMatchObject({
       locale: "en",
@@ -301,7 +296,7 @@ describe("fetchReaderDocument", () => {
     });
   });
 
-  it("reads a publication and maps the abstract/body/source", async () => {
+  it("reads a publication and maps the abstract/body", async () => {
     const fake = createFakeSupabase({
       tables: {
         publications: [publicationRow()],
@@ -325,15 +320,10 @@ describe("fetchReaderDocument", () => {
       language: "en",
       publicationDate: "2026-02-01",
       externalUrl: "https://example.org/publication",
-      availableLocales: ["en"],
-      source: {
-        provider: "google_doc",
-        path: null,
-        externalId: "drive-doc-123",
-        syncedAt: "2026-10-19T08:00:00Z",
-        allowOriginalDownload: false
-      }
+      availableLocales: ["en"]
     });
+    expect(model).not.toHaveProperty("source");
+    expect(selectText(fake, "publications")).not.toContain("source_");
     expect(model?.translations[0]).toMatchObject({
       locale: "en",
       title: "Sample publication",

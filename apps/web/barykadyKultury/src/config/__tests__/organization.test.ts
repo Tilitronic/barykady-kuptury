@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { organization, type SocialLink } from "@/config/organization";
+import {
+  activeSocialLinks,
+  hasActiveSocialLinks,
+  organization,
+  type SocialLink
+} from "@/config/organization";
 
 /**
  * T-043 / D-05 — the no-invent guard for social URLs.
@@ -50,5 +55,55 @@ describe("organization.socialLinks (D-05)", () => {
       expect(seen.has(link.platform), `duplicate ${link.platform}`).toBe(false);
       seen.add(link.platform);
     }
+  });
+});
+
+/**
+ * T-044 readability: the "non-empty URL = configured" rule (D-05) lived as
+ * duplicated inline filters in SocialLinks.vue and contact.vue. The shared
+ * helpers below are now the single definition of that predicate — components
+ * must call them instead of re-deriving the rule.
+ */
+const fb: SocialLink = {
+  platform: "facebook",
+  label: "Facebook",
+  url: "https://www.facebook.com/BARYKADYKULTURY/"
+};
+const blank: SocialLink = {
+  platform: "instagram",
+  label: "Instagram",
+  url: ""
+};
+const whitespace: SocialLink = {
+  platform: "telegram",
+  label: "Telegram",
+  url: "   "
+};
+
+describe("activeSocialLinks / hasActiveSocialLinks (D-05 predicate)", () => {
+  it("keeps only links whose URL is non-empty after trimming", () => {
+    expect(activeSocialLinks([fb, blank, whitespace])).toEqual([fb]);
+  });
+
+  it("preserves the configured order of the surviving links", () => {
+    const tg: SocialLink = { ...whitespace, url: "https://t.me/x" };
+    expect(activeSocialLinks([tg, blank, fb])).toEqual([tg, fb]);
+  });
+
+  it("returns an empty array for an empty input without mutating it", () => {
+    const input: SocialLink[] = [];
+    expect(activeSocialLinks(input)).toEqual([]);
+    expect(input).toHaveLength(0);
+  });
+
+  it("treats whitespace-only URLs as unconfigured (hasActiveSocialLinks)", () => {
+    expect(hasActiveSocialLinks([blank, whitespace])).toBe(false);
+    expect(hasActiveSocialLinks([])).toBe(false);
+    expect(hasActiveSocialLinks([blank, fb])).toBe(true);
+  });
+
+  it("reports the shipped config as configured (live guard)", () => {
+    expect(hasActiveSocialLinks(organization.socialLinks)).toBe(true);
+    expect(activeSocialLinks(organization.socialLinks)).toHaveLength(3);
   });
 });

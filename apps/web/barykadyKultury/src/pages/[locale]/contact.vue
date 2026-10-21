@@ -59,7 +59,7 @@ import { useI18n } from "vue-i18n";
 
 import ContactChannels from "@/components/contact/ContactChannels.vue";
 import SocialLinks from "@/components/navigation/SocialLinks.vue";
-import { organization } from "@/config/organization";
+import { hasActiveSocialLinks, organization } from "@/config/organization";
 import { hasContactDetails } from "@/features/contact/contactDetails";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
@@ -83,12 +83,10 @@ const currentLocale = computed<Locale>(() => {
 const details = organization.contact;
 const hasChannels = hasContactDetails(details);
 
-/**
- * T-043: same "non-empty URL = configured" rule as SocialLinks — the heading
- * must not strand above an empty list (D-05: no placeholders).
- */
+/** Guard on the shared D-05 predicate (same rule SocialLinks applies) so
+ * the "Follow us" heading never strands above an empty list. */
 const hasSocialLinks = computed(() =>
-  organization.socialLinks.some(link => link.url.trim().length > 0)
+  hasActiveSocialLinks(organization.socialLinks)
 );
 </script>
 

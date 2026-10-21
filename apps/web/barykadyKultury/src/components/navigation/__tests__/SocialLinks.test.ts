@@ -137,6 +137,50 @@ describe("SocialLinks", () => {
       expect(wrapper.find("a svg").exists()).toBe(true);
       expect(wrapper.get("a").attributes("aria-label")).toBe("Mastodon");
     });
+
+    // T-044 readability: the v-if chain became a typed platform→glyph map.
+    // This pins the observable per-platform geometry so the refactor cannot
+    // silently swap or drop a glyph.
+    it("maps each platform to its distinct glyph (typed map contract)", () => {
+      const shapes = (link: SocialLink) => {
+        const svg = mountLinks([link]).get("a svg").element;
+        return {
+          path: svg.querySelectorAll("path").length,
+          rect: svg.querySelectorAll("rect").length,
+          circle: svg.querySelectorAll("circle").length,
+          line: svg.querySelectorAll("line").length
+        };
+      };
+
+      expect(shapes(facebook)).toEqual({
+        path: 1,
+        rect: 0,
+        circle: 0,
+        line: 0
+      });
+      expect(shapes(instagram)).toEqual({
+        path: 1,
+        rect: 1,
+        circle: 0,
+        line: 1
+      });
+      expect(shapes(telegram)).toEqual({
+        path: 2,
+        rect: 0,
+        circle: 0,
+        line: 0
+      });
+
+      // youtube / twitter / linkedin and any stale platform share the globe.
+      const globe = { path: 1, rect: 0, circle: 1, line: 1 };
+      expect(
+        shapes({
+          platform: "youtube",
+          label: "YouTube",
+          url: "https://youtube.com/@barykadykultury"
+        })
+      ).toEqual(globe);
+    });
   });
 
   describe("T-043: localized accessible labels", () => {

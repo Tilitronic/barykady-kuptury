@@ -31,6 +31,21 @@ export interface SocialLink {
 }
 
 /**
+ * The ONE definition of the D-05 "configured channel" rule: a link is live
+ * only when its URL is non-empty after trimming. SocialLinks.vue and the
+ * Contact page both consume these helpers (T-044) so the predicate can
+ * never drift between the list and its enclosing heading.
+ */
+export function activeSocialLinks(links: readonly SocialLink[]): SocialLink[] {
+  return links.filter(link => link.url.trim().length > 0);
+}
+
+/** Whether at least one channel is configured — headings guard on this. */
+export function hasActiveSocialLinks(links: readonly SocialLink[]): boolean {
+  return activeSocialLinks(links).length > 0;
+}
+
+/**
  * Public contact details — the single place D-04 data lands (T-021).
  *
  * Every field is optional *by convention*: an empty string means "not

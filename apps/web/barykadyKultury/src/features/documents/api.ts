@@ -31,6 +31,19 @@ export interface OrganizationDocumentRowWithTranslations extends OrganizationDoc
   readonly organization_document_translations: readonly OrganizationDocumentTranslationRow[];
 }
 
+/** List rows select only card metadata; the reader body stays on detail. */
+type OrganizationDocumentListTranslationRow = Pick<
+  OrganizationDocumentTranslationRow,
+  "locale" | "title" | "description"
+>;
+
+export interface OrganizationDocumentListRow extends Omit<
+  OrganizationDocumentRowWithTranslations,
+  "organization_document_translations"
+> {
+  readonly organization_document_translations: readonly OrganizationDocumentListTranslationRow[];
+}
+
 /** A locale-tagged translation projection shared by the listing and reader. */
 export interface OrganizationDocumentTranslation {
   readonly locale: Locale;
@@ -89,7 +102,10 @@ export const READER_REQUIRED_FIELDS = [
   "body"
 ] as const satisfies readonly (keyof OrganizationDocumentTranslation)[];
 
-const DOCUMENT_SELECT =
+const DOCUMENT_LIST_SELECT =
+  "id, slug, status, document_type, language, publication_date, storage_path, mime_type, file_size_bytes, sort_order, updated_at, organization_document_translations(locale, title, description)";
+
+const DOCUMENT_DETAIL_SELECT =
   "id, slug, status, document_type, language, publication_date, storage_path, mime_type, file_size_bytes, sort_order, updated_at, organization_document_translations(locale, title, description, body)";
 
 /** Navigation order for locales, so the switcher order never depends on rows. */
@@ -129,9 +145,14 @@ function toTranslation(
   };
 }
 
-/** Maps one joined row to a listing model, or `null` without usable text. */
+/**
+ * Maps a lean list row to the card model. The list query omits `body`, so the
+ * model exposes `body: null`; for a text document (`storage_path` null) all
+ * translation locales remain "readable" for the card's reader affordance —
+ * the reader itself resolves the actual readable translation and fallback.
+ */
 export function mapDocument(
-  row: OrganizationDocumentRowWithTranslations,
+  row: OrganizationDocumentListRow,
   locale: Locale
 ): OrganizationDocument | null {
   const selected = selectTranslation(
@@ -145,8 +166,12 @@ export function mapDocument(
 
   if (!selected) return null;
 
-  const translations =
-    row.organization_document_translations.map(toTranslation);
+  const availableLocales =
+    row.storage_path === null
+      ? row.organization_document_translations
+          .map(translation => translation.locale)
+          .sort((a, b) => LOCALE_ORDER.indexOf(a) - LOCALE_ORDER.indexOf(b))
+      : [];
 
   return {
     id: row.id,
@@ -161,8 +186,8 @@ export function mapDocument(
     mimeType: row.mime_type,
     sizeBytes: row.file_size_bytes,
     sortOrder: row.sort_order,
-    body: selected.value.body,
-    availableLocales: availableBodyLocales(translations),
+    body: null,
+    availableLocales,
     isFallback: selected.isFallback,
     updatedAt: row.updated_at
   };
@@ -244,11 +269,12 @@ export function selectReaderTranslation(
  */
 async function fetchPublishedDocumentRows(
   supabase: SupabaseClient<Database>,
+  select: string,
   slug?: string
 ): Promise<ContentResult<OrganizationDocumentRowWithTranslations>> {
   let query = supabase
     .from("organization_documents")
-    .select(DOCUMENT_SELECT)
+    .select(select)
     .eq("status", "published");
 
   if (slug !== undefined) query = query.eq("slug", slug);
@@ -272,7 +298,7 @@ export async function fetchPublishedDocuments(
 ): Promise<ContentResult<OrganizationDocument>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedDocumentRows(supabase);
+  const rows = await fetchPublishedDocumentRows(supabase, DOCUMENT_LIST_SELECT);
   if (rows.kind !== "ok") return rows;
 
   return fromRows(rows.items, row => mapDocument(row, locale));
@@ -291,7 +317,11 @@ export async function fetchPublishedDocumentBySlug(
 ): Promise<ContentResult<OrganizationDocumentReader>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedDocumentRows(supabase, slug);
+  const rows = await fetchPublishedDocumentRows(
+    supabase,
+    DOCUMENT_DETAIL_SELECT,
+    slug
+  );
   if (rows.kind !== "ok") return rows;
 
   const row = findDocumentBySlug(rows.items, slug);

@@ -55,6 +55,13 @@ function documentRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function selectText(
+  calls: ReturnType<typeof createFakeSupabase>["calls"]
+): string {
+  const select = calls.find(call => call.method === "select")?.args[0];
+  return typeof select === "string" ? select : "";
+}
+
 function eqValue(
   calls: ReturnType<typeof createFakeSupabase>["calls"],
   column: string
@@ -80,7 +87,20 @@ describe("fetchPublishedDocuments", () => {
     ).toBe(true);
   });
 
-  it("maps the localized body and every locale that carries text", async () => {
+  it("uses a lean list projection without the reader body", async () => {
+    const fake = createFakeSupabase({
+      tables: { organization_documents: [documentRow()] }
+    });
+
+    await fetchPublishedDocuments(fake.client, "en");
+
+    expect(selectText(fake.calls)).toContain(
+      "organization_document_translations(locale, title, description)"
+    );
+    expect(selectText(fake.calls)).not.toContain("body");
+  });
+
+  it("maps card metadata without fetching the reader body", async () => {
     const fake = createFakeSupabase({
       tables: {
         organization_documents: [
@@ -111,9 +131,12 @@ describe("fetchPublishedDocuments", () => {
 
     const [doc] = result.items;
     expect(doc!.title).toBe("Regulamin działalności stowarzyszenia zwykłego");
-    expect(doc!.body).toContain("Polski tekst");
+    // The list query omits the body; the reader/detail query owns it.
+    expect(doc!.body).toBeNull();
     expect(doc!.slug).toBe(CANONICAL_SLUG);
-    expect(doc!.availableLocales).toEqual(["en", "pl"]);
+    // Text documents (storage_path null) still link all translation locales,
+    // which is all the listing card needs for its "read online" affordance.
+    expect(doc!.availableLocales).toEqual(["en", "pl", "uk"]);
     expect(doc!.isFallback).toBe(false);
     expect(Object.keys(doc!)).not.toContain("document_type");
   });
@@ -136,7 +159,7 @@ describe("fetchPublishedDocuments", () => {
 });
 
 describe("fetchPublishedDocumentBySlug", () => {
-  it("queries by the canonical root slug", async () => {
+  it("queries by the canonical root slug and keeps the reader body", async () => {
     const fake = createFakeSupabase({
       tables: { organization_documents: [documentRow()] }
     });
@@ -144,6 +167,9 @@ describe("fetchPublishedDocumentBySlug", () => {
     await fetchPublishedDocumentBySlug(fake.client, CANONICAL_SLUG);
 
     expect(eqValue(fake.calls, "slug")).toEqual([CANONICAL_SLUG]);
+    expect(selectText(fake.calls)).toContain(
+      "organization_document_translations(locale, title, description, body)"
+    );
   });
 
   it("resolves the canonical slug when the requested-locale translation exists", async () => {
@@ -174,6 +200,9 @@ describe("fetchPublishedDocumentBySlug", () => {
 
     expect(result.items[0]!.id).toBe(DOC_ID);
     expect(result.items[0]!.translations).toHaveLength(2);
+    expect(result.items[0]!.translations[1]!.body).toBe(
+      "## § 1\n\nPolski tekst."
+    );
   });
 
   it("resolves the canonical slug when the requested translation is absent (reader falls back to English)", async () => {

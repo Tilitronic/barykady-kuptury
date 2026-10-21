@@ -29,6 +29,19 @@ export interface ProjectRowWithTranslations extends ProjectRow {
   readonly project_translations: readonly ProjectTranslationRow[];
 }
 
+/** List rows select only the card fields; `body` stays on the detail query. */
+type ProjectListTranslationRow = Pick<
+  ProjectTranslationRow,
+  "locale" | "title" | "summary"
+>;
+
+export interface ProjectListRowWithTranslations extends Omit<
+  ProjectRowWithTranslations,
+  "project_translations"
+> {
+  readonly project_translations: readonly ProjectListTranslationRow[];
+}
+
 /** Locale-independent project metadata plus one locale-resolved translation. */
 export interface ProjectSummary {
   readonly id: string;
@@ -50,17 +63,68 @@ export interface ProjectSummary {
  * need are present. T-027 enforces the same rule on publish; the seed rows for
  * the published fixture satisfy it in all three locales.
  */
+/** Card/list completeness: title + summary (body is detail-only). */
+export const PROJECT_LIST_REQUIRED_FIELDS = [
+  "title",
+  "summary"
+] as const satisfies readonly (keyof ProjectListTranslationRow)[];
+
+/** Detail completeness: the body is required to render the reader page. */
 export const PROJECT_REQUIRED_FIELDS = [
   "title",
   "summary",
   "body"
 ] as const satisfies readonly (keyof ProjectTranslationRow)[];
 
-const PROJECT_SELECT =
+const PROJECT_LIST_SELECT =
+  "id, slug, status, featured_rank, cover_path, start_date, end_date, updated_at, project_translations(locale, title, summary)";
+
+const PROJECT_DETAIL_SELECT =
   "id, slug, status, featured_rank, cover_path, start_date, end_date, updated_at, project_translations(locale, title, summary, body)";
 
-/** Maps one joined row to a domain model, or `null` when it has no usable text. */
+function toSummary(
+  row: ProjectRowWithTranslations | ProjectListRowWithTranslations,
+  translation: ProjectListTranslationRow,
+  body: string | null,
+  isFallback: boolean
+): ProjectSummary {
+  return {
+    id: row.id,
+    status: row.status,
+    slug: row.slug,
+    title: translation.title,
+    summary: translation.summary,
+    body,
+    isFallback,
+    featuredRank: row.featured_rank,
+    coverPath: row.cover_path,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    updatedAt: row.updated_at
+  };
+}
+
+/**
+ * Maps a lean list row (no body) to the card model. `body` is null because the
+ * list deliberately does not fetch it; detail pages use `mapProjectDetail`.
+ */
 export function mapProject(
+  row: ProjectListRowWithTranslations,
+  locale: Locale
+): ProjectSummary | null {
+  const selected = selectTranslation(
+    { status: row.status, translations: row.project_translations },
+    locale,
+    { requiredFields: PROJECT_LIST_REQUIRED_FIELDS }
+  );
+
+  return selected
+    ? toSummary(row, selected.value, null, selected.isFallback)
+    : null;
+}
+
+/** Maps a full detail row (with body) to the page model. */
+export function mapProjectDetail(
   row: ProjectRowWithTranslations,
   locale: Locale
 ): ProjectSummary | null {
@@ -70,24 +134,9 @@ export function mapProject(
     { requiredFields: PROJECT_REQUIRED_FIELDS }
   );
 
-  if (!selected) return null;
-
-  const translation = selected.value;
-
-  return {
-    id: row.id,
-    status: row.status,
-    slug: row.slug,
-    title: translation.title,
-    summary: translation.summary,
-    body: translation.body,
-    isFallback: selected.isFallback,
-    featuredRank: row.featured_rank,
-    coverPath: row.cover_path,
-    startDate: row.start_date,
-    endDate: row.end_date,
-    updatedAt: row.updated_at
-  };
+  return selected
+    ? toSummary(row, selected.value, selected.value.body, selected.isFallback)
+    : null;
 }
 
 /** Published projects for a locale (newest-updated first), or an explicit state. */
@@ -97,7 +146,7 @@ export async function fetchPublishedProjects(
 ): Promise<ContentResult<ProjectSummary>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedProjectRows(supabase);
+  const rows = await fetchPublishedProjectRows(supabase, PROJECT_LIST_SELECT);
   if (rows.kind !== "ok") return rows;
 
   return fromRows(rows.items, row => mapProject(row, locale));
@@ -146,13 +195,17 @@ export async function fetchPublishedProjectBySlug(
 ): Promise<ContentResult<ProjectSummary>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedProjectRows(supabase, slug);
+  const rows = await fetchPublishedProjectRows(
+    supabase,
+    PROJECT_DETAIL_SELECT,
+    slug
+  );
   if (rows.kind !== "ok") return rows;
 
   const row = findProjectBySlug(rows.items, slug, locale);
   if (!row) return { kind: "empty" };
 
-  const project = mapProject(row, locale);
+  const project = mapProjectDetail(row, locale);
   return project ? { kind: "ok", items: [project] } : { kind: "empty" };
 }
 
@@ -162,11 +215,12 @@ export async function fetchPublishedProjectBySlug(
  */
 async function fetchPublishedProjectRows(
   supabase: SupabaseClient<Database>,
+  select: string,
   slug?: string
 ): Promise<ContentResult<ProjectRowWithTranslations>> {
   let query = supabase
     .from("projects")
-    .select(PROJECT_SELECT)
+    .select(select)
     .eq("status", "published");
 
   if (slug !== undefined) query = query.eq("slug", slug);

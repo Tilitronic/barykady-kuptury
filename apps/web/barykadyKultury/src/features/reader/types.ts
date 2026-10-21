@@ -201,21 +201,6 @@ export interface ReaderAsset {
   readonly sizeBytes: number | null;
 }
 
-export type ReaderSourceProvider = "manual" | "upload" | "google_doc";
-
-export interface ReaderSourceMeta {
-  readonly provider: ReaderSourceProvider;
-  readonly path: string | null;
-  readonly mime: string | null;
-  readonly externalId: string | null;
-  readonly syncedAt: string | null;
-  /**
-   * Only a hint for the reader: the UI still requests a short-lived signed URL
-   * server-side when true (D-30); the bucket itself is private.
-   */
-  readonly allowOriginalDownload: boolean;
-}
-
 export interface ReaderDocumentModel {
   readonly id: string;
   readonly kind: ReaderEntityKind;
@@ -224,7 +209,6 @@ export interface ReaderDocumentModel {
   /** Translations with readable content, in supported-locale order. */
   readonly availableLocales: readonly Locale[];
   readonly assets: readonly ReaderAsset[];
-  readonly source: ReaderSourceMeta;
   /** Documents only. */
   readonly documentType: string | null;
   /** Language of an uploaded file, where meaningful. */

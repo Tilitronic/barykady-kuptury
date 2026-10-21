@@ -28,10 +28,10 @@ export default defineConfig(ctx => {
       // 'eva-icons',
       // 'themify',
       // 'line-awesome',
-
       // T-007: roboto-font removed — Inter Variable is self-hosted via
       // public/fonts/ and declared in src/css/typography.css.
-      "material-icons" // optional, you are not bound to it
+      // T-044/F4b: material-icons removed — the app uses project SVGs and
+      // zero qi-* icon classes, so the ~125 KB font was never downloaded.
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build

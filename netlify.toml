@@ -18,3 +18,28 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# T-044: response-level security headers. The CSP mirrors index.html's meta
+# policy (default/script/style/connect/img/font/object/base/form), plus
+# frame-ancestors. The Supabase wildcard is provisional until T-034 pins the
+# hosted project origin (D-08); update both the meta and this header together.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https://*.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Hashed build output is content-addressed; cache it forever.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Self-hosted font files are stable, versioned by filename when changed.
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"

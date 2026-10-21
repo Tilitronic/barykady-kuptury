@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Session, User } from "@supabase/supabase-js";
 
 import { configureAuth, type AuthApi } from "@/features/auth/authStore";
@@ -44,6 +44,21 @@ async function mountSignIn(initialRoute = "/en/admin/sign-in") {
   return mountWithPlugins(AdminSignInPage, {
     routes,
     initialRoute
+  });
+}
+
+/**
+ * T-044 F1: route components are lazy, so a router.push resolves after a
+ * dynamic import. Poll until the sign-in route has actually been left instead
+ * of assuming a single macrotask is enough.
+ */
+async function waitForNavigation(
+  wrapper: Awaited<ReturnType<typeof mountSignIn>>
+): Promise<void> {
+  await vi.waitFor(() => {
+    expect(wrapper.vm.$router.currentRoute.value.path).not.toBe(
+      "/en/admin/sign-in"
+    );
   });
 }
 
@@ -169,7 +184,7 @@ describe("submission lifecycle", () => {
       error: null
     });
     await submitPromise;
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await waitForNavigation(wrapper);
 
     expect(wrapper.vm.$router.currentRoute.value.path).toBe("/en/admin");
   });
@@ -218,7 +233,7 @@ describe("submission lifecycle", () => {
     await wrapper.get("#admin-email").setValue("admin@demo.local");
     await wrapper.get("#admin-password").setValue("hunter2");
     await wrapper.get("form").trigger("submit");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await waitForNavigation(wrapper);
 
     // The stored target is an admin path; the guard is not installed in this
     // unit router, so the page must navigate there verbatim.
@@ -236,7 +251,7 @@ describe("submission lifecycle", () => {
     await wrapper.get("#admin-email").setValue("admin@demo.local");
     await wrapper.get("#admin-password").setValue("hunter2");
     await wrapper.get("form").trigger("submit");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await waitForNavigation(wrapper);
 
     expect(wrapper.vm.$router.currentRoute.value.fullPath).toBe(
       "/en/admin/access-denied?tab=1#top"
@@ -252,7 +267,7 @@ describe("submission lifecycle", () => {
     await wrapper.get("#admin-email").setValue("admin@demo.local");
     await wrapper.get("#admin-password").setValue("hunter2");
     await wrapper.get("form").trigger("submit");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await waitForNavigation(wrapper);
 
     expect(wrapper.vm.$router.currentRoute.value.path).toBe("/en/admin");
   });
@@ -266,7 +281,7 @@ describe("submission lifecycle", () => {
     await wrapper.get("#admin-email").setValue("admin@demo.local");
     await wrapper.get("#admin-password").setValue("hunter2");
     await wrapper.get("form").trigger("submit");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await waitForNavigation(wrapper);
 
     expect(wrapper.vm.$router.currentRoute.value.path).toBe("/en/admin");
   });
@@ -280,7 +295,7 @@ describe("submission lifecycle", () => {
     await wrapper.get("#admin-email").setValue("admin@demo.local");
     await wrapper.get("#admin-password").setValue("hunter2");
     await wrapper.get("form").trigger("submit");
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await waitForNavigation(wrapper);
 
     expect(wrapper.vm.$router.currentRoute.value.path).toBe("/en/admin");
   });

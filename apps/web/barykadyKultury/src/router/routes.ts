@@ -4,24 +4,6 @@ import { LOCALE_ROUTE_PATTERN } from "@/features/i18n/locales";
 import type { LocalePageMeta } from "@/features/i18n/pageMeta";
 import { resolveInitialLocale } from "@/features/i18n/resolveInitialLocale";
 
-import PublicLayout from "@/layouts/PublicLayout.vue";
-import AdminLayout from "@/layouts/AdminLayout.vue";
-import HomePage from "@/pages/[locale]/index.vue";
-import NotFoundPage from "@/pages/404.vue";
-import LocaleNotFoundPage from "@/pages/[locale]/not-found.vue";
-import ProjectsPage from "@/pages/[locale]/projects.vue";
-import ProjectDetailPage from "@/pages/[locale]/project-detail.vue";
-import ContactPage from "@/pages/[locale]/contact.vue";
-import AboutPage from "@/pages/[locale]/about.vue";
-import AboutDocumentPage from "@/pages/[locale]/about-document.vue";
-import SupportPage from "@/pages/[locale]/support.vue";
-import EventsPage from "@/pages/[locale]/events.vue";
-import PublicationsPage from "@/pages/[locale]/publications.vue";
-import PublicationDetailPage from "@/pages/[locale]/publication-detail.vue";
-import AdminSignInPage from "@/pages/admin/AdminSignInPage.vue";
-import AdminDashboardPage from "@/pages/admin/AdminDashboardPage.vue";
-import AdminDeniedPage from "@/pages/admin/AdminDeniedPage.vue";
-
 declare module "vue-router" {
   interface RouteMeta {
     /**
@@ -62,6 +44,15 @@ declare module "vue-router" {
  */
 const localeSegment = `:locale(${LOCALE_ROUTE_PATTERN})`;
 
+/**
+ * T-044 F1: every route component is a lazy loader.
+ *
+ * WHY: the app previously emitted one ~557 KB entry chunk containing the
+ * public site, the admin subtree and every page. Route-level splitting keeps
+ * the first paint to the current page and moves admin/reader/search code into
+ * separate chunks. Keep `component` values as functions; a static import here
+ * silently re-merges code into the entry chunk (guarded by routes.test.ts).
+ */
 export const routes: RouteRecordRaw[] = [
   // ── Root redirect ─────────────────────────────────────────────────────────
   {
@@ -75,13 +66,13 @@ export const routes: RouteRecordRaw[] = [
   // each page importing AppShell.
   {
     path: `/${localeSegment}`,
-    component: PublicLayout,
+    component: () => import("@/layouts/PublicLayout.vue"),
     children: [
       // Home
       {
         path: "",
         name: "home",
-        component: HomePage,
+        component: () => import("@/pages/[locale]/index.vue"),
         meta: {
           pageMeta: {
             titleKey: "home.title",
@@ -93,7 +84,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "contact",
         name: "contact",
-        component: ContactPage,
+        component: () => import("@/pages/[locale]/contact.vue"),
         meta: {
           pageMeta: {
             titleKey: "contact.title",
@@ -105,7 +96,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "about",
         name: "about",
-        component: AboutPage,
+        component: () => import("@/pages/[locale]/about.vue"),
         meta: {
           pageMeta: {
             titleKey: "about.title",
@@ -143,7 +134,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "about/documents/:slug",
         name: "about-document",
-        component: AboutDocumentPage,
+        component: () => import("@/pages/[locale]/about-document.vue"),
         meta: {
           pageMeta: {
             titleKey: "aboutDocuments.title",
@@ -155,7 +146,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "support",
         name: "support",
-        component: SupportPage,
+        component: () => import("@/pages/[locale]/support.vue"),
         meta: {
           pageMeta: {
             titleKey: "support.title",
@@ -167,7 +158,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "projects",
         name: "projects",
-        component: ProjectsPage,
+        component: () => import("@/pages/[locale]/projects.vue"),
         meta: {
           pageMeta: {
             titleKey: "projects.title",
@@ -183,7 +174,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "projects/:slug",
         name: "project-detail",
-        component: ProjectDetailPage,
+        component: () => import("@/pages/[locale]/project-detail.vue"),
         meta: {
           pageMeta: {
             titleKey: "projects.title",
@@ -195,7 +186,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "events",
         name: "events",
-        component: EventsPage,
+        component: () => import("@/pages/[locale]/events.vue"),
         meta: {
           pageMeta: {
             titleKey: "events.title",
@@ -207,7 +198,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "publications",
         name: "publications",
-        component: PublicationsPage,
+        component: () => import("@/pages/[locale]/publications.vue"),
         meta: {
           pageMeta: {
             titleKey: "publications.title",
@@ -223,7 +214,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "publications/:slug",
         name: "publication-detail",
-        component: PublicationDetailPage,
+        component: () => import("@/pages/[locale]/publication-detail.vue"),
         meta: {
           pageMeta: {
             titleKey: "publications.title",
@@ -236,7 +227,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: ":pathMatch(.*)*",
         name: "locale-not-found",
-        component: LocaleNotFoundPage,
+        component: () => import("@/pages/[locale]/not-found.vue"),
         meta: {
           pageMeta: {
             titleKey: "notFound.title",
@@ -255,14 +246,14 @@ export const routes: RouteRecordRaw[] = [
   // `src/features/auth/adminGuard.ts`; these records only declare the shape.
   {
     path: `/${localeSegment}/admin`,
-    component: AdminLayout,
+    component: () => import("@/layouts/AdminLayout.vue"),
     children: [
       // Sign-in: reachable for anonymous and non-admins (switch-account
       // path); admins are bounced to the dashboard by the guard.
       {
         path: "sign-in",
         name: "admin-sign-in",
-        component: AdminSignInPage,
+        component: () => import("@/pages/admin/AdminSignInPage.vue"),
         meta: {
           pageMeta: {
             titleKey: "admin.signIn.title",
@@ -274,7 +265,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "access-denied",
         name: "admin-denied",
-        component: AdminDeniedPage,
+        component: () => import("@/pages/admin/AdminDeniedPage.vue"),
         meta: {
           pageMeta: {
             titleKey: "admin.denied.title",
@@ -287,7 +278,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "",
         name: "admin-dashboard",
-        component: AdminDashboardPage,
+        component: () => import("@/pages/admin/AdminDashboardPage.vue"),
         meta: {
           requiresAdmin: true,
           pageMeta: {
@@ -306,7 +297,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
-    component: NotFoundPage,
+    component: () => import("@/pages/404.vue"),
     meta: {
       pageMeta: {
         titleKey: "notFound.title",

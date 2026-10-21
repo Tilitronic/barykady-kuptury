@@ -10,7 +10,6 @@ import {
 import { fetchReaderDocument } from "@/features/reader/api";
 import type {
   ReaderDocumentModel,
-  ReaderSourceMeta,
   ReaderTranslation
 } from "@/features/reader/types";
 
@@ -19,15 +18,6 @@ vi.mock("@/features/reader/api", () => ({
 }));
 
 const fetchMock = vi.mocked(fetchReaderDocument);
-
-const SOURCE: ReaderSourceMeta = {
-  provider: "manual",
-  path: null,
-  mime: null,
-  externalId: null,
-  syncedAt: null,
-  allowOriginalDownload: false
-};
 
 function translation(
   locale: ReaderTranslation["locale"],
@@ -55,7 +45,6 @@ function model(
       .filter(candidate => candidate.hasReadableContent)
       .map(candidate => candidate.locale),
     assets: [],
-    source: SOURCE,
     documentType: "regulations",
     language: null,
     publicationDate: null,

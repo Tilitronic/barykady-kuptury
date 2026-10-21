@@ -92,7 +92,10 @@ export const PUBLICATION_REQUIRED_FIELDS = [
   "title"
 ] as const satisfies readonly (keyof PublicationTranslationRow)[];
 
-const PUBLICATION_SELECT =
+const PUBLICATION_LIST_SELECT =
+  "id, slug, status, language, publication_date, external_url, sort_order, updated_at, publication_translations(locale, title, abstract, authors), publication_files(locale, label, storage_path, mime_type, file_size_bytes)";
+
+const PUBLICATION_DETAIL_SELECT =
   "id, slug, status, language, publication_date, external_url, sort_order, updated_at, publication_translations(locale, title, abstract, authors, body, body_ast, body_ast_version), publication_files(locale, label, storage_path, mime_type, file_size_bytes)";
 
 function mapFile(row: PublicationFileRow): PublicationFile {
@@ -253,7 +256,10 @@ export async function fetchPublishedPublications(
 ): Promise<ContentResult<PublicationSummary>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedPublicationRows(supabase);
+  const rows = await fetchPublishedPublicationRows(
+    supabase,
+    PUBLICATION_LIST_SELECT
+  );
   if (rows.kind !== "ok") return rows;
 
   return fromRows(rows.items, row => mapPublication(row, locale));
@@ -299,7 +305,11 @@ export async function fetchPublishedPublicationBySlug(
 ): Promise<ContentResult<PublicationSummary>> {
   if (!supabase) return unavailable();
 
-  const rows = await fetchPublishedPublicationRows(supabase, slug);
+  const rows = await fetchPublishedPublicationRows(
+    supabase,
+    PUBLICATION_DETAIL_SELECT,
+    slug
+  );
   if (rows.kind !== "ok") return rows;
 
   const row = findPublicationBySlug(rows.items, slug, locale);
@@ -331,7 +341,11 @@ export async function fetchPublicationDetail(
   const canonicalSlug = slug.trim();
   if (canonicalSlug.length === 0) return { kind: "empty" };
 
-  const rows = await fetchPublishedPublicationRows(supabase, canonicalSlug);
+  const rows = await fetchPublishedPublicationRows(
+    supabase,
+    PUBLICATION_DETAIL_SELECT,
+    canonicalSlug
+  );
   if (rows.kind !== "ok") {
     return rows.kind === "empty" ? { kind: "empty" } : unavailable();
   }
@@ -356,11 +370,12 @@ export async function fetchPublicationDetail(
  */
 async function fetchPublishedPublicationRows(
   supabase: SupabaseClient<Database>,
+  select: string,
   slug?: string
 ): Promise<ContentResult<PublicationRowWithTranslations>> {
   let query = supabase
     .from("publications")
-    .select(PUBLICATION_SELECT)
+    .select(select)
     .eq("status", "published");
 
   if (slug !== undefined) query = query.eq("slug", slug);

@@ -57,6 +57,13 @@ function publicationRow(overrides: Record<string, unknown> = {}) {
   } as unknown as PublicationRowWithTranslations;
 }
 
+function selectText(
+  calls: ReturnType<typeof createFakeSupabase>["calls"]
+): string {
+  const select = calls.find(call => call.method === "select")?.args[0];
+  return typeof select === "string" ? select : "";
+}
+
 function eqValue(
   calls: ReturnType<typeof createFakeSupabase>["calls"],
   column: string
@@ -74,6 +81,20 @@ describe("fetchPublishedPublications (T-015 baseline, unchanged)", () => {
 
     const eq = fake.calls.find(c => c.method === "eq");
     expect(eq?.args).toEqual(["status", "published"]);
+  });
+
+  it("uses a lean list projection without reader body fields", async () => {
+    const fake = createFakeSupabase({
+      tables: { publications: [publicationRow()] }
+    });
+
+    await fetchPublishedPublications(fake.client, "pl");
+
+    const select = selectText(fake.calls);
+    expect(select).toContain(
+      "publication_translations(locale, title, abstract, authors)"
+    );
+    expect(select).not.toContain("body");
   });
 
   it("maps the canonical root slug, not a locale translation slug", async () => {
@@ -131,6 +152,9 @@ describe("fetchPublishedPublicationBySlug", () => {
     await fetchPublishedPublicationBySlug(fake.client, CANONICAL_SLUG, "pl");
 
     expect(eqValue(fake.calls, "slug")).toEqual([CANONICAL_SLUG]);
+    expect(selectText(fake.calls)).toContain(
+      "body, body_ast, body_ast_version"
+    );
   });
 
   it("returns the single publication for the canonical slug in the requested locale", async () => {
