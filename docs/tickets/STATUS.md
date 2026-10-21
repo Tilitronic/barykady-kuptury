@@ -44,8 +44,8 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-038 | One canonical slug per entity across all locales (D-24) | 9 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | cfc67a6 | 2026-10-20 |
 | T-039 | Consolidated area pages with TOC + two-source site search (D-25, D-26) | 10 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | d61b5dc | 2026-10-20 |
 | T-040 | Unified long-form reader for documents/publications (language `?lang=`, TOC, reading controls, images, a11y) | 11 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | ff7788e | 2026-10-21 |
-| T-041 | Content import pipeline (MD, DOCX) + private source files + admin preview (no editor); ODT deferred | 10 | todo | — | — | — |
-| T-042 | Google Docs import/sync (Drive export → stored sanitized copy; no iframe) | 11 | todo | — | — | — |
+| T-041 | Content import pipeline (MD, DOCX) + private source files + admin preview (no editor); ODT deferred | 12 | todo | — | — | — |
+| T-042 | Google Docs import/sync (Drive export → stored sanitized copy; no iframe) | 12 | todo | — | — | — |
 | T-043 | Social links (Facebook, Instagram, Telegram) in header, footer and contact | 11 | done | @designer + live smoke | 400a884 | 2026-10-21 |
 | T-044 | Post-review remediation: security, performance, readability | 11 | done | security/performance/readability reviews + remediation | 93065fa | 2026-10-21 |
 
@@ -67,8 +67,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 
 ## Next session (planned)
 
-- **Session 12** — T-041 import pipeline (MD + DOCX, private source files, admin preview); T-042 Google Docs import/sync (OAuth + service account); T-043 social links in header/footer/contact. Decisions D-27–D-38.
-- **Session 13 (hosting phase)** — deploy validation, cloud Supabase, T-034 SEO, T-027–T-031 admin CRUD, T-032–T-035.
-- **Session 12 (hosting phase)** — deploy validation (D-23 base root), cloud Supabase + production migrations/Storage, real Google Calendar credentials (D-07), real content authoring through the admin, SEO/OG/analytics (T-034, including pinned CSP origin + hreflang), release readiness (T-035), accessibility audit (T-033), full journey matrix (T-032), and admin CRUD tickets T-027…T-031 against the canonical-slug model.
+- **Session 12** — T-041 import pipeline (MD + DOCX, private source files, admin preview); T-042 Google Docs import/sync (OAuth + service account); deferred performance F2 (publication-detail single fetch) and F4 (Quasar CSS/test pipeline). See `HANDOFF-S12-2026-10-21.md`.
+- **Session 13 (hosting phase)** — deploy validation (D-23 base root), cloud Supabase + production migrations/Storage, real Google Calendar credentials (D-07), real content authoring through the admin, SEO/OG/analytics (T-034, including pinned CSP origin + hreflang), release readiness (T-035), accessibility audit (T-033), full journey matrix (T-032), and admin CRUD tickets T-027…T-031 against the canonical-slug model.
 - `NGOinfoSources/` is now ignored and untracked (`d7b1c8e`); the material is still present in pushed history (`bec10ba`) — decide on a history purge before the hosting phase.
 - Local workstation note: port 9000 is occupied by the `poetry-dev` Docker container. Use `DEMO_DEV_PORT=9200 pnpm demo` (and `DEMO_BASE_URL=http://127.0.0.1:9200 pnpm demo:check`) unless that container is stopped.
