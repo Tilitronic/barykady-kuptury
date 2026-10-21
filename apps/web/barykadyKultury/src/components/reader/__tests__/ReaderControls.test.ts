@@ -8,10 +8,21 @@ import { DEFAULT_READER_SETTINGS } from "../readerSettings";
 import { createTestI18n } from "@/test-utils/mount";
 
 /**
- * T-040 (D-34) — reading controls on Quasar accessible primitives:
- * QOptionGroup radiogroups for exclusive steps, QSlider paired with −/+
- * buttons (WCAG 2.5.7), labeled, announced, reset.
+ * Header-lane follow-up on T-040 (D-34): ALL step controls use ONE primitive
+ * — a QSlider with ruler ticks plus a grouped −/+ button pair to its RIGHT
+ * (never straddling the slider). Paragraph spacing is gone: the control and
+ * its setting no longer exist.
+ *
+ * The contract kept from D-34: draggable slider (arrows), coarse button path
+ * (WCAG 2.5.7), word-valued aria-valuetext, polite announcements without
+ * focus movement, live-drag/commit-on-release persistence split.
  */
+
+const SECTIONS = [
+  "control-text-size",
+  "control-measure",
+  "control-line-spacing"
+] as const;
 
 async function mountControls(settings = DEFAULT_READER_SETTINGS) {
   return mount(ReaderControls, {
@@ -20,8 +31,15 @@ async function mountControls(settings = DEFAULT_READER_SETTINGS) {
   });
 }
 
-describe("ReaderControls", () => {
-  it("is a labelled group with the four control sections", async () => {
+function section(
+  wrapper: Awaited<ReturnType<typeof mountControls>>,
+  id: string
+) {
+  return wrapper.get(`[data-testid="${id}"]`);
+}
+
+describe("ReaderControls — unified stepper sliders", () => {
+  it("renders the three stepper controls and no paragraph-spacing control", async () => {
     const wrapper = await mountControls();
 
     expect(
@@ -30,41 +48,154 @@ describe("ReaderControls", () => {
     expect(wrapper.text()).toContain("Text size");
     expect(wrapper.text()).toContain("Line width");
     expect(wrapper.text()).toContain("Line spacing");
-    expect(wrapper.text()).toContain("Paragraph spacing");
+
+    expect(wrapper.text()).not.toContain("Paragraph spacing");
+    expect(
+      wrapper.find('[data-testid="control-paragraph-spacing"]').exists()
+    ).toBe(false);
   });
 
-  it("renders text-size radios in a radiogroup with the selected one checked", async () => {
-    // D-34: QOptionGroup gives real radiogroup semantics (role=radiogroup +
-    // role=radio + aria-checked), which is what assistive tech reads — assert
-    // that contract, not the hidden native input.
+  it("pairs every slider with both step buttons grouped to its RIGHT", async () => {
     const wrapper = await mountControls();
 
-    const group = wrapper.get(
-      '[data-testid="control-text-size"] [role="radiogroup"]'
-    );
-    expect(group.findAll('[role="radio"]')).toHaveLength(4);
-    const checked = wrapper.findAll(
-      '[data-testid="control-text-size"] [role="radio"][aria-checked="true"]'
-    );
-    expect(checked).toHaveLength(1);
-    // Step 0 is the 16 px baseline; the default reads "Normal".
-    expect(checked[0]!.attributes("aria-label")).toBe("Normal");
-    expect(wrapper.text()).toContain("Normal");
+    for (const id of SECTIONS) {
+      const html = section(wrapper, id).html();
+      const sliderAt = html.indexOf('role="slider"');
+      const minusAt = html.indexOf("Decrease");
+      const plusAt = html.indexOf("Increase");
+
+      expect(sliderAt, `${id}: has a slider`).toBeGreaterThan(-1);
+      // Both buttons come after the slider in DOM order (visually docked
+      // right via flex), and − precedes + inside the group.
+      expect(minusAt, `${id}: − right of the slider`).toBeGreaterThan(sliderAt);
+      expect(plusAt, `${id}: + right of the slider`).toBeGreaterThan(minusAt);
+    }
   });
 
-  it("emits step changes for the sliders' paired buttons", async () => {
+  it("shows a ruler of per-step ticks with visible min/max labels", async () => {
     const wrapper = await mountControls();
 
-    const increase = wrapper.get(
-      '[data-testid="control-line-spacing"] button[aria-label*="Increase"]'
-    );
-    await increase.trigger("click");
+    const ticks = (id: string) =>
+      section(wrapper, id).findAll(".reader-controls__tick");
 
-    const emitted = wrapper.emitted("update")?.at(-1)?.[0] as Record<
-      string,
-      unknown
-    >;
-    expect(emitted).toMatchObject({ lineSpacing: 1 });
+    expect(ticks("control-text-size")).toHaveLength(4);
+    expect(ticks("control-measure")).toHaveLength(3);
+    expect(ticks("control-line-spacing")).toHaveLength(4);
+
+    // Rulers are decorative; the words are the labels sighted users match
+    // against the slider bubble/announcement.
+    expect(section(wrapper, "control-text-size").text()).toContain("Normal");
+    expect(section(wrapper, "control-text-size").text()).toContain("Maximum");
+    expect(section(wrapper, "control-measure").text()).toContain("Narrow");
+    expect(section(wrapper, "control-measure").text()).toContain("Wide");
+    expect(section(wrapper, "control-line-spacing").text()).toContain(
+      "Standard"
+    );
+    for (const id of SECTIONS) {
+      expect(
+        section(wrapper, id)
+          .get(".reader-controls__ruler")
+          .attributes("aria-hidden")
+      ).toBe("true");
+    }
+  });
+
+  it("exposes word-valued aria-valuetext and no raw slider labels (rev-1 F)", async () => {
+    const wrapper = await mountControls();
+
+    const valueText = (id: string) =>
+      section(wrapper, id).get('[role="slider"]').attributes("aria-valuetext");
+
+    expect(valueText("control-text-size")).toBe("Normal");
+    expect(valueText("control-measure")).toBe("Medium");
+    expect(valueText("control-line-spacing")).toBe("Standard");
+
+    expect(wrapper.find(".q-slider__text").exists()).toBe(false);
+  });
+
+  it("mirrors the current value visibly next to each control", async () => {
+    const wrapper = await mountControls({
+      ...DEFAULT_READER_SETTINGS,
+      textSize: 2,
+      measure: "wide",
+      lineSpacing: 1
+    });
+
+    expect(section(wrapper, "control-text-size").text()).toContain(
+      "Extra large"
+    );
+    expect(section(wrapper, "control-measure").text()).toContain("Wide");
+    expect(section(wrapper, "control-line-spacing").text()).toContain(
+      "Relaxed"
+    );
+  });
+
+  it("steps every control with the paired buttons and commits immediately", async () => {
+    const wrapper = await mountControls();
+
+    await section(wrapper, "control-text-size")
+      .get('button[aria-label*="Increase"]')
+      .trigger("click");
+    await section(wrapper, "control-measure")
+      .get('button[aria-label*="Increase"]')
+      .trigger("click");
+    await section(wrapper, "control-line-spacing")
+      .get('button[aria-label*="Increase"]')
+      .trigger("click");
+
+    expect(wrapper.emitted("commit")).toHaveLength(3);
+    const updates = wrapper.emitted("update") ?? [];
+    expect(updates[0]?.[0]).toMatchObject({ textSize: 1 });
+    expect(updates[1]?.[0]).toMatchObject({ measure: "wide" });
+    expect(updates[2]?.[0]).toMatchObject({ lineSpacing: 1 });
+
+    // At the bottom of a ruler the outward button is disabled, not broken.
+    const disabled = await mountControls();
+    expect(
+      section(disabled, "control-line-spacing")
+        .get('button[aria-label*="Decrease"]')
+        .attributes("disabled")
+    ).toBeDefined();
+  });
+
+  it("disables the outer buttons at the ends of each ruler", async () => {
+    const wrapper = await mountControls({
+      ...DEFAULT_READER_SETTINGS,
+      textSize: 3,
+      lineSpacing: 0
+    });
+
+    expect(
+      section(wrapper, "control-text-size")
+        .get('button[aria-label*="Increase"]')
+        .attributes("disabled")
+    ).toBeDefined();
+    expect(
+      section(wrapper, "control-line-spacing")
+        .get('button[aria-label*="Decrease"]')
+        .attributes("disabled")
+    ).toBeDefined();
+  });
+
+  it("drags apply live but persist only on release (rev-1 F)", async () => {
+    const wrapper = await mountControls();
+
+    const slider = section(wrapper, "control-line-spacing").findComponent(
+      QSlider
+    );
+
+    slider.vm.$emit("update:model-value", 2);
+    await nextTick();
+    expect(wrapper.emitted("update")).toHaveLength(1);
+    expect(wrapper.emitted("commit") ?? []).toHaveLength(0);
+
+    slider.vm.$emit("change", 2);
+    await nextTick();
+    const committed = wrapper.emitted("commit");
+    expect(committed).toHaveLength(1);
+    expect(committed?.[0]?.[0]).toEqual(
+      expect.objectContaining({ lineSpacing: 2 })
+    );
   });
 
   it("announces changes politely without moving focus", async () => {
@@ -73,12 +204,11 @@ describe("ReaderControls", () => {
     const live = wrapper.get('[data-testid="controls-status"]');
     expect(live.attributes("aria-live")).toBe("polite");
 
-    const plus = wrapper.get(
-      '[data-testid="control-paragraph-spacing"] button[aria-label*="Increase"]'
-    );
-    await plus.trigger("click");
+    await section(wrapper, "control-line-spacing")
+      .get('button[aria-label*="Increase"]')
+      .trigger("click");
 
-    expect(live.text()).toContain("Paragraph spacing");
+    expect(live.text()).toContain("Line spacing");
   });
 
   it("emits reset when the reset control is activated", async () => {
@@ -90,57 +220,5 @@ describe("ReaderControls", () => {
     await wrapper.get('[data-testid="control-reset"]').trigger("click");
 
     expect(wrapper.emitted("reset")).toHaveLength(1);
-  });
-
-  it("pairs each slider with a label describing its value", async () => {
-    const wrapper = await mountControls();
-
-    const slider = wrapper.get('[data-testid="control-measure"]');
-    expect(slider.text()).toContain("Medium");
-  });
-
-  it("drags apply live but persist only on release (rev-1 F)", async () => {
-    const wrapper = await mountControls();
-
-    // The component instance (not the DOM wrapper) to drive Quasar events.
-    const slider = wrapper.findComponent(QSlider);
-
-    // Drag frame: live update, no commit.
-    slider.vm.$emit("update:model-value", 2);
-    await nextTick();
-    expect(wrapper.emitted("update")).toHaveLength(1);
-    expect(wrapper.emitted("commit") ?? []).toHaveLength(0);
-
-    // Release: the committed value carries the final step.
-    slider.vm.$emit("change", 2);
-    await nextTick();
-    const committed = wrapper.emitted("commit");
-    expect(committed).toHaveLength(1);
-    expect(committed?.[0]?.[0]).toEqual(
-      expect.objectContaining({ lineSpacing: 2 })
-    );
-  });
-
-  it("exposes word-valued aria-valuetext and no raw slider labels (rev-1 F)", async () => {
-    const wrapper = await mountControls();
-
-    // Quasar routes the ARIA attrs onto the role=slider element itself.
-    const handle = wrapper.get(
-      '[data-testid="control-line-spacing"] [role="slider"]'
-    );
-    expect(handle.attributes("aria-valuetext")).toBe("Standard");
-    expect(wrapper.find(".q-slider__text").exists()).toBe(false);
-  });
-
-  it("discrete controls commit immediately", async () => {
-    const wrapper = await mountControls();
-
-    const increase = wrapper.get(
-      '[data-testid="control-line-spacing"] button[aria-label*="Increase"]'
-    );
-    await increase.trigger("click");
-
-    expect(wrapper.emitted("update")).toHaveLength(1);
-    expect(wrapper.emitted("commit")).toHaveLength(1);
   });
 });

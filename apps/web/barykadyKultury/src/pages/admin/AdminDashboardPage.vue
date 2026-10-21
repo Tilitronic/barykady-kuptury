@@ -24,15 +24,25 @@
       <p class="admin-dashboard__panel-text">
         {{ t("admin.dashboardPage.placeholder") }}
       </p>
+      <p class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/import`"
+          class="admin-dashboard__link focus-ring"
+        >
+          {{ t("admin.import.title") }}
+        </RouterLink>
+      </p>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import { useAuth } from "@/features/auth/authStore";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
  * T-026 — signed-in admin overview. The guard has already proven the
@@ -42,8 +52,13 @@ import { useAuth } from "@/features/auth/authStore";
  */
 const { t } = useI18n();
 const { user } = useAuth();
+const route = useRoute();
 
 const userEmail = computed(() => user.value?.email ?? "");
+const currentLocale = computed<Locale>(() => {
+  const { locale } = route.params as { locale?: unknown };
+  return isLocale(locale) ? locale : DEFAULT_LOCALE;
+});
 
 /** Stable id so the panel's accessible name relation never drifts. */
 const panelHeadingId = "admin-dashboard-panel-heading";
@@ -86,5 +101,14 @@ const panelHeadingId = "admin-dashboard-panel-heading";
   margin: 0;
   max-width: 65ch;
   line-height: 1.6;
+}
+
+.admin-dashboard__action {
+  margin: 1rem 0 0;
+}
+
+.admin-dashboard__link {
+  color: var(--color-link);
+  font-weight: 600;
 }
 </style>

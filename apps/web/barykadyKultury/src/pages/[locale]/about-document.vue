@@ -14,7 +14,31 @@
       </RouterLink>
     </p>
 
+    <ContentUpdateBanner
+      :visible="updateAvailable"
+      :applying="applying"
+      @show="showUpdate"
+    />
+
+    <div
+      v-if="applying"
+      class="document-reader__refreshing"
+      role="status"
+      aria-live="polite"
+      :aria-label="t('content.updating')"
+    >
+      <span
+        class="document-reader__skeleton document-reader__skeleton--title"
+      />
+      <span class="document-reader__skeleton" />
+      <span class="document-reader__skeleton" />
+      <span
+        class="document-reader__skeleton document-reader__skeleton--short"
+      />
+    </div>
+
     <LongFormReader
+      v-else
       :title="headingText"
       :description="reader.selected.value?.description ?? null"
       :body-ast="reader.selected.value?.bodyAst ?? null"
@@ -26,6 +50,7 @@
       :status="reader.status.value"
       :storage-key="storageKey"
       :is-fallback="isFallback"
+      :original-download-url="originalDownloadUrl"
       @change-locale="chooseContentLocale"
       @retry="reader.retry"
     />
@@ -37,8 +62,11 @@ import { computed, inject } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import ContentUpdateBanner from "@/components/content/ContentUpdateBanner.vue";
 import LongFormReader from "@/components/reader/LongFormReader.vue";
+import { contentOriginalUrl } from "@/features/reader/originalUrl";
 import { readerSettingsKey } from "@/components/reader/readerSettings";
+import { useContentRevalidation } from "@/features/import/useContentRevalidation";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import { useReaderDocument } from "@/features/reader/useReaderDocument";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
@@ -71,6 +99,26 @@ const reader = useReaderDocument({
   supabase
 });
 
+const { updateAvailable, applying, applyUpdate } = useContentRevalidation({
+  kind: "document",
+  slug: requestedSlug
+});
+
+/**
+ * S9: the banner is the only prompt. The article is replaced by a short
+ * skeleton while a non-blanking refresh runs; a failed refresh keeps the old
+ * copy because `refresh()` preserves the model.
+ */
+async function showUpdate(): Promise<void> {
+  await applyUpdate(async () => {
+    reader.refresh();
+    const deadline = Date.now() + 5_000;
+    while (reader.status.value === "loading" && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  });
+}
+
 /**
  * The fallback note names English only when the reader substituted it on the
  * user's behalf (no explicit `?lang` + resolved ≠ UI). An explicit content
@@ -85,6 +133,13 @@ const isFallback = computed(
 
 const headingText = computed(
   () => reader.selected.value?.title ?? t("aboutDocuments.title")
+);
+
+/** Owner opt-in gate for the original-file affordance (T-041 S4). */
+const originalDownloadUrl = computed<string | null>(() =>
+  reader.model.value?.allowOriginalDownload === true
+    ? contentOriginalUrl("document", requestedSlug.value)
+    : null
 );
 
 const storageKey = computed(() =>
@@ -126,5 +181,44 @@ function chooseContentLocale(locale: Locale): void {
 
 .document-reader__back-link:hover {
   text-decoration: underline;
+}
+
+.document-reader__refreshing {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.document-reader__skeleton {
+  display: block;
+  height: 1rem;
+  border-radius: 0.25rem;
+  background: var(--color-surface-raised);
+  animation: document-reader-pulse 1.2s ease-in-out infinite;
+}
+
+.document-reader__skeleton--title {
+  height: 2rem;
+  width: min(60%, 28rem);
+}
+
+.document-reader__skeleton--short {
+  width: min(40%, 18rem);
+}
+
+@keyframes document-reader-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .document-reader__skeleton {
+    animation: none;
+  }
 }
 </style>

@@ -1,5 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
+import { Quasar } from "quasar";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Component, Plugin } from "vue";
 import { createI18n } from "vue-i18n";
@@ -54,9 +55,11 @@ export function createTestI18n(locale: Locale = "en") {
 
 /**
  * Mounts a component with the plugins every application component may assume:
- * Pinia, vue-i18n and a memory-history router whose single route renders the
- * component under test. Tests that need different router state can append
- * their own plugin patterns later without duplicating this setup.
+ * Pinia, vue-i18n, the Quasar plugin (the app installs it globally — any
+ * component may therefore reach for Quasar primitives like QItem), and a
+ * memory-history router whose single route renders the component under test.
+ * Tests that need different router state can append their own plugin patterns
+ * later without duplicating this setup.
  */
 export async function mountWithPlugins(
   component: Component,
@@ -97,6 +100,7 @@ export async function mountWithPlugins(
         createTestI18n(locale),
         supabasePlugin,
         router,
+        Quasar,
         ...plugins
       ]
     }

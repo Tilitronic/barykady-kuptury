@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
+import { nextTick } from "vue";
+import { Quasar } from "quasar";
 
 import { createTestI18n } from "@/test-utils/mount";
 
@@ -70,7 +72,7 @@ const ITEMS = [
 function mountToc(items: readonly TocItem[] = ITEMS) {
   return mount(PageToc, {
     props: { items, ariaLabel: "On this page" },
-    global: { plugins: [createTestI18n("en")] }
+    global: { plugins: [Quasar, createTestI18n("en")] }
   });
 }
 
@@ -110,6 +112,18 @@ describe("PageToc", () => {
 
     vi.unstubAllGlobals();
     document.body.innerHTML = "";
+  });
+
+  it("renders each item as a full-width QItem row anchor (hit zone wider than the label)", () => {
+    const wrapper = mountToc();
+
+    const link = wrapper.get(".page-toc__desktop a.page-toc__link");
+    // Quasar's row primitive + our anchor semantics coexist on one element.
+    expect(link.classes()).toContain("q-item");
+    expect(link.attributes("href")).toBe("#mission");
+    expect(link.element.tagName).toBe("A");
+    // Rows live in a QList (ul.q-list) — not bare anchors.
+    expect(wrapper.get(".page-toc__desktop ul").classes()).toContain("q-list");
   });
 
   it("degrades silently without IntersectionObserver (links still render)", () => {
@@ -243,7 +257,7 @@ describe("PageToc", () => {
           ariaLabel: "On this page",
           linkLang: "pl"
         },
-        global: { plugins: [createTestI18n("en")] }
+        global: { plugins: [Quasar, createTestI18n("en")] }
       });
 
       for (const link of wrapper.findAll(".page-toc__desktop a")) {
@@ -251,4 +265,86 @@ describe("PageToc", () => {
       }
     });
   });
+});
+
+describe("PageToc — optimistic activation (scroll-spy lane)", () => {
+  /**
+   * The two behaviors the About rail depends on (user-reported): clicking a
+   * link marks it active IMMEDIATELY (the observer confirms later), and
+   * reaching the document bottom activates the LAST item — a short final
+   * section never enters the observer band on its own.
+   */
+  it("marks a clicked link aria-current without waiting for the observer", async () => {
+    document.body.innerHTML = `
+      <section id="mission">m</section><section id="history">h</section>
+    `;
+    const wrapper = mountToc();
+
+    const history = wrapper
+      .findAll(".page-toc__desktop a")
+      .find(link => link.attributes("href") === "#history");
+    await history!.trigger("click");
+    await nextTick();
+
+    expect(history!.attributes("aria-current")).toBe("location");
+  });
+
+  it("forces the last item active at the bottom of the page", async () => {
+    const previousObserved = [...observed];
+    const previousCallbacks = [...callbacks];
+    observed.clear();
+    callbacks.length = 0;
+    try {
+      await runBottomScenario();
+    } finally {
+      observed.clear();
+      for (const element of previousObserved) observed.add(element);
+      callbacks.length = 0;
+      callbacks.push(...previousCallbacks);
+    }
+  });
+
+  async function runBottomScenario() {
+    vi.stubGlobal("IntersectionObserver", FakeIO);
+    document.body.innerHTML = `
+      <section id="mission">m</section><section id="history">h</section>
+    `;
+    const wrapper = mountToc();
+
+    // Let the mount-time observer (re)observe settle before driving IO.
+    await nextTick();
+    const [mission, history] = wrapper.findAll(".page-toc__desktop a");
+
+    // A mid-page scroll keeps the observer's first-visible rule.
+    Object.defineProperty(window, "scrollY", {
+      value: 400,
+      configurable: true
+    });
+    Object.defineProperty(window, "innerHeight", {
+      value: 800,
+      configurable: true
+    });
+    Object.defineProperty(document.documentElement, "scrollHeight", {
+      value: 4000,
+      configurable: true
+    });
+    emitVisible(["mission"]);
+    await flushPromises();
+    expect(mission!.attributes("aria-current")).toBe("location");
+    expect(history!.attributes("aria-current")).toBeUndefined();
+
+    // At the bottom (within the 2 px tolerance) the LAST TOC item wins even
+    // though its short section never intersects the band.
+    Object.defineProperty(window, "scrollY", {
+      value: 3200,
+      configurable: true
+    });
+    window.dispatchEvent(new Event("scroll"));
+    emitVisible([]);
+    await flushPromises();
+    expect(history!.attributes("aria-current")).toBe("location");
+    wrapper.unmount();
+    vi.unstubAllGlobals();
+    document.body.innerHTML = "";
+  }
 });

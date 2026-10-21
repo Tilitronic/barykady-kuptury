@@ -10,7 +10,7 @@
     An unknown or draft slug renders the translated 404 content. RLS already
     hides drafts anonymously; this is the app-layer complement.
   -->
-  <div v-if="useReaderView" class="publication-reader">
+  <div v-if="useReaderView || applying" class="publication-reader">
     <p class="publication-detail__back">
       <RouterLink
         :to="listPath"
@@ -20,7 +20,31 @@
       </RouterLink>
     </p>
 
+    <ContentUpdateBanner
+      :visible="updateAvailable"
+      :applying="applying"
+      @show="showUpdate"
+    />
+
+    <div
+      v-if="applying"
+      class="publication-reader__refreshing"
+      role="status"
+      aria-live="polite"
+      :aria-label="t('content.updating')"
+    >
+      <span
+        class="publication-reader__skeleton publication-reader__skeleton--title"
+      />
+      <span class="publication-reader__skeleton" />
+      <span class="publication-reader__skeleton" />
+      <span
+        class="publication-reader__skeleton publication-reader__skeleton--short"
+      />
+    </div>
+
     <LongFormReader
+      v-else
       :title="readerTitle"
       :description="reader.selected.value?.description ?? null"
       :body-ast="reader.selected.value?.bodyAst ?? null"
@@ -33,6 +57,7 @@
       :storage-key="readerStorageKey"
       :is-fallback="readerIsFallback"
       :offers-download="readerOffersDownload"
+      :original-download-url="originalDownloadUrl"
       @change-locale="chooseContentLocale"
       @retry="reader.retry"
     >
@@ -146,8 +171,11 @@ import { computed, inject, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import ContentUpdateBanner from "@/components/content/ContentUpdateBanner.vue";
 import LongFormReader from "@/components/reader/LongFormReader.vue";
+import { contentOriginalUrl } from "@/features/reader/originalUrl";
 import { readerSettingsKey } from "@/components/reader/readerSettings";
+import { useContentRevalidation } from "@/features/import/useContentRevalidation";
 import PublicationFiles from "@/components/publications/PublicationFiles.vue";
 import {
   fetchPublicationDetail,
@@ -206,6 +234,21 @@ const reader = useReaderDocument({
   supabase
 });
 
+const { updateAvailable, applying, applyUpdate } = useContentRevalidation({
+  kind: "publication",
+  slug: requestedSlug
+});
+
+async function showUpdate(): Promise<void> {
+  await applyUpdate(async () => {
+    reader.refresh();
+    const deadline = Date.now() + 5_000;
+    while (reader.status.value === "loading" && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  });
+}
+
 /** Reader view only when the selected translation actually has body data. */
 const useReaderView = computed(() => {
   const selected = reader.selected.value;
@@ -225,6 +268,13 @@ const readerIsFallback = computed(
 
 const readerStorageKey = computed(() =>
   readerSettingsKey("publication", requestedSlug.value)
+);
+
+/** Owner opt-in gate for the original-file affordance (T-041 S4). */
+const originalDownloadUrl = computed<string | null>(() =>
+  useReaderView.value && reader.model.value?.allowOriginalDownload === true
+    ? contentOriginalUrl("publication", requestedSlug.value)
+    : null
 );
 
 /* ── D-38 metadata for the reader branch (rev-1 E) ────────────────────────── */
@@ -385,5 +435,44 @@ const formattedDate = computed(() => {
 
 .publication-not-found__back-link:hover {
   text-decoration: underline;
+}
+
+.publication-reader__refreshing {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.publication-reader__skeleton {
+  display: block;
+  height: 1rem;
+  border-radius: 0.25rem;
+  background: var(--color-surface-raised);
+  animation: publication-reader-pulse 1.2s ease-in-out infinite;
+}
+
+.publication-reader__skeleton--title {
+  height: 2rem;
+  width: min(60%, 28rem);
+}
+
+.publication-reader__skeleton--short {
+  width: min(40%, 18rem);
+}
+
+@keyframes publication-reader-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .publication-reader__skeleton {
+    animation: none;
+  }
 }
 </style>

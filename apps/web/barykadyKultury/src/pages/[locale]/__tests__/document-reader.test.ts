@@ -116,6 +116,29 @@ describe("document reader (T-040)", () => {
     expect(wrapper.findAll("h1")).toHaveLength(1);
   });
 
+  it("offers the original download only when the owner opted in (T-041 S4)", async () => {
+    const off = await mountReader(
+      createFakeSupabase({
+        tables: { organization_documents: [documentRow()] }
+      }).client
+    );
+    expect(off.find("[data-testid='download-original']").exists()).toBe(false);
+
+    const on = await mountReader(
+      createFakeSupabase({
+        tables: {
+          organization_documents: [
+            documentRow({ allow_original_download: true })
+          ]
+        }
+      }).client
+    );
+    const link = on.get("[data-testid='download-original']");
+    expect(link.attributes("href")).toBe(
+      "/.netlify/functions/content-original?kind=document&slug=regulations"
+    );
+  });
+
   it("keeps the back link on the consolidated About anchor", async () => {
     const fake = createFakeSupabase({
       tables: { organization_documents: [documentRow()] }

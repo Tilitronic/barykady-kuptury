@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { Quasar } from "quasar";
 
 import LongFormReader from "@/components/reader/LongFormReader.vue";
+import {
+  DEFAULT_READER_SETTINGS,
+  readerSettingsKey,
+  saveReaderSettings
+} from "@/components/reader/readerSettings";
 import type { ReaderAsset, ReaderDocumentV1 } from "@/features/reader/types";
 import { createFakeSupabase } from "@/test-utils/fakeSupabase";
 import { mountWithPlugins } from "@/test-utils/mount";
@@ -431,5 +436,126 @@ describe("states", () => {
     });
 
     expect(wrapper.text()).toContain("not available in a readable version yet");
+  });
+});
+
+describe("reading-preference plumbing (header-lane cascade fix)", () => {
+  /**
+   * The article is the single owner of the --lfr-* / --prose-* custom
+   * properties. jsdom cannot resolve the CSS cascade, so the contract here
+   * is the variable surface itself: size/line-height/measure + the prose
+   * hooks (measure + relative heading sizes). Paragraph spacing left the
+   * model — its variable must never appear again (E2E asserts the cascade
+   * effects per block type in reader.spec.ts).
+   */
+  it("binds exactly the preference vars on the article — no paragraph space", async () => {
+    const wrapper = await mountReader();
+
+    const style = wrapper.get("article").attributes("style") ?? "";
+
+    expect(style).toContain("--lfr-font-size: 1rem");
+    expect(style).toContain("--lfr-line-height: 1.5");
+    expect(style).toContain("--lfr-measure: 65ch");
+    expect(style).not.toContain("para-space");
+  });
+
+  it("keeps the settings rail mounted for ready content only", async () => {
+    const wrapper = await mountReader();
+    expect(wrapper.find('[data-testid="reader-controls"]').exists()).toBe(true);
+
+    const loading = await mountReader({ status: "loading" });
+    expect(loading.find('[data-testid="reader-controls"]').exists()).toBe(
+      false
+    );
+  });
+
+  /**
+   * Queue-3 wiring proof: the mount-time load must be the INHERITING one —
+   * a document the reader never configured opens at their last committed
+   * size (1.375rem = TEXT_SIZE_STEPS[2]), not at the DS baseline. The store
+   * owns the fallback chain; this pins that the component actually uses it.
+   */
+  it("opens a never-configured document at the last committed size", async () => {
+    localStorage.clear();
+    try {
+      saveReaderSettings(readerSettingsKey("publication", "report-2025"), {
+        ...DEFAULT_READER_SETTINGS,
+        textSize: 2
+      });
+
+      const wrapper = await mountReader();
+
+      expect(wrapper.get("article").attributes("style") ?? "").toContain(
+        "--lfr-font-size: 1.375rem"
+      );
+    } finally {
+      // Isolate the inheritance source from every later test in this file.
+      localStorage.clear();
+    }
+  });
+});
+
+describe("download-original affordance (content-original endpoint)", () => {
+  const url =
+    "/.netlify/functions/content-original?kind=document&slug=regulations";
+
+  it("renders a same-origin download link when the page passes one", async () => {
+    const wrapper = await mountReader({ originalDownloadUrl: url });
+    const link = wrapper.get("a[data-testid='download-original']");
+    expect(link.attributes("href")).toBe(url);
+    expect(link.text()).toContain("Download the original file.");
+    // The affordance is an action, never raw color: an icon-less but fully
+    // named link; aria-describedby is not needed — the label is complete.
+    expect(link.attributes("rel")).toBeUndefined();
+  });
+
+  it("renders nothing when the flag or URL is absent (default off)", async () => {
+    const bare = await mountReader();
+    expect(bare.find("[data-testid='download-original']").exists()).toBe(false);
+    const empty = await mountReader({ originalDownloadUrl: null });
+    expect(empty.find("[data-testid='download-original']").exists()).toBe(
+      false
+    );
+  });
+
+  it("localizes the affordance in pl and uk", async () => {
+    const pl = await mountWithPlugins(LongFormReader, {
+      plugins: [Quasar],
+      locale: "pl",
+      supabase: createFakeSupabase({}).client,
+      props: {
+        title: "Regulamin",
+        bodyAst: AST,
+        body: null,
+        contentLocale: "en" as never,
+        uiLocale: "pl" as never,
+        availableLocales: ["en"] as never,
+        assets: [] as never,
+        status: "ready" as never,
+        storageKey: "bk.reader.document.regulations",
+        originalDownloadUrl:
+          "/.netlify/functions/content-original?kind=document&slug=regulations"
+      }
+    });
+    expect(pl.text()).toContain("Pobierz oryginalny plik.");
+    const uk = await mountWithPlugins(LongFormReader, {
+      plugins: [Quasar],
+      locale: "uk",
+      supabase: createFakeSupabase({}).client,
+      props: {
+        title: "Статут",
+        bodyAst: AST,
+        body: null,
+        contentLocale: "en" as never,
+        uiLocale: "uk" as never,
+        availableLocales: ["en"] as never,
+        assets: [] as never,
+        status: "ready" as never,
+        storageKey: "bk.reader.document.regulations",
+        originalDownloadUrl:
+          "/.netlify/functions/content-original?kind=document&slug=regulations"
+      }
+    });
+    expect(uk.text()).toContain("Завантажити оригінальний файл.");
   });
 });

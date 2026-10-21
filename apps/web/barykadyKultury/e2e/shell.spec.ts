@@ -343,6 +343,27 @@ test.describe("shell — T-043 social links", () => {
     ).toBe(false);
   });
 
+  test("hovering a header channel paints scarlet — the brand accent on interaction", async ({
+    page
+  }) => {
+    // Owner hover pass: the icon cluster answers hover with the scarlet
+    // link token (theme-adaptive: pure SCARLET in light, the raised
+    // variant in dark — never the gray surface raise alone).
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/en");
+    const link = page
+      .getByRole("banner")
+      .getByRole("link", { name: "Instagram", exact: true });
+
+    await link.hover();
+    await expect(link).toHaveCSS("color", "rgb(198, 0, 1)");
+    await expect(link).toHaveCSS("border-color", "rgb(198, 0, 1)");
+
+    // Keyboard users get the identical treatment (focus-visible).
+    await link.focus();
+    await expect(link).toHaveCSS("color", "rgb(198, 0, 1)");
+  });
+
   test("footer carries the same channels with a localized list label", async ({
     page
   }) => {

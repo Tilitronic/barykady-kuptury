@@ -131,6 +131,89 @@ export type Database = {
           }
         ];
       };
+      content_sync_jobs: {
+        Row: {
+          created_at: string;
+          entity_id: string | null;
+          error_code: string | null;
+          finished_at: string | null;
+          id: string;
+          kind: string;
+          locale: Database["public"]["Enums"]["content_locale"];
+          request: NonNullable<Json>;
+          requested_by: string | null;
+          started_at: string | null;
+          status: string;
+          summary: Json | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          entity_id?: string | null;
+          error_code?: string | null;
+          finished_at?: string | null;
+          id?: string;
+          kind: string;
+          locale: Database["public"]["Enums"]["content_locale"];
+          request: NonNullable<Json>;
+          requested_by?: string | null;
+          started_at?: string | null;
+          status?: string;
+          summary?: Json | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          entity_id?: string | null;
+          error_code?: string | null;
+          finished_at?: string | null;
+          id?: string;
+          kind?: string;
+          locale?: Database["public"]["Enums"]["content_locale"];
+          request?: NonNullable<Json>;
+          requested_by?: string | null;
+          started_at?: string | null;
+          status?: string;
+          summary?: Json | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      content_sync_runs: {
+        Row: {
+          checked: number;
+          created_at: string;
+          failed: number;
+          finished_at: string | null;
+          id: string;
+          skipped: number;
+          started_at: string;
+          updated: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          checked?: number;
+          created_at?: string;
+          failed?: number;
+          finished_at?: string | null;
+          id?: string;
+          skipped?: number;
+          started_at: string;
+          updated?: number;
+        };
+        Update: {
+          checked?: number;
+          created_at?: string;
+          failed?: number;
+          finished_at?: string | null;
+          id?: string;
+          skipped?: number;
+          started_at?: string;
+          updated?: number;
+        };
+        Relationships: [];
+      };
       organization_document_translations: {
         Row: {
           body: string | null;
@@ -195,11 +278,15 @@ export type Database = {
           published_at: string | null;
           slug: string;
           sort_order: number;
+          source_check_failures: number;
+          source_checked_at: string | null;
           source_external_id: string | null;
           source_mime: string | null;
+          source_modified_at: string | null;
           source_path: string | null;
           source_provider: Database["public"]["Enums"]["content_source_provider"];
           source_synced_at: string | null;
+          source_url: string | null;
           status: Database["public"]["Enums"]["content_status"];
           storage_path: string | null;
           updated_at: string;
@@ -217,11 +304,15 @@ export type Database = {
           published_at?: string | null;
           slug: string;
           sort_order?: number;
+          source_check_failures?: number;
+          source_checked_at?: string | null;
           source_external_id?: string | null;
           source_mime?: string | null;
+          source_modified_at?: string | null;
           source_path?: string | null;
           source_provider?: Database["public"]["Enums"]["content_source_provider"];
           source_synced_at?: string | null;
+          source_url?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           storage_path?: string | null;
           updated_at?: string;
@@ -238,11 +329,15 @@ export type Database = {
           published_at?: string | null;
           slug?: string;
           sort_order?: number;
+          source_check_failures?: number;
+          source_checked_at?: string | null;
           source_external_id?: string | null;
           source_mime?: string | null;
+          source_modified_at?: string | null;
           source_path?: string | null;
           source_provider?: Database["public"]["Enums"]["content_source_provider"];
           source_synced_at?: string | null;
+          source_url?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           storage_path?: string | null;
           updated_at?: string;
@@ -444,11 +539,15 @@ export type Database = {
           published_at: string | null;
           slug: string;
           sort_order: number;
+          source_check_failures: number;
+          source_checked_at: string | null;
           source_external_id: string | null;
           source_mime: string | null;
+          source_modified_at: string | null;
           source_path: string | null;
           source_provider: Database["public"]["Enums"]["content_source_provider"];
           source_synced_at: string | null;
+          source_url: string | null;
           status: Database["public"]["Enums"]["content_status"];
           updated_at: string;
         };
@@ -463,11 +562,15 @@ export type Database = {
           published_at?: string | null;
           slug: string;
           sort_order?: number;
+          source_check_failures?: number;
+          source_checked_at?: string | null;
           source_external_id?: string | null;
           source_mime?: string | null;
+          source_modified_at?: string | null;
           source_path?: string | null;
           source_provider?: Database["public"]["Enums"]["content_source_provider"];
           source_synced_at?: string | null;
+          source_url?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
         };
@@ -481,11 +584,15 @@ export type Database = {
           published_at?: string | null;
           slug?: string;
           sort_order?: number;
+          source_check_failures?: number;
+          source_checked_at?: string | null;
           source_external_id?: string | null;
           source_mime?: string | null;
+          source_modified_at?: string | null;
           source_path?: string | null;
           source_provider?: Database["public"]["Enums"]["content_source_provider"];
           source_synced_at?: string | null;
+          source_url?: string | null;
           status?: Database["public"]["Enums"]["content_status"];
           updated_at?: string;
         };
@@ -657,10 +764,70 @@ export type Database = {
         };
         Returns: undefined;
       };
+      claim_content_check_v1: {
+        Args: {
+          p_base_interval_minutes?: number;
+          p_kind: string;
+          p_slug: string;
+        };
+        Returns: {
+          allow_original_download: boolean;
+          check_failures: number;
+          entity_id: string;
+          file_id: string;
+          locale: Database["public"]["Enums"]["content_locale"];
+          outcome: string;
+          source_modified_at: string;
+          source_synced_at: string;
+          source_url: string;
+          status: Database["public"]["Enums"]["content_status"];
+        }[];
+      };
+      claim_scheduled_content_sync_job_v1: {
+        Args: {
+          p_entity_id: string;
+          p_kind: string;
+          p_locale: Database["public"]["Enums"]["content_locale"];
+          p_request: Json;
+        };
+        Returns: string;
+      };
+      enqueue_content_sync_job_v1: {
+        Args: {
+          p_entity_id: string;
+          p_kind: string;
+          p_locale: Database["public"]["Enums"]["content_locale"];
+          p_request: Json;
+        };
+        Returns: string;
+      };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_published: {
         Args: { p_status: Database["public"]["Enums"]["content_status"] };
         Returns: boolean;
+      };
+      persist_reader_import_v1: {
+        Args: {
+          p_allow_original_download: boolean;
+          p_assets: Json;
+          p_body_ast: Json;
+          p_description: string;
+          p_document_type: string;
+          p_entity_id: string;
+          p_kind: string;
+          p_locale: Database["public"]["Enums"]["content_locale"];
+          p_slug: string;
+          p_source_external_id: string;
+          p_source_mime: string;
+          p_source_modified_at: string;
+          p_source_path: string;
+          p_source_provider: Database["public"]["Enums"]["content_source_provider"];
+          p_source_synced_at: string;
+          p_source_url: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+          p_title: string;
+        };
+        Returns: string;
       };
       reader_ast_assert_keys_v1: {
         Args: { allowed_keys: string[]; node: Json; required_keys: string[] };
@@ -675,6 +842,10 @@ export type Database = {
       };
       reader_ast_validate_inlines_v1: {
         Args: { children: Json; depth?: number };
+        Returns: undefined;
+      };
+      record_content_check_result_v1: {
+        Args: { p_entity_id: string; p_kind: string; p_success: boolean };
         Returns: undefined;
       };
       search_published_content: {

@@ -131,6 +131,24 @@
           />
         </template>
 
+        <!-- Owner-offered original file (T-041 S4): a same-origin link to
+             the content-original endpoint, which redirects to a short-lived
+             signed URL. The page builds the URL only when the published row
+             opts in; no storage path or credential ever reaches this layer. -->
+        <p
+          v-if="status === 'ready' && originalDownloadUrl"
+          class="long-form-reader__original"
+        >
+          <UiBtn
+            tag="a"
+            :href="originalDownloadUrl"
+            variant="secondary"
+            icon="download"
+            :label="t('reader.controls.downloadOriginal')"
+            data-testid="download-original"
+          />
+        </p>
+
         <!-- Page-owned extras (publication files/meta) below the body. -->
         <slot />
       </article>
@@ -152,6 +170,7 @@ import { computed, inject, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 import LocalizedRichText from "@/components/content/LocalizedRichText.vue";
+import { UiBtn } from "@/components/ui";
 import ReaderToc from "./ReaderToc.vue";
 import ReaderControls from "./ReaderControls.vue";
 import AstBody from "./AstBody.vue";
@@ -167,7 +186,6 @@ import type {
 import {
   LINE_SPACING_STEPS,
   MEASURE_WIDTHS,
-  PARAGRAPH_SPACING_STEPS,
   DEFAULT_READER_SETTINGS,
   loadReaderSettings,
   removeReaderSettings,
@@ -197,6 +215,12 @@ const props = defineProps<{
   isFallback?: boolean;
   /** Whether the page renders a download affordance (unsupported copy split). */
   offersDownload?: boolean;
+  /**
+   * Same-origin content-original URL for the owner-approved source file.
+   * The page sets it only when the published row carries
+   * `allowOriginalDownload` (default off); null/undefined renders nothing.
+   */
+  originalDownloadUrl?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -247,12 +271,18 @@ const tocItems = computed(() =>
   }))
 );
 
-/** Reading preferences as CSS custom properties on the article only. */
+/**
+ * Reading preferences as CSS custom properties on the article only. The
+ * --prose-* hooks ride the same element so EVERY descendant block — AST or
+ * legacy rich text — reads them: one measure for the whole article and
+ * heading sizes as RELATIVE factors of the user's size step (2.125 / 1.5 /
+ * 1.25 = the DESIGN_SYSTEM §2 desktop ratios over the 16 px body). Inside
+ * the reader the type scale therefore follows the reader, not the viewport.
+ */
 const articleStyle = computed(() => ({
   "--lfr-font-size": `${String(TEXT_SIZE_STEPS[settings.value.textSize])}rem`,
   "--lfr-measure": MEASURE_WIDTHS[settings.value.measure],
-  "--lfr-line-height": String(LINE_SPACING_STEPS[settings.value.lineSpacing]),
-  "--lfr-para-space": `${String(PARAGRAPH_SPACING_STEPS[settings.value.paragraphSpacing])}rem`
+  "--lfr-line-height": String(LINE_SPACING_STEPS[settings.value.lineSpacing])
 }));
 </script>
 
@@ -324,7 +354,27 @@ const articleStyle = computed(() => ({
 
    DOM order is toc → article → controls (screen readers get the text first);
    at < 1024 px the AREAS put the controls visually ABOVE the article so a
-   phone reader can set type before reading — without reordering the DOM. */
+   phone reader can set type before reading — without reordering the DOM.
+
+   Full-bleed band (measure-cascade fix): the shell's 72rem column cannot
+   host a 13rem TOC, a 15rem controls rail AND a 78ch reading column — the
+   track clipped every measure step, so the Line-width control did nothing
+   at large text sizes. At ≥1024 px the reader bleeds past the shell into a
+   centered 90rem band: the TOC and controls sit OUTSIDE the prose, and the
+   78ch wide step (≈54rem at the biggest text step) always has real room.
+   Same idiom as the About rail (about-page__bleed); app.scss clips the
+   root horizontally so the 100vw overshoot never scrolls. */
+
+.long-form-reader {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .long-form-reader {
+    margin-inline: calc(50% - 50vw);
+    padding-inline: max(1.25rem, calc((100vw - 90rem) / 2));
+  }
+}
 
 .long-form-reader__layout {
   display: grid;
@@ -377,7 +427,7 @@ const articleStyle = computed(() => ({
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1440px) {
   .long-form-reader__layout {
     grid-template-columns: 13rem minmax(0, 1fr) 15rem;
     grid-template-areas: "toc article controls";
@@ -389,7 +439,7 @@ const articleStyle = computed(() => ({
   }
 }
 
-@media (min-width: 1024px) and (max-width: 1279px) {
+@media (min-width: 1024px) and (max-width: 1439px) {
   .long-form-reader__layout--toc-collapsed {
     grid-template-columns: min-content minmax(0, 1fr);
   }
@@ -397,10 +447,59 @@ const articleStyle = computed(() => ({
 
 .long-form-reader__article {
   min-width: 0;
-  /* The committed preferences land here as custom properties. */
+  /* The committed preferences land here as custom properties (inline style). */
   font-size: var(--lfr-font-size, var(--font-size-body));
   line-height: var(--lfr-line-height, 1.5);
   max-width: var(--lfr-measure, 65ch);
+
+  /*
+   * Cascade fix (settings applied only to plain paragraphs): every block
+   * type inside the article must obey the same three preferences. These
+   * hooks are consumed by LocalizedRichText too, so both body renderers
+   * scale identically; the block rules below override the global element
+   * styles (typography.css) that previously pinned absolute sizes.
+   */
+  --prose-measure: none;
+  --prose-h2-size: calc(var(--lfr-font-size, 1rem) * 2.125);
+  --prose-h3-size: calc(var(--lfr-font-size, 1rem) * 1.5);
+  --prose-h4-size: calc(var(--lfr-font-size, 1rem) * 1.25);
+  --prose-small-size: calc(var(--lfr-font-size, 1rem) * 0.875);
+}
+
+/*
+ * Text blocks follow the user's size AND line-height: the global `p`/`li`
+ * element rules (fluid --font-size-body, fixed --line-height-body) applied
+ * on top of inheritance before — inheriting instead keeps one rhythm for
+ * lists, quotes and table cells alike.
+ */
+.long-form-reader__article :deep(p),
+.long-form-reader__article :deep(li),
+.long-form-reader__article :deep(blockquote),
+.long-form-reader__article :deep(sup),
+.long-form-reader__article :deep(small) {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Headings: relative factors off the user step (see --prose hooks). */
+.long-form-reader__article :deep(h2),
+.long-form-reader__article :deep(h3),
+.long-form-reader__article :deep(h4) {
+  margin-block: 2rem 0.75rem;
+  scroll-margin-top: 5rem;
+  line-height: var(--line-height-heading);
+}
+
+.long-form-reader__article :deep(h2) {
+  font-size: var(--prose-h2-size, var(--font-size-h2));
+}
+
+.long-form-reader__article :deep(h3) {
+  font-size: var(--prose-h3-size, var(--font-size-h3));
+}
+
+.long-form-reader__article :deep(h4) {
+  font-size: var(--prose-h4-size, var(--font-size-h4));
 }
 
 .long-form-reader__article :deep(p),
@@ -410,14 +509,9 @@ const articleStyle = computed(() => ({
 .long-form-reader__article :deep(pre),
 .long-form-reader__article :deep(table),
 .long-form-reader__article :deep(figure) {
-  margin-block: 0 var(--lfr-para-space, 1rem);
-}
-
-.long-form-reader__article :deep(h2),
-.long-form-reader__article :deep(h3),
-.long-form-reader__article :deep(h4) {
-  margin-block: 2rem 0.75rem;
-  scroll-margin-top: 5rem;
+  /* Block rhythm is the DS baseline: paragraph spacing left the settings
+     model (header-lane simplification), so the old --lfr-para-space is gone. */
+  margin-block: 0 1rem;
 }
 
 .long-form-reader__article :deep(blockquote) {
@@ -436,7 +530,7 @@ const articleStyle = computed(() => ({
 .long-form-reader__article :deep(caption) {
   padding-block-end: 0.5rem;
   color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  font-size: var(--prose-small-size, var(--font-size-small));
   text-align: start;
 }
 
@@ -452,10 +546,6 @@ const articleStyle = computed(() => ({
   background: var(--color-surface);
 }
 
-.long-form-reader__article :deep(figure) {
-  margin: 0 0 var(--lfr-para-space, 1rem);
-}
-
 .long-form-reader__article :deep(img) {
   max-width: 100%;
   height: auto;
@@ -465,23 +555,33 @@ const articleStyle = computed(() => ({
 .long-form-reader__article :deep(figcaption) {
   margin-block-start: 0.5rem;
   color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  font-size: var(--prose-small-size, var(--font-size-small));
+  line-height: inherit;
 }
 
+/* Code keeps the monospace face but rides the same scale as prose. */
 .long-form-reader__article :deep(pre) {
   padding: 1rem;
   overflow-x: auto;
   border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   background: var(--color-surface);
+  font-family: var(--font-family-monospace, monospace);
+  font-size: calc(var(--lfr-font-size, 1rem) * 0.875);
+  line-height: var(--lfr-line-height, 1.5);
+}
+
+.long-form-reader__article :deep(code) {
+  font-family: var(--font-family-monospace, monospace);
 }
 
 .long-form-reader__article :deep(.reader-footnote) {
   padding-block-start: 0.5rem;
-  margin-block-end: var(--lfr-para-space, 1rem);
+  margin-block-end: 1rem;
   border-block-start: 1px dashed var(--color-border);
   color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  font-size: var(--prose-small-size, var(--font-size-small));
+  line-height: inherit;
 }
 
 .long-form-reader__state {

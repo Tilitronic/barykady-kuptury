@@ -114,6 +114,7 @@ function documentRow(overrides: Record<string, unknown> = {}) {
     language: null,
     publication_date: null,
     updated_at: "2026-10-20T12:00:00Z",
+    allow_original_download: false,
     organization_document_translations: [
       {
         locale: "en",
@@ -152,6 +153,7 @@ function publicationRow(overrides: Record<string, unknown> = {}) {
     publication_date: "2026-02-01",
     external_url: "https://example.org/publication",
     updated_at: "2026-10-20T12:00:00Z",
+    allow_original_download: false,
     publication_translations: [
       {
         locale: "en",
@@ -245,7 +247,8 @@ describe("fetchReaderDocument", () => {
       language: null,
       publicationDate: null,
       externalUrl: null,
-      availableLocales: ["en", "pl"]
+      availableLocales: ["en", "pl"],
+      allowOriginalDownload: false
     });
     // T-044: private provider paths/IDs must never reach the public payload.
     expect(model).not.toHaveProperty("source");
@@ -294,6 +297,31 @@ describe("fetchReaderDocument", () => {
       method: "eq",
       args: ["organization_document_id", "00000000-0000-4000-8000-000000000601"]
     });
+  });
+
+  it("exposes allow_original_download on the reader model (content-original affordance)", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({ allow_original_download: true })
+        ],
+        content_assets: []
+      }
+    });
+
+    const result = await fetchReaderDocument(
+      fake.client,
+      "document",
+      "regulations"
+    );
+
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+    expect(result.items[0]?.allowOriginalDownload).toBe(true);
+    // The column must be part of the projection, or the value never arrives.
+    expect(selectText(fake, "organization_documents")).toContain(
+      "allow_original_download"
+    );
   });
 
   it("reads a publication and maps the abstract/body", async () => {

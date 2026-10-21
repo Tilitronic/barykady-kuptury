@@ -216,5 +216,11 @@ export interface ReaderDocumentModel {
   readonly publicationDate: string | null;
   /** Publications only. */
   readonly externalUrl: string | null;
+  /**
+   * Owner opt-in (T-040/T-041): the private source file may be offered for
+   * download through /.netlify/functions/content-original. Public rows only
+   * ever carry the boolean — never a storage path or source id.
+   */
+  readonly allowOriginalDownload: boolean;
   readonly updatedAt: string;
 }

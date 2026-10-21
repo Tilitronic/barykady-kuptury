@@ -59,6 +59,29 @@ const AST_EN = {
       ]
     },
     {
+      kind: "list",
+      ordered: false,
+      items: [
+        { children: [{ kind: "text", value: "Identity" }] },
+        { children: [{ kind: "text", value: "Community" }] }
+      ]
+    },
+    {
+      kind: "blockquote",
+      children: [
+        {
+          kind: "paragraph",
+          children: [{ kind: "text", value: "Culture is a bridge." }]
+        }
+      ]
+    },
+    { kind: "code", value: "SELECT 1;", language: "sql" },
+    {
+      kind: "footnote",
+      label: "[1]",
+      children: [{ kind: "text", value: "See section 2 of the statute." }]
+    },
+    {
       kind: "image",
       assetId: "asset-e2e",
       alt: "Association seal",
@@ -370,48 +393,249 @@ test.describe("unified reader", () => {
     await page.goto("/en/about/documents/e2e-regulations");
 
     const article = page.locator("article");
-    const baseSize = await article.evaluate(el =>
-      getComputedStyle(el).getPropertyValue("--lfr-font-size")
-    );
-    expect(baseSize.trim()).toBe("1rem");
+    const readVar = (name: string) =>
+      article.evaluate(
+        (el, prop) =>
+          getComputedStyle(el)
+            .getPropertyValue(prop as string)
+            .trim(),
+        name
+      );
 
-    await page
-      .getByTestId("control-text-size")
-      .getByRole("radio", { name: "Large", exact: true })
-      .click();
-    await page
-      .getByTestId("control-measure")
-      .getByRole("radio", { name: "Narrow" })
-      .click();
+    expect(await readVar("--lfr-font-size")).toBe("1rem");
+    // Paragraph spacing left the settings model entirely.
+    expect(await readVar("--lfr-para-space")).toBe("");
 
-    await expect
-      .poll(() =>
-        article.evaluate(el =>
-          getComputedStyle(el).getPropertyValue("--lfr-font-size")
-        )
-      )
-      .toBe("1.1875rem");
+    // One primitive everywhere: a stepper slider with both buttons to the
+    // right. Text size + twice (1rem -> 1.1875 -> 1.375), line width − once
+    // (medium -> narrow).
+    const textSize = page.getByTestId("control-text-size");
+    await textSize.getByRole("button", { name: "Increase Text size" }).click();
+    await textSize.getByRole("button", { name: "Increase Text size" }).click();
+    await expect.poll(() => readVar("--lfr-font-size")).toBe("1.375rem");
+
+    const measure = page.getByTestId("control-measure");
+    await measure.getByRole("button", { name: "Decrease Line width" }).click();
+    await expect.poll(() => readVar("--lfr-measure")).toBe("50ch");
 
     // The announcement lands in the polite live region.
     await expect(page.getByTestId("controls-status")).toContainText(
       "Line width"
     );
 
-    await page.reload();
+    // Outer ends are disabled, not broken (default at the ruler bottom).
     await expect(
       page
-        .getByTestId("control-text-size")
-        .getByRole("radio", { name: "Large", exact: true })
-    ).toHaveAttribute("aria-checked", "true");
+        .getByTestId("control-line-spacing")
+        .getByRole("button", { name: "Decrease Line spacing" })
+    ).toBeDisabled();
+
+    await page.reload();
+    await expect(
+      page.getByTestId("control-text-size").getByRole("slider")
+    ).toHaveAttribute("aria-valuetext", "Extra large");
+    await expect(
+      page.getByTestId("control-measure").getByRole("slider")
+    ).toHaveAttribute("aria-valuetext", "Narrow");
 
     await page.getByTestId("control-reset").click();
+    await expect.poll(() => readVar("--lfr-font-size")).toBe("1rem");
+    await expect.poll(() => readVar("--lfr-measure")).toBe("65ch");
+  });
+
+  /**
+   * Queue-3 journey — settings inheritance. A reader who sizes one document
+   * up gets the same reading experience on documents they never configured;
+   * a per-document commit then always wins over the drifting last-used
+   * value. Deterministic mocked fixtures only (docs/TESTING.md §2).
+   */
+  test("sized-up reading inherits into a fresh document; per-document commits win", async ({
+    page
+  }) => {
+    await mockReaderData(page);
+
+    const readVar = (name: string) =>
+      page.locator("article").evaluate(
+        (el, prop) =>
+          getComputedStyle(el)
+            .getPropertyValue(prop as string)
+            .trim(),
+        name
+      );
+
+    await page.goto("/en/about/documents/e2e-regulations");
+    expect(await readVar("--lfr-font-size")).toBe("1rem");
+
+    // Commit a size on the regulations: 1rem -> 1.375rem.
+    const increase = page
+      .getByTestId("control-text-size")
+      .getByRole("button", { name: "Increase Text size" });
+    await increase.click();
+    await increase.click();
+    await expect.poll(() => readVar("--lfr-font-size")).toBe("1.375rem");
+
+    // A never-configured document opens AT the inherited size — no controls
+    // touched there.
+    await page.goto("/en/about/documents/e2e-long");
+    await expect.poll(() => readVar("--lfr-font-size")).toBe("1.375rem");
+
+    // Configure the second document differently: its own commit now wins…
+    await page
+      .getByTestId("control-text-size")
+      .getByRole("button", { name: "Decrease Text size" })
+      .click();
+    await expect.poll(() => readVar("--lfr-font-size")).toBe("1.1875rem");
+
+    // …and the first document keeps its committed value even though the
+    // last-used source drifted.
+    await page.goto("/en/about/documents/e2e-regulations");
+    await expect.poll(() => readVar("--lfr-font-size")).toBe("1.375rem");
+  });
+
+  test("every block type scales with the settings — the cascade regression", async ({
+    page
+  }) => {
+    await mockReaderData(page);
+    await page.goto("/en/about/documents/e2e-regulations");
+    // Read only once the article has actually rendered: every other test in
+    // this file awaits a heading first; without it the `read()` below races
+    // the async load and throws on a still-empty article.
+    await expect(
+      page.getByRole("heading", { level: 2, name: "1. Definitions" })
+    ).toBeVisible();
+
+    const article = page.locator("article");
+    const selectors = {
+      p: "p",
+      h2: "h2",
+      li: "ul li",
+      quote: "blockquote p",
+      pre: "pre",
+      caption: "table caption",
+      figcaption: "figure figcaption",
+      footnote: ".reader-footnote"
+    } as const;
+
+    const read = () =>
+      page.evaluate(sel => {
+        const out: Record<string, { size: number; height: number }> = {};
+        for (const [key, selector] of Object.entries(sel)) {
+          const el = document.querySelector(`article ${selector}`);
+          if (!el) throw new Error(`missing block: ${selector}`);
+          const cs = getComputedStyle(el);
+          out[key] = {
+            size: Number.parseFloat(cs.fontSize),
+            height: Number.parseFloat(cs.lineHeight)
+          };
+        }
+        return out;
+      }, selectors);
+
+    const before = await read();
+    // Headings ride off the USER step now (h2 = 2.125 x 1rem), not the
+    // viewport fluid scale: 34 px at the default step on this viewport.
+    expect(before.h2!.size).toBeCloseTo(34, 0);
+
+    // Text size step 0 -> 2 (1.375x): every block's font-size AND every
+    // numeric line-height (which multiplies the block's own size) scale.
+    const textSize = page.getByTestId("control-text-size");
+    await textSize.getByRole("button", { name: "Increase Text size" }).click();
+    await textSize.getByRole("button", { name: "Increase Text size" }).click();
+
+    const resized = await read();
+    for (const key of Object.keys(selectors) as (keyof typeof selectors)[]) {
+      expect(
+        resized[key]!.size / before[key]!.size,
+        `${key} font-size follows the text-size step`
+      ).toBeCloseTo(1.375, 1);
+      expect(
+        resized[key]!.height / before[key]!.height,
+        `${key} line-height follows its own size`
+      ).toBeCloseTo(1.375, 1);
+    }
+
+    // Line spacing step 0 -> 1 (1.5 -> 1.75): prose blocks (paragraphs,
+    // list items, quotes, code, tables, captions, footnotes) share the
+    // article's line-height; headings keep the tighter heading ratio.
+    await page
+      .getByTestId("control-line-spacing")
+      .getByRole("button", { name: "Increase Line spacing" })
+      .click();
+
+    const respaced = await read();
+    for (const key of Object.keys(selectors) as (keyof typeof selectors)[]) {
+      expect(
+        respaced[key]!.size,
+        `${key} size is untouched by line spacing`
+      ).toBeCloseTo(resized[key]!.size, 0);
+      const ratio = respaced[key]!.height / resized[key]!.height;
+      if (key === "h2") {
+        expect(ratio, "h2 keeps the heading line-height").toBeCloseTo(1, 1);
+      } else {
+        expect(ratio, `${key} follows the line-spacing step`).toBeCloseTo(
+          1.75 / 1.5,
+          1
+        );
+      }
+    }
+
+    // One measure for the whole article: the wide step widens the column
+    // itself, nothing inside keeps a private 65ch cap. The default stop is
+    // medium (index 1 of 3), so ONE increase reaches wide — the second
+    // button press would land on a legitimately disabled control.
+    const beforeWidth = (await article.boundingBox())!.width;
+    const measure = page.getByTestId("control-measure");
+    await measure.getByRole("button", { name: "Increase Line width" }).click();
     await expect
       .poll(() =>
-        article.evaluate(el =>
-          getComputedStyle(el).getPropertyValue("--lfr-font-size")
+        page.evaluate(() =>
+          getComputedStyle(document.querySelector("article")!)
+            .getPropertyValue("--lfr-measure")
+            .trim()
         )
       )
-      .toBe("1rem");
+      .toBe("78ch");
+    const wideWidth = (await article.boundingBox())!.width;
+    expect(wideWidth).toBeGreaterThan(beforeWidth + 40);
+
+    // The code block runs to the same content edge (minus its own padding)
+    // instead of a narrower private column.
+    const preWidth = (await article.locator("pre").boundingBox())!.width;
+    expect(preWidth).toBeGreaterThan(wideWidth * 0.8);
+  });
+  test("the original-file affordance appears only on opt-in rows", async ({
+    page
+  }) => {
+    // Off (fixture default): the reader promises nothing.
+    await mockReaderData(page);
+    await page.goto("/en/about/documents/e2e-regulations");
+    await expect(
+      page.getByRole("heading", { level: 2, name: "1. Definitions" })
+    ).toBeVisible();
+    await expect(page.getByTestId("download-original")).toHaveCount(0);
+
+    // On: one same-origin link, fully labelled, pointing at the Netlify
+    // binding — no storage path, no token in the href.
+    await mockSupabaseRest(page, {
+      responses: {
+        organization_documents: [
+          { ...DOCUMENT_FIXTURE[0], allow_original_download: true },
+          ...LONG_FIXTURE
+        ],
+        content_assets: ASSETS_FIXTURE,
+        publications: PUBLICATION_FIXTURE
+      }
+    });
+    await page.goto("/en/about/documents/e2e-regulations");
+    const link = page.getByTestId("download-original");
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute(
+      "href",
+      "/.netlify/functions/content-original?kind=document&slug=e2e-regulations"
+    );
+    await expect(link).toContainText("Download the original file.");
+
+    await checkA11y(page);
   });
 
   test("publications with body data render through the reader", async ({
@@ -434,6 +658,13 @@ test.describe("unified reader", () => {
     await expect(page.getByTestId("reader-toc")).toHaveCount(0);
     // Reading controls are present in the reader view.
     await expect(page.getByTestId("reader-controls")).toBeVisible();
+
+    // Cascade fix: the legacy prose inherits the article's ONE measure —
+    // LocalizedRichText's private 65ch cap is released inside a reader.
+    await expect(page.locator("article .localized-rich-text")).toHaveCSS(
+      "max-width",
+      "none"
+    );
     // rev-1 E: bibliographic identity from the D-38 detail read.
     await expect(
       page.locator("article").getByText("Barykady Kultury", { exact: true })

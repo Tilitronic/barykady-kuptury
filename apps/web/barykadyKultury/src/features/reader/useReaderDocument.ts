@@ -93,6 +93,8 @@ export function useReaderDocument(options: UseReaderDocumentOptions): {
   locale: Ref<Locale>;
   status: Ref<ReaderDocumentStatus>;
   retry: () => void;
+  /** Refetch without blanking the current copy; a failure keeps it visible. */
+  refresh: () => void;
 } {
   const router = options.router ?? useRouter();
   const route = options.route ?? useRoute();
@@ -145,7 +147,7 @@ export function useReaderDocument(options: UseReaderDocumentOptions): {
     }
   }
 
-  async function load(): Promise<void> {
+  async function load(preserve: boolean = false): Promise<void> {
     const canonicalSlug = options.slug.value?.trim() ?? "";
     const currentGeneration = ++generation;
 
@@ -157,8 +159,10 @@ export function useReaderDocument(options: UseReaderDocumentOptions): {
     }
 
     status.value = "loading";
-    model.value = null;
-    selected.value = null;
+    if (!preserve) {
+      model.value = null;
+      selected.value = null;
+    }
 
     let result: Awaited<ReturnType<typeof fetchReaderDocument>>;
     try {
@@ -171,7 +175,8 @@ export function useReaderDocument(options: UseReaderDocumentOptions): {
       // `fetchReaderDocument` already converts its own failures; this is a
       // last-resort guard so a rejected transport never escapes the composable.
       if (currentGeneration !== generation) return;
-      status.value = "unavailable";
+      // A background revalidation must never blank published content.
+      status.value = preserve && model.value !== null ? "ready" : "unavailable";
       return;
     }
 
@@ -191,6 +196,10 @@ export function useReaderDocument(options: UseReaderDocumentOptions): {
       return;
     }
 
+    if (preserve && model.value !== null) {
+      status.value = "ready";
+      return;
+    }
     status.value = result.kind === "empty" ? "empty" : "unavailable";
   }
 
@@ -207,11 +216,16 @@ export function useReaderDocument(options: UseReaderDocumentOptions): {
     void load();
   }
 
+  function refresh(): void {
+    void load(model.value !== null);
+  }
+
   return {
     model,
     selected,
     locale: contentLocale,
     status,
-    retry
+    retry,
+    refresh
   };
 }

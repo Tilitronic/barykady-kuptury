@@ -212,12 +212,23 @@ function iconShapesFor(platform: string): readonly IconShape[] {
   text-decoration: none;
   transition:
     background-color var(--motion-duration),
-    border-color var(--motion-duration);
+    border-color var(--motion-duration),
+    color var(--motion-duration);
 }
 
-.social-links__link:hover {
+/*
+ * Scarlet hover (owner pass): the interaction accent is the brand scarlet
+ * token --color-link — pure SCARLET in light mode, the raised dark-mode
+ * variant in dark (DESIGN_SYSTEM §1: scarlet-on-nero is forbidden for
+ * text/icons, so the token, never the raw hex). Keyboard focus-visible
+ * mirrors the mouse state; the color change is an enhancement, focus
+ * remains visible through the global focus ring.
+ */
+.social-links__link:hover,
+.social-links__link:focus-visible {
+  color: var(--color-link);
   background: var(--color-surface-raised);
-  border-color: var(--color-text-muted);
+  border-color: var(--color-link);
 }
 
 /* 2.25rem square target — the ≥24 px AA minimum (WCAG 2.5.8) and the same

@@ -22,6 +22,8 @@ const pl: MessageSchema = {
   /** Wyszukiwanie w nagłówku (T-039, D-26). */
   search: {
     trigger: "Szukaj w serwisie",
+    /** Krótka etykieta tooltipa (pass nagłówka). */
+    triggerTooltip: "Szukaj",
     dialogTitle: "Szukaj w serwisie",
     inputLabel: "Szukaj",
     placeholder: "Szukaj stron, projektów, publikacji…",
@@ -184,11 +186,11 @@ const pl: MessageSchema = {
         wide: "Szeroka"
       },
       lineSpacing: "Odstęp wierszy",
-      paragraphSpacing: "Odstęp między akapitami",
       decrease: "Zmniejsz",
       increase: "Zwiększ",
       reset: "Przywróć domyślne",
-      resetDone: "Przywrócono domyślne ustawienia czytania."
+      resetDone: "Przywrócono domyślne ustawienia czytania.",
+      downloadOriginal: "Pobierz oryginalny plik."
     },
     states: {
       empty: "Ten tekst jest niedostępny.",
@@ -202,6 +204,10 @@ const pl: MessageSchema = {
     openMenu: "Otwórz menu nawigacji",
     closeMenu: "Zamknij menu nawigacji",
     mainNav: "Nawigacja główna",
+    /** Pasma telefonów: szuflada zawiera pełne menu — dolny pasek jest nawigacją główną. */
+    fullMenu: "Pełne menu",
+    /** Pozycja dolnego paska otwierająca wszystkie sekcje. */
+    more: "Więcej",
     contact: "Kontakt",
     about: "O nas",
     support: "Wesprzyj nas",
@@ -409,6 +415,169 @@ const pl: MessageSchema = {
       message:
         "Jesteś zalogowany, ale to konto nie ma uprawnień administratora. Poproś organizację o zaproszenie Cię jako administratora albo zaloguj się na inne konto.",
       switchAccount: "Zaloguj się na inne konto"
+    },
+    import: {
+      title: "Import treści",
+      description:
+        "Importuj wersję językową dokumentu lub publikacji z Markdown, Worda lub Google Docs.",
+      heading: "Import treści",
+      intro:
+        "Przekonwertuj plik lub dokument Google, sprawdź bezpieczny podgląd i metadane, a następnie opublikuj. Oryginały pozostają prywatne.",
+      provider: {
+        legend: "Źródło",
+        file: "Plik",
+        google: "Google Docs"
+      },
+      fields: {
+        kind: "Typ treści",
+        document: "Dokument",
+        publication: "Publikacja",
+        locale: "Język",
+        title: "Tytuł",
+        titleHint: "Wymagany dla każdej wersji językowej.",
+        description: "Opis lub streszczenie",
+        documentType: "Typ dokumentu",
+        slug: "Identyfikator URL",
+        slugHint:
+          "Wspólny dla wszystkich języków; małe litery, cyfry i myślniki.",
+        allowOriginalDownload: "Zezwól na pobranie oryginału",
+        allowOriginalDownloadHint:
+          "Domyślnie wyłączone. Po włączeniu czytnik oferuje krótkotrwałe podpisane pobranie."
+      },
+      file: {
+        label: "Plik Markdown lub Word",
+        hint: "Akceptowane: .md i .docx. Pliki .odt/.docm są odrzucane z instrukcją zapisu jako DOCX.",
+        choose: "Wybierz plik",
+        selected: "Wybrany plik",
+        converting: "Konwertowanie…"
+      },
+      google: {
+        label: "Identyfikator lub URL dokumentu Google",
+        hint: "Eksport z Drive to DOCX; strona publiczna renderuje zapisaną kopię, nigdy iframe.",
+        import: "Importuj z Google",
+        syncNow: "Synchronizuj teraz",
+        check: "Sprawdź zmiany",
+        syncing: "Sprawdzanie Google Drive…"
+      },
+      preview: {
+        heading: "Bezpieczny podgląd",
+        empty: "Wybierz plik lub dokument Google, aby zobaczyć podgląd.",
+        blocking: "Rozwiąż te problemy przed publikacją:",
+        warning: "Uwagi z konwersji:",
+        altLabel: "Tekst alternatywny dla {file}",
+        altHint: "Wymagany dla każdego obrazu informacyjnego."
+      },
+      actions: {
+        publish: "Opublikuj",
+        publishing: "Publikowanie…",
+        saveDraft: "Zapisz szkic",
+        savingDraft: "Zapisywanie…"
+      },
+      status: {
+        converted:
+          "Przekonwertowano. Sprawdź podgląd i tytuł, a następnie opublikuj.",
+        published:
+          "Opublikowano. Czytnik publiczny może teraz pokazać tę wersję.",
+        draftSaved: "Szkic zapisany.",
+        unchanged: "Brak nowych zmian w Google Drive.",
+        updateAvailable: "Dostępna jest aktualizacja.",
+        checking: "Sprawdzanie…",
+        failed: "Import nie został ukończony."
+      },
+      sync: {
+        heading: "Synchronizacja Google",
+        lastSynced: "Ostatnia synchronizacja: {time}",
+        never: "Nigdy nie synchronizowano",
+        jobQueued: "W kolejce…",
+        jobRunning: "Synchronizowanie…",
+        jobSucceeded: "Synchronizacja ukończona.",
+        jobUnchanged: "Wersja jest aktualna.",
+        jobBlocked: "Synchronizację zablokowały problemy z treścią.",
+        jobFailed:
+          "Synchronizacja nie powiodła się. Opublikowana kopia pozostała bez zmian.",
+        diffHeading: "Podsumowanie zmian",
+        blocks: "{previous} → {next} bloków",
+        headings: "{count} nagłówków",
+        images: "{count} obrazów",
+        tables: "{count} tabel",
+        added: "Dodano: {items}",
+        removed: "Usunięto: {items}"
+      },
+      errors: {
+        titleRequired: "Wpisz tytuł.",
+        slugRequired: "Wpisz identyfikator URL.",
+        noFile: "Najpierw wybierz plik.",
+        conversionFailed: "Nie udało się przekonwertować pliku.",
+        publishFailed: "Nie udało się zapisać importu.",
+        googleFailed: "Nie udało się uruchomić synchronizacji Google.",
+        noSupabase: "Usługa treści nie jest skonfigurowana.",
+        blocking: "Brak tekstu alternatywnego obrazu blokuje publikację."
+      },
+      schedule: {
+        heading: "Harmonogram świeżości",
+        description:
+          "Nocne zadanie sprawdza Google Docs i aktualizuje zmienione kopie. Ręczna synchronizacja pozostaje nadpisaniem.",
+        lastRun: "Ostatni uruchomiony harmonogram",
+        checked: "Sprawdzono {count}",
+        updated: "Zaktualizowano {count}",
+        failed: "Błędy {count}",
+        skipped: "Pominięto {count}",
+        none: "Nie zapisano jeszcze uruchomienia harmonogramu."
+      }
+    }
+  },
+  /**
+   * T-041 import treści (D-28/D-35). Kody błędów i ostrzeżeń pochodzą z
+   * konwertera; tutaj znajdują się wyłącznie zlokalizowane komunikaty.
+   */
+  import: {
+    title: "Import treści",
+    description:
+      "Zaimportuj plik Markdown lub Word (.docx) i sprawdź przekonwertowaną treść przed publikacją.",
+    acceptedFormats: "Akceptowane formaty: Markdown (.md) i Word (.docx).",
+    errors: {
+      emptyFile: "Wybrany plik jest pusty.",
+      fileTooLarge: "Plik jest zbyt duży, aby go zaimportować.",
+      invalidSize: "Rozmiar pliku jest nieprawidłowy.",
+      invalidFileName: "Nazwa pliku jest nieprawidłowa.",
+      unsupportedExtension:
+        "Nie można zaimportować tego typu pliku. Użyj Markdown (.md) lub Word (.docx).",
+      unsupportedMime:
+        "Typ pliku zgłoszony przez przeglądarkę nie jest obsługiwany.",
+      mimeExtensionMismatch: "Nazwa pliku i jego typ nie są zgodne.",
+      activeContent:
+        "Nie można importować aktywnej treści, takiej jak HTML, SVG lub JavaScript.",
+      odtDeferred:
+        "Format OpenDocument (.odt) nie jest jeszcze obsługiwany. Zapisz dokument jako Word (.docx) w edytorze, a następnie zaimportuj plik .docx.",
+      docmRejected:
+        "Dokumenty Word z makrami (.docm) nie są akceptowane. Zapisz dokument jako .docx bez makr, a następnie go zaimportuj.",
+      docxUnsafeZip:
+        "Plik Word jest uszkodzony lub przekracza bezpieczne limity importu.",
+      docxMacros:
+        "Plik Word zawiera makra, które są niedozwolone. Zapisz go jako .docx bez makr.",
+      docxInvalid: "Nie można odczytać pliku Word.",
+      emptyDocument: "Plik nie zawiera czytelnej treści.",
+      conversionFailed:
+        "Nie udało się przekonwertować pliku. Sprawdź plik i spróbuj ponownie.",
+      conversionTimeout: "Konwersja trwała zbyt długo i została zatrzymana."
+    },
+    warnings: {
+      rawHtmlDropped: "Surowy HTML został usunięty z Markdown.",
+      unsafeLink:
+        "Odnośnik z nieobsługiwanym adresem zamieniono na zwykły tekst.",
+      remoteImageStripped:
+        "Zdalny obraz został usunięty. Prześlij obraz do witryny i wstaw odwołanie do zasobu.",
+      imageUnresolved:
+        "Nie udało się powiązać obrazu z przesłanym zasobem, więc obraz został usunięty.",
+      nestedListFlattened:
+        "Zagnieżdżoną listę spłaszczono, aby dopasować ją do formatu czytnika.",
+      unsupportedFormatting:
+        "Niektóre formatowanie uproszczono na potrzeby czytnika.",
+      imageAltMissing:
+        "Obraz nie ma tekstu alternatywnego. Dodaj opis przed publikacją.",
+      imageUnsupported:
+        "Obraz w nieobsługiwanym formacie został usunięty. Użyj PNG, JPEG lub WebP.",
+      docxWarning: "Konwersja pliku Word zgłosiła ostrzeżenie."
     }
   },
   notFound: {
@@ -417,6 +586,9 @@ const pl: MessageSchema = {
     message: "Żądana strona nie została znaleziona."
   },
   content: {
+    updateAvailable: "Dostępna jest aktualizacja.",
+    showUpdate: "Pokaż aktualizację",
+    updating: "Wczytywanie aktualizacji…",
     loading: "Ładowanie…",
     empty: "Ta strona nie jest dostępna.",
     unavailable: "Ta treść jest tymczasowo niedostępna.",

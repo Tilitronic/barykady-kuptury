@@ -210,13 +210,16 @@ const resolvedAlt = computed<string>(() => {
   Each class provides the default for its token; callers may override the
   rendered height via the inherited --brand-logo-size custom property (used
   by AppHeader to step the logotype down on narrow desktop widths).
+  The md default reads --brand-logo-height-md (tokens.css): that variable is
+  also the multiplicand of --nav-active-stroke, so the active-page underline
+  keeps the same ratio to the "B" stem at every theme/breakpoint.
 */
 .brand-logo--sm {
   --logo-size: var(--brand-logo-size, 32px);
 }
 
 .brand-logo--md {
-  --logo-size: var(--brand-logo-size, 48px);
+  --logo-size: var(--brand-logo-size, var(--brand-logo-height-md, 48px));
 }
 
 .brand-logo--lg {

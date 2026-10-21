@@ -95,9 +95,11 @@ describe("fetchPublishedDocuments", () => {
     await fetchPublishedDocuments(fake.client, "en");
 
     expect(selectText(fake.calls)).toContain(
-      "organization_document_translations(locale, title, description)"
+      "organization_document_translations(locale, title, description, body_ast_version)"
     );
-    expect(selectText(fake.calls)).not.toContain("body");
+    // The full reader body stays on the detail query; only the AST-version
+    // flag is projected for the card's reader affordance.
+    expect(selectText(fake.calls)).not.toMatch(/[(, ]body[),]/);
   });
 
   it("maps card metadata without fetching the reader body", async () => {
@@ -139,6 +141,45 @@ describe("fetchPublishedDocuments", () => {
     expect(doc!.availableLocales).toEqual(["en", "pl", "uk"]);
     expect(doc!.isFallback).toBe(false);
     expect(Object.keys(doc!)).not.toContain("document_type");
+  });
+
+  it("links file documents whose translations carry a reader AST", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({
+            storage_path: "documents/annual-report.pdf",
+            mime_type: "application/pdf",
+            organization_document_translations: [
+              translation({ body: null, body_ast_version: 1 }),
+              translation({
+                id: "00000000-0000-4000-8000-000000000603",
+                locale: "pl",
+                title: "Regulamin działalności stowarzyszenia zwykłego",
+                body: null,
+                body_ast_version: 1
+              }),
+              translation({
+                id: "00000000-0000-4000-8000-000000000604",
+                locale: "uk",
+                title: "Регламент діяльності звичайного товариства",
+                body: null,
+                body_ast_version: null
+              })
+            ]
+          })
+        ]
+      }
+    });
+
+    const result = await fetchPublishedDocuments(fake.client, "pl");
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+
+    // Hybrid file+text documents link only the AST-backed locales; the PDF
+    // stays a separate download affordance (T-029), the reader shows the text.
+    const [doc] = result.items;
+    expect(doc!.availableLocales).toEqual(["en", "pl"]);
   });
 
   it("returns the empty state when no document is published", async () => {

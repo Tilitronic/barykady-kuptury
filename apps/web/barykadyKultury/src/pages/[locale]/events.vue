@@ -28,11 +28,11 @@
           :key="n"
           class="events-page__skeleton-card"
         >
-          <q-skeleton height="1.75rem" width="min(24rem, 80%)" />
-          <q-skeleton height="1.25rem" width="min(16rem, 60%)" />
-          <q-skeleton height="1rem" width="min(12rem, 50%)" />
-          <q-skeleton height="5rem" width="min(36rem, 100%)" />
-          <q-skeleton height="2.75rem" width="10rem" />
+          <UiSkeleton height="1.75rem" width="min(24rem, 80%)" />
+          <UiSkeleton height="1.25rem" width="min(16rem, 60%)" />
+          <UiSkeleton height="1rem" width="min(12rem, 50%)" />
+          <UiSkeleton height="5rem" width="min(36rem, 100%)" />
+          <UiSkeleton height="2.75rem" width="10rem" />
         </li>
       </ul>
     </div>
@@ -154,7 +154,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
-import { QSkeleton } from "quasar";
+import { UiSkeleton } from "@/components/ui";
 import { useI18n } from "vue-i18n";
 
 import EventCard from "@/components/events/EventCard.vue";

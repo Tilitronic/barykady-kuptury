@@ -379,3 +379,101 @@ test.describe("site search", () => {
     await checkA11y(page);
   });
 });
+
+/**
+ * Header lane fix: the icon trigger used to sit flush against the social
+ * links with no visible name or tooltip. The full sentence stays the
+ * accessible name; the short localized label rides on title + a Quasar
+ * tooltip shown on hover and keyboard focus; a dedicated margin keeps the
+ * icons separated.
+ */
+test.describe("search trigger naming, tooltip and spacing", () => {
+  test("keyboard focus reveals the tooltip", async ({ page }) => {
+    await mockSupabaseRest(page, {
+      responses: { publications: [{ publication_date: "2026-02-01" }] }
+    });
+    await mockSearchRpc(page, { rows: [] });
+    await mockCalendarEvents(page, { events: [] });
+
+    await page.goto("/en");
+
+    // Walk the tab order to the trigger: :focus-visible must come from a
+    // real keyboard press for Quasar to arm the tooltip.
+    const trigger = page.getByTestId("site-search-trigger");
+    // The SPA header hydrates after DOMContentLoaded — measure only once the
+    // trigger is actually in the document.
+    await expect(trigger).toBeVisible();
+    await page.evaluate(() => {
+      document.body.setAttribute("tabindex", "-1");
+      document.body.focus();
+      document.body.removeAttribute("tabindex");
+    });
+    for (let stop = 0; stop < 15; stop++) {
+      await page.keyboard.press("Tab");
+      if (
+        await page.evaluate(
+          () =>
+            document.activeElement?.getAttribute("data-testid") ===
+            "site-search-trigger"
+        )
+      ) {
+        break;
+      }
+    }
+    await expect(trigger).toBeFocused();
+
+    const tooltip = page.locator(".q-tooltip");
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toHaveText("Search");
+
+    // Tabbing away closes it; the dialog still opens from the trigger.
+    await page.keyboard.press("Tab");
+    await expect(tooltip).toBeHidden();
+  });
+
+  test("the trigger keeps clear space from the social icons (desktop + 320 px drawer)", async ({
+    page
+  }) => {
+    await mockSupabaseRest(page, {
+      responses: { publications: [{ publication_date: "2026-02-01" }] }
+    });
+    await mockSearchRpc(page, { rows: [] });
+    await mockCalendarEvents(page, { events: [] });
+
+    const gap = async () =>
+      page.evaluate(() => {
+        const t = document
+          .querySelector("[data-testid='site-search-trigger']")!
+          .getBoundingClientRect();
+        const s = document
+          .querySelector(".social-links")!
+          .getBoundingClientRect();
+        return s.left - t.right;
+      });
+
+    await page.goto("/en");
+    await expect(page.getByTestId("site-search-trigger")).toBeVisible();
+    const desktopGap = await gap();
+    expect(
+      desktopGap,
+      "trigger must not touch the social icons"
+    ).toBeGreaterThanOrEqual(6);
+    const box = await page.getByTestId("site-search-trigger").boundingBox();
+    expect(box!.width).toBeGreaterThanOrEqual(24);
+    expect(box!.height).toBeGreaterThanOrEqual(24);
+
+    // 320 px (phone band): the trigger rides the slim header strip — no
+    // drawer tap needed; it stays a ≥24 px target beside the hamburger.
+    await page.setViewportSize({ width: 320, height: 640 });
+    const trigger = page.getByTestId("site-search-trigger");
+    await expect(trigger).toBeVisible();
+    const stripBox = await trigger.boundingBox();
+    expect(stripBox!.width).toBeGreaterThanOrEqual(24);
+    expect(stripBox!.height).toBeGreaterThanOrEqual(24);
+    const burgerBox = await page.getByTestId("menu-trigger").boundingBox();
+    // Same strip: separated from the hamburger too.
+    expect(burgerBox!.x).toBeGreaterThanOrEqual(
+      stripBox!.x + stripBox!.width + 6
+    );
+  });
+});

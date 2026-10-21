@@ -29,3 +29,17 @@
   white-space: nowrap;
   border: 0;
 }
+
+/*
+ * Full-bleed guard (header lane; extended by the reader measure fix). The
+ * About page's side rail and the unified reader bleed to 100vw so they can
+ * dock at the viewport edge / host the wide measure outside the shell; on
+ * classic-scrollbar platforms that overshoots the scrollport by the
+ * scrollbar width. Clip the root horizontally ONLY while one of these is
+ * mounted — overflow-x: clip (not hidden) so it does not create a scroll
+ * container and therefore keeps the sticky header and sticky rails working
+ * (DESIGN_SYSTEM.md §6).
+ */
+html:has(.about-page, .long-form-reader) {
+  overflow-x: clip;
+}

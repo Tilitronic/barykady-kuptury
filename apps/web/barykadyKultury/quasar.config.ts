@@ -107,6 +107,16 @@ export default defineConfig(ctx => {
       // launcher resolves that binary.
       open: false,
 
+      // WSL/DrvFs (this repo lives under /mnt/c) does not deliver fs events
+      // reliably, so Vite HMR silently keeps serving a stale bundle after
+      // edits. Poll the tree instead — quasarConf.devServer merges into
+      // viteConf.server (@quasar/app-vite config-tools), so `watch` lands on
+      // Vite's own watcher. Opt out on native filesystems with
+      // QUASAR_WATCH_NOPOLL=1.
+      ...(process.env.QUASAR_WATCH_NOPOLL === "1"
+        ? {}
+        : { watch: { usePolling: true, interval: 400 } }),
+
       // T-037 Lane B: DEV-ONLY proxy to the Bun calendar mock. The SPA keeps
       // calling the production path, so client code and Netlify wiring are
       // unchanged; production builds never read this block. The target honors

@@ -1,5 +1,6 @@
 import { Fragment, h, type VNode } from "vue";
 
+import { isSafeHref } from "@/features/reader/safeHref";
 import type {
   ReaderBlock,
   ReaderDocumentV1,
@@ -18,27 +19,13 @@ import type {
  *
  * Link schemes are re-filtered client-side (http/https/mailto): the DB is the
  * authority on write, but a stale bundle must still render `javascript:` as
- * inert text (defense in depth).
+ * inert text (defense in depth). The predicate is shared with the T-041 import
+ * converter (`features/reader/safeHref`) so the two cannot drift.
  *
  * Heading ids are positional (`ast-heading-<blockIndex>`): stable for a given
  * stored AST version, and the only contract the TOC and deep links need —
  * slugifying localized heading text would make anchors locale-dependent.
  */
-
-/**
- * The renderer mirrors the DB validator's link allowlist exactly
- * (`reader_ast_validate_inlines_v1`, rev-1 A): http/https/mailto schemes,
- * in-page fragments, and same-origin absolute paths. Rejected: the
- * protocol-relative `//host` form (scheme-inheriting, origin-escaping),
- * every other relative form, and `javascript:`/`data:`/`file:`.
- */
-function isSafeHref(href: string): boolean {
-  const lower = href.toLowerCase();
-  if (lower.startsWith("http://") || lower.startsWith("https:")) return true;
-  if (lower.startsWith("mailto:")) return true;
-  if (href.startsWith("#")) return true;
-  return href.startsWith("/") && !href.startsWith("//");
-}
 
 export interface ResolvedAsset {
   readonly url: string;

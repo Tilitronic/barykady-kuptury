@@ -14,6 +14,12 @@
 
 export const TEXT_SIZE_STEPS = [1, 1.1875, 1.375, 1.625] as const;
 export type ReaderMeasure = "narrow" | "medium" | "wide";
+/** Slider order for the measure control (index = step). */
+export const MEASURE_STOPS: readonly ReaderMeasure[] = [
+  "narrow",
+  "medium",
+  "wide"
+];
 export const MEASURE_WIDTHS: Record<ReaderMeasure, string> = {
   narrow: "50ch",
   medium: "65ch",
@@ -21,25 +27,29 @@ export const MEASURE_WIDTHS: Record<ReaderMeasure, string> = {
 };
 /** Rendered `line-height` multipliers; step 0 is the DS baseline (never less). */
 export const LINE_SPACING_STEPS = [1.5, 1.75, 2, 2.25] as const;
-/** Paragraph bottom space in rem; step 0 is the DS baseline. */
-export const PARAGRAPH_SPACING_STEPS = [1, 1.35, 1.75, 2.25] as const;
 
 export interface ReaderSettings {
   readonly textSize: number;
   readonly measure: ReaderMeasure;
   readonly lineSpacing: number;
-  readonly paragraphSpacing: number;
 }
 
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   // Step 0 everywhere: the DS baseline is the default, larger steps add.
   textSize: 0,
   measure: "medium",
-  lineSpacing: 0,
-  paragraphSpacing: 0
+  lineSpacing: 0
 };
 
 const STORAGE_PREFIX = "bk.reader";
+
+/**
+ * Settings inheritance (queue-3): the LAST committed choice seeds every
+ * document the reader never configured. Per-document commits always win;
+ * `removeReaderSettings` clears this source too so "reset" is honest —
+ * re-opening must not re-inherit the values the reader just discarded.
+ */
+export const LAST_USED_SETTINGS_KEY = `${STORAGE_PREFIX}.last`;
 
 export function readerSettingsKey(
   kind: "document" | "publication",
@@ -76,46 +86,75 @@ export function clampReaderSettings(value: unknown): ReaderSettings {
       candidate.lineSpacing,
       LINE_SPACING_STEPS.length,
       DEFAULT_READER_SETTINGS.lineSpacing
-    ),
-    paragraphSpacing: clampStep(
-      candidate.paragraphSpacing,
-      PARAGRAPH_SPACING_STEPS.length,
-      DEFAULT_READER_SETTINGS.paragraphSpacing
     )
   };
 }
 
-export function loadReaderSettings(key: string): ReaderSettings {
+/**
+ * One storage read: absent or unparsable payload == null (the caller decides
+ * the fallback), valid JSON is clamped step-by-step so a hostile payload can
+ * never apply partially.
+ */
+function readStoredSettings(key: string): ReaderSettings | null {
   let raw: string | null = null;
   try {
     raw = localStorage.getItem(key);
   } catch {
-    return { ...DEFAULT_READER_SETTINGS };
+    return null;
   }
-  if (raw === null) return { ...DEFAULT_READER_SETTINGS };
+  if (raw === null) return null;
 
   try {
     return clampReaderSettings(JSON.parse(raw));
   } catch {
-    return { ...DEFAULT_READER_SETTINGS };
+    return null;
   }
 }
 
-/** Storage failures (quota, private mode) must never break the reader. */
-export function saveReaderSettings(
-  key: string,
-  settings: ReaderSettings
-): void {
+function writeStoredSettings(key: string, settings: ReaderSettings): void {
   try {
-    localStorage.setItem(key, JSON.stringify(clampReaderSettings(settings)));
+    localStorage.setItem(key, JSON.stringify(settings));
   } catch {
     /* ignored by design: preferences are enhancement, not function */
   }
 }
 
+/**
+ * Layered read (queue-3): the document's own committed settings win; a
+ * document never configured inherits the reader's last-used choice; with no
+ * history at all the DS baseline applies. Storage failures are invisible to
+ * the reader — every level degrades to the next.
+ */
+export function loadReaderSettings(key: string): ReaderSettings {
+  return (
+    readStoredSettings(key) ??
+    readStoredSettings(LAST_USED_SETTINGS_KEY) ?? { ...DEFAULT_READER_SETTINGS }
+  );
+}
+
+/** Committing for one document also becomes the inheritance source. */
+export function saveReaderSettings(
+  key: string,
+  settings: ReaderSettings
+): void {
+  const clean = clampReaderSettings(settings);
+  writeStoredSettings(key, clean);
+  if (key !== LAST_USED_SETTINGS_KEY) {
+    writeStoredSettings(LAST_USED_SETTINGS_KEY, clean);
+  }
+}
+
+/**
+ * Reset = this document back to the baseline AND stop re-inheriting the
+ * discarded choice into fresh documents (see LAST_USED_SETTINGS_KEY note).
+ * Documents the reader configured by hand keep their own stored values.
+ */
 export function removeReaderSettings(key: string): void {
   try {
     localStorage.removeItem(key);
+    if (key !== LAST_USED_SETTINGS_KEY) {
+      localStorage.removeItem(LAST_USED_SETTINGS_KEY);
+    }
   } catch {
     /* ignored — see saveReaderSettings */
   }

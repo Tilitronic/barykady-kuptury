@@ -60,10 +60,12 @@ import {
   h,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   ref,
   type PropType,
   watch
 } from "vue";
+import { UiItem, UiList } from "@/components/ui";
 import { useI18n } from "vue-i18n";
 
 import { applyDeepLink } from "@/shared/content/deepLink";
@@ -113,6 +115,49 @@ const detailsRef = ref<HTMLElement | null>(null);
 let observer: IntersectionObserver | null = null;
 const visible = new Set<string>();
 
+/**
+ * The bottom-of-page activation tolerance (px). A short final section never
+ * enters the observer band at the end of the document — when the viewport
+ * physically cannot scroll further, the LAST TOC item is the honest answer
+ * to "where am I on this page".
+ */
+const BOTTOM_TOLERANCE = 2;
+
+function isAtDocumentBottom(): boolean {
+  // clientHeight excludes scrollbars — when a host reports it (0 means
+  // "not measured", e.g. detached documents/tests), trust it over innerHeight.
+  const client = document.documentElement.clientHeight;
+  const viewport =
+    client > 0 ? Math.min(window.innerHeight, client) : window.innerHeight;
+  return (
+    window.scrollY + viewport >=
+    document.documentElement.scrollHeight - BOTTOM_TOLERANCE
+  );
+}
+
+/**
+ * Sync activation state on scroll, not only on intersection flips: the
+ * bottom shortcut applies here, and leaving the bottom must not strand the
+ * last item's accent when its section is back out of the band (IO batching
+ * alone was unreliable for instant jumps).
+ */
+function onScrollSync(): void {
+  if (props.items.length === 0) return;
+  const last = props.items[props.items.length - 1]!;
+
+  if (isAtDocumentBottom()) {
+    activeId.value = last.id;
+    visible.clear();
+    visible.add(last.id);
+    return;
+  }
+
+  if (activeId.value && !visible.has(activeId.value)) {
+    const first = props.items.find(item => visible.has(item.id));
+    activeId.value = first ? first.id : "";
+  }
+}
+
 function onIntersect(entries: readonly IntersectionObserverEntry[]): void {
   for (const entry of entries) {
     const id = (entry.target as HTMLElement).id;
@@ -123,11 +168,30 @@ function onIntersect(entries: readonly IntersectionObserverEntry[]): void {
     }
   }
 
+  if (isAtDocumentBottom()) {
+    const last = props.items[props.items.length - 1];
+    if (last) {
+      activeId.value = last.id;
+      visible.clear();
+      visible.add(last.id);
+      return;
+    }
+  }
+
   // Document order wins over intersection order: the first visible section
   // is what "where am I on this page" means for a top-down read.
   const first = props.items.find(item => visible.has(item.id));
   if (first) {
     activeId.value = first.id;
+    return;
+  }
+
+  // Nothing in the band: gaps between sections keep the last honest answer —
+  // EXCEPT the bottom shortcut, which is only true at the bottom. Leaving
+  // the last section upward must not strand its accent on the rail.
+  const last = props.items[props.items.length - 1];
+  if (last && activeId.value === last.id && !visible.has(last.id)) {
+    activeId.value = "";
   }
 }
 
@@ -135,7 +199,12 @@ function reobserve(): void {
   observer?.disconnect();
   observer = null;
   visible.clear();
-  activeId.value = "";
+  // Keep an optimistic (clicked) active id while its section is still on the
+  // page — clearing here unconditionally raced with click activation on the
+  // first mount and swallowed the immediate accent.
+  if (!props.items.some(item => item.id === activeId.value)) {
+    activeId.value = "";
+  }
 
   if (typeof IntersectionObserver === "undefined") return;
 
@@ -157,7 +226,12 @@ watch(
   { immediate: true, deep: false }
 );
 
+onMounted(() => {
+  window.addEventListener("scroll", onScrollSync, { passive: true });
+});
+
 onBeforeUnmount(() => {
+  window.removeEventListener("scroll", onScrollSync);
   observer?.disconnect();
   observer = null;
 });
@@ -207,42 +281,60 @@ const TocTree = defineComponent({
     }
   },
   setup(nodeProps) {
-    const renderLevel = (
+    /**
+     * Rows are Quasar QItem anchors inside a QList: the WHOLE row is the
+     * hit target — hover and clicks register in the space beside the text,
+     * not only on the words (the owner's Vue-docs ask). The anchor itself
+     * keeps our href, aria-current and JS activation. Nested outline levels
+     * stay real `<ul>`/`<li>` inside the row's list item — a genuine,
+     * navigable outline for assistive tech (rev-1 B1 preserved).
+     */
+    const renderItems = (
       nodes: readonly TocNode[],
       depth: number
-    ): ReturnType<typeof h> =>
-      h(
-        "ul",
-        { class: "page-toc__list" },
-        nodes.map(node =>
-          h("li", { key: `${depth}-${node.item.id}` }, [
-            h(
-              "a",
-              {
-                href: `#${node.item.id}`,
-                class: "page-toc__link focus-ring",
-                lang: props.linkLang,
-                "aria-current":
-                  activeId.value === node.item.id ? "location" : undefined,
-                onClick: (event: MouseEvent) => {
-                  event.preventDefault();
-                  goTo(node.item.id);
-                }
-              },
-              node.item.label
-            ),
-            node.children.length > 0
-              ? renderLevel(node.children, depth + 1)
-              : null
-          ])
-        )
+    ): ReturnType<typeof h>[] =>
+      nodes.map(node =>
+        h("li", { key: `${depth}-${node.item.id}` }, [
+          h(
+            UiItem,
+            {
+              tag: "a",
+              href: `#${node.item.id}`,
+              class: "page-toc__link focus-ring",
+              lang: props.linkLang,
+              "aria-current":
+                activeId.value === node.item.id ? "location" : undefined,
+              onClick: (event: MouseEvent) => {
+                event.preventDefault();
+                goTo(node.item.id);
+              }
+            },
+            () => node.item.label
+          ),
+          node.children.length > 0
+            ? h(
+                "ul",
+                { class: "page-toc__list" },
+                renderItems(node.children, depth + 1)
+              )
+            : null
+        ])
       );
 
-    return () => renderLevel(nodeProps.nodes, 0);
+    // tag="ul" keeps the REAL list semantics (Quasar's default div+role
+    // would break the nested-outline contract the reader TOC relies on).
+    return () =>
+      h(UiList, { tag: "ul", class: "page-toc__list", dense: true }, () =>
+        renderItems(nodeProps.nodes, 0)
+      );
   }
 });
 
 function goTo(id: string): void {
+  // Optimistic activation: the reader just told us where they want to be —
+  // the accent moves NOW, and the observer (or the bottom rule) confirms as
+  // the scroll settles instead of lagging a deliberate choice.
+  activeId.value = id;
   applyDeepLink(`#${id}`);
   // Shareable position without a router navigation (whose scrollBehavior
   // would reset the page to top).
@@ -269,43 +361,58 @@ function goTo(id: string): void {
   text-transform: uppercase;
 }
 
-.page-toc__list {
+.page-toc :deep(.page-toc__list) {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.page-toc__link {
-  display: block;
-  padding: 0.375rem 0.625rem;
-  border-inline-start: 2px solid var(--color-border);
-  color: var(--color-text-muted);
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-
-.page-toc__link:hover {
-  color: var(--color-link);
-  text-decoration: underline;
-}
-
-/*
- * Active section: border thickens + text bolds + aria-current in the DOM —
- * state is never carried by the scarlet color alone (DESIGN_SYSTEM.md §6).
- */
 /* Nested outline levels indent via the child list (rev-1 B1). */
-.page-toc__list .page-toc__list {
+.page-toc :deep(.page-toc__list .page-toc__list) {
   padding-inline-start: 0.875rem;
   margin-block-start: 0.125rem;
 }
 
-.page-toc__link[aria-current="location"] {
-  border-inline-start-color: var(--color-accent);
-  color: var(--color-text);
-  font-weight: 600;
+/*
+ * Row semantics (owner Vue-docs pass): the QItem anchor spans the full
+ * panel width, so hover/activation work in the empty space beside a short
+ * label too. States are token-driven and theme-adaptive — light surface +
+ * dark text in light mode, dark surface + light text in dark; scarlet only
+ * as text/tint, never a hardcoded color, never the bare underline/link
+ * blue. Active = red text + subtle tint + aria-current (never a side bar,
+ * never an underline). Weight is CONSTANT across states: switching states
+ * repaints only (zero layout shift).
+ */
+.page-toc :deep(.page-toc__link) {
+  /* QItem paints its own label color; the token state below must win —
+     the selector stacks the class for specificity (real ul/role=list). */
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition:
+    background-color var(--motion-duration),
+    color var(--motion-duration);
+}
+
+.page-toc :deep(.page-toc__link:hover),
+.page-toc :deep(.page-toc__link:focus-visible) {
+  color: var(--color-link);
+  /* Light scarlet wash — token-derived; older engines keep no tint. */
+  background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  text-decoration: none;
+}
+
+/* Active section: RED TEXT ONLY — the rail contract is one state signal per
+   moment: hover carries the light tint, the current location carries the
+   color. No side bar, no underline, no fill (the owner's Vue-docs pass,
+   confirmed against the rail spec). The state also lives in the DOM via
+   aria-current="location" (§6: not color alone for AT). */
+.page-toc :deep(.page-toc__link[aria-current="location"]) {
+  color: var(--color-link);
 }
 
 .page-toc__skeleton {
@@ -341,7 +448,7 @@ function goTo(id: string): void {
   border-radius: 0.375rem;
 }
 
-.page-toc__mobile[open] .page-toc__list {
+.page-toc__mobile[open] :deep(.page-toc__list) {
   padding: 0 0.5rem 0.5rem;
 }
 

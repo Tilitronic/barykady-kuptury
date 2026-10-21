@@ -163,6 +163,33 @@ describe("validateUpload", () => {
     );
   });
 
+  it("accepts Markdown for the content-import source bucket (T-041)", () => {
+    expect(validateUpload(file("article.md", "text/markdown"))).toMatchObject({
+      ok: true,
+      fileName: "article.md",
+      mimeType: "text/markdown"
+    });
+  });
+
+  it("accepts text/plain as the browser-reported Markdown type", () => {
+    expect(validateUpload(file("article.md", "text/plain"))).toMatchObject({
+      ok: true,
+      mimeType: "text/plain"
+    });
+  });
+
+  it("honours a caller-specific size ceiling without changing the bucket default", () => {
+    expect(
+      validateUpload(file("article.md", "text/markdown", 2048), {
+        maxBytes: 1024
+      })
+    ).toMatchObject({ ok: false, code: "file-too-large" });
+
+    expect(
+      validateUpload(file("report.pdf", "application/pdf", MAX_UPLOAD_BYTES))
+    ).toMatchObject({ ok: true });
+  });
+
   it("exports the documented extension allow-list", () => {
     expect(ALLOWED_EXTENSIONS).toEqual([
       ".pdf",
@@ -170,7 +197,8 @@ describe("validateUpload", () => {
       ".jpg",
       ".jpeg",
       ".webp",
-      ".docx"
+      ".docx",
+      ".md"
     ]);
   });
 });

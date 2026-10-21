@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { flushPromises } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
+import { Quasar } from "quasar";
 
 import SiteSearch from "@/components/search/SiteSearch.vue";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
@@ -116,7 +117,7 @@ async function setup(
 
   const wrapper = mount(SiteSearch, {
     global: {
-      plugins: [createTestI18n("en"), router],
+      plugins: [createTestI18n("en"), router, Quasar],
       provide: { [SUPABASE_CLIENT_KEY as unknown as symbol]: rpcFake.client }
     },
     attachTo: document.body
@@ -687,5 +688,41 @@ describe("route change", () => {
       const nav = q('[data-testid="search-section-navigation"]')!;
       expect(nav.textContent).toContain("2026");
     });
+  });
+});
+
+describe("trigger accessible naming and tooltip", () => {
+  /**
+   * Header lane fix: the icon trigger sat unlabeled next to the social
+   * icons. The full sentence stays the accessible name (aria-label wins
+   * over title), the short label drives the native title fallback and the
+   * Quasar tooltip shown on hover/keyboard focus, and the trigger owns a
+   * dedicated inline-end margin so it never touches SocialLinks.
+   */
+  it("keeps the full accessible name and adds the localized short title", async () => {
+    const { wrapper } = await setup();
+
+    const trigger = wrapper.get("[data-testid='site-search-trigger']");
+    expect(trigger.attributes("aria-label")).toBe("Search the site");
+    expect(trigger.attributes("title")).toBe("Search");
+  });
+
+  it("anchors a Quasar tooltip carrying the short label to the trigger", async () => {
+    const { wrapper } = await setup();
+
+    const tooltip = wrapper.findComponent({ name: "QTooltip" });
+    expect(tooltip.exists()).toBe(true);
+
+    // Arm it through the real path: Quasar anchors the tooltip on
+    // `pointerenter` (100 ms cursor settle), so the label that ships is the
+    // localized short name, rendered teleported like the dialog is.
+    await wrapper
+      .get("[data-testid='site-search-trigger']")
+      .trigger("pointerenter");
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await flushPromises();
+
+    const tip = document.querySelector(".q-tooltip");
+    expect(tip?.textContent).toBe("Search");
   });
 });

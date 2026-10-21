@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header" role="banner">
+  <header class="app-header" role="banner" @keydown="handleHeaderEscape">
     <!--
       Brand links to the locale home through a single native navigation
       mechanism (RouterLink): plain clicks stay client-side while modified
@@ -42,7 +42,7 @@
         id="app-nav"
         data-testid="main-nav"
         class="app-header__nav"
-        :aria-label="t('nav.mainNav')"
+        :aria-label="navLabel"
       >
         <ul class="app-header__nav-list">
           <li
@@ -78,41 +78,63 @@
         text is contained in its accessible name (WCAG 2.5.3).
       -->
       <div class="app-header__controls">
-        <SiteSearch />
+        <!-- One SiteSearch instance at a time: in the cluster on tablet
+             and desktop, in the slim header strip on phones (below). -->
+        <SiteSearch v-if="!isPhoneBand" />
         <SocialLinks :links="organization.socialLinks" variant="icon" />
         <ThemeToggle />
         <LanguageSwitcher />
       </div>
     </div>
 
-    <!-- Mobile hamburger — shown only on small viewports via CSS ————————— -->
-    <button
-      ref="triggerRef"
-      type="button"
-      data-testid="menu-trigger"
-      class="app-header__menu-btn focus-ring"
-      :aria-expanded="isMenuOpen"
-      aria-controls="app-panel"
-      @click="toggleMenu"
-    >
-      <span class="app-header__menu-icon" aria-hidden="true">
-        {{ isMenuOpen ? "✕" : "☰" }}
-      </span>
-      <span class="sr-only">
-        {{ isMenuOpen ? t("nav.closeMenu") : t("nav.openMenu") }}
-      </span>
-    </button>
+    <!-- Phone-band action strip: search (single instance, moved out of the
+         drawer) and the hamburger fallback for the full menu. ——————————————— -->
+    <div class="app-header__actions">
+      <SiteSearch v-if="isPhoneBand" />
+
+      <!-- Mobile hamburger — shown only on small viewports via CSS ———————— -->
+      <button
+        ref="triggerRef"
+        type="button"
+        data-testid="menu-trigger"
+        class="app-header__menu-btn focus-ring"
+        :aria-expanded="isMenuOpen"
+        aria-controls="app-panel"
+        @click="toggleMenu"
+      >
+        <span class="app-header__menu-icon" aria-hidden="true">
+          {{ isMenuOpen ? "✕" : "☰" }}
+        </span>
+        <span class="sr-only">
+          {{ isMenuOpen ? t("nav.closeMenu") : t("nav.openMenu") }}
+        </span>
+      </button>
+    </div>
+
+    <MobileBottomNav
+      :locale="currentLocale"
+      :menu-open="isMenuOpen"
+      @open-menu="isMenuOpen = true"
+    />
   </header>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch
+} from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import BrandLogo from "@/components/brand/BrandLogo.vue";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import SiteSearch from "@/components/search/SiteSearch.vue";
+import MobileBottomNav from "@/components/navigation/MobileBottomNav.vue";
 import SocialLinks from "@/components/navigation/SocialLinks.vue";
 import ThemeToggle from "@/components/ThemeToggle.vue";
 import { organization } from "@/config/organization";
@@ -147,6 +169,43 @@ const isMenuOpen = ref(false);
 
 /** Reference to the toggle button so focus can be restored on close. */
 const triggerRef = ref<HTMLButtonElement | null>(null);
+
+/*
+ * Phone band: viewport < 600 px (documented breakpoint of this lane). In
+ * it the header becomes a slim brand strip — the section links move to
+ * MobileBottomNav, the search trigger rides the strip, and the drawer
+ * stays as the FULL menu (its landmark is renamed so the two navs never
+ * share one accessible name). Tablet and desktop are untouched.
+ */
+const PHONE_BAND_QUERY = "(max-width: 599px)";
+const isPhoneBand = ref(
+  typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia(PHONE_BAND_QUERY).matches
+);
+
+function onPhoneBandChange(event: MediaQueryListEvent): void {
+  isPhoneBand.value = event.matches;
+}
+
+let phoneMql: MediaQueryList | null = null;
+
+onMounted(() => {
+  if (typeof window.matchMedia !== "function") return;
+  phoneMql = window.matchMedia(PHONE_BAND_QUERY);
+  isPhoneBand.value = phoneMql.matches;
+  phoneMql.addEventListener("change", onPhoneBandChange);
+});
+
+onBeforeUnmount(() => {
+  phoneMql?.removeEventListener("change", onPhoneBandChange);
+});
+
+/** Drawer landmark name: "Main navigation" normally; "Full menu" in the
+ *  phone band, where the bottom bar is the main navigation. */
+const navLabel = computed(() =>
+  isPhoneBand.value ? t("nav.fullMenu") : t("nav.mainNav")
+);
 
 /** Open or close the mobile panel. */
 function toggleMenu(): void {
@@ -184,6 +243,19 @@ watch(
  * panel so it works from any focused child (nav link, language option,
  * theme switch) — no focus trap required by the spec.
  */
+/*
+ * Escape from OUTSIDE the drawer (strip search, burger, bottom-bar More):
+ * only meaningful while the drawer is open; the panel keeps its own handler
+ * for focus inside the drawer (both paths call closeMenu, idempotent).
+ */
+function handleHeaderEscape(event: KeyboardEvent): void {
+  if (event.key === "Escape" && isMenuOpen.value) {
+    // The panel handler already ran for in-drawer focus; avoid double focus
+    // churn only matters for the outside-focus case bubbling here first.
+    closeMenu();
+  }
+}
+
 function handleNavKeydown(event: KeyboardEvent): void {
   if (event.key === "Escape") {
     event.preventDefault();
@@ -278,7 +350,8 @@ function isActivePage(item: NavItem): boolean {
   font-weight: 500;
   color: var(--color-text);
   text-decoration: none;
-  border-bottom: 2px solid transparent;
+  /* Brand stroke: same thickness as the logotype's "B" stem (tokens.css). */
+  border-bottom: var(--nav-active-stroke) solid transparent;
   transition:
     color var(--motion-duration),
     border-color var(--motion-duration);
@@ -289,7 +362,7 @@ function isActivePage(item: NavItem): boolean {
   color: var(--color-link);
 }
 
-/* Active / current page — a 2 px scarlet underline inside the header height */
+/* Active / current page — the brand-stroke scarlet underline (== the logotype "B" stem) inside the header height */
 .app-header__nav-link[aria-current="page"] {
   color: var(--color-accent);
   border-bottom-color: var(--color-accent);
@@ -339,6 +412,15 @@ function isActivePage(item: NavItem): boolean {
     gap: 0.125rem;
     padding-left: 0.125rem;
   }
+}
+
+/* ── Action strip (search on phones + hamburger) ──────────────────────── */
+
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 /* ── Mobile hamburger ────────────────────────────────────────────────────── */
@@ -416,7 +498,8 @@ function isActivePage(item: NavItem): boolean {
     height: auto;
     padding: 0.875rem 1.5rem;
     border-bottom: none;
-    border-left: 3px solid transparent;
+    /* Same brand stroke as the desktop underline (tokens.css chain). */
+    border-left: var(--nav-active-stroke) solid transparent;
   }
 
   .app-header__nav-link[aria-current="page"] {

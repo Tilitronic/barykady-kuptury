@@ -34,7 +34,7 @@ export interface OrganizationDocumentRowWithTranslations extends OrganizationDoc
 /** List rows select only card metadata; the reader body stays on detail. */
 type OrganizationDocumentListTranslationRow = Pick<
   OrganizationDocumentTranslationRow,
-  "locale" | "title" | "description"
+  "locale" | "title" | "description" | "body_ast_version"
 >;
 
 export interface OrganizationDocumentListRow extends Omit<
@@ -103,7 +103,7 @@ export const READER_REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof OrganizationDocumentTranslation)[];
 
 const DOCUMENT_LIST_SELECT =
-  "id, slug, status, document_type, language, publication_date, storage_path, mime_type, file_size_bytes, sort_order, updated_at, organization_document_translations(locale, title, description)";
+  "id, slug, status, document_type, language, publication_date, storage_path, mime_type, file_size_bytes, sort_order, updated_at, organization_document_translations(locale, title, description, body_ast_version)";
 
 const DOCUMENT_DETAIL_SELECT =
   "id, slug, status, document_type, language, publication_date, storage_path, mime_type, file_size_bytes, sort_order, updated_at, organization_document_translations(locale, title, description, body)";
@@ -166,12 +166,21 @@ export function mapDocument(
 
   if (!selected) return null;
 
-  const availableLocales =
+  // Text documents (no uploaded file) keep every translation locale linkable —
+  // the reader resolves the actual readable translation and fallback. Hybrid
+  // file+text documents (storage_path set, AST present since the T-041 seed
+  // follow-up) link only the AST-backed locales; the PDF stays a separate
+  // download affordance owned by T-029.
+  const astLocales = row.organization_document_translations
+    .filter(translation => translation.body_ast_version != null)
+    .map(translation => translation.locale);
+  const availableLocales = (
     row.storage_path === null
-      ? row.organization_document_translations
-          .map(translation => translation.locale)
-          .sort((a, b) => LOCALE_ORDER.indexOf(a) - LOCALE_ORDER.indexOf(b))
-      : [];
+      ? row.organization_document_translations.map(
+          translation => translation.locale
+        )
+      : astLocales
+  ).sort((a, b) => LOCALE_ORDER.indexOf(a) - LOCALE_ORDER.indexOf(b));
 
   return {
     id: row.id,

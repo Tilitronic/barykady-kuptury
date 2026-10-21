@@ -97,6 +97,54 @@ async function flushPromises() {
 }
 
 describe("publication detail", () => {
+  it("offers the original download only when the owner opted in (T-041 S4)", async () => {
+    const readerTranslations = [
+      {
+        ...EN_TRANSLATION,
+        body: "Reader body text",
+        body_ast: null,
+        body_ast_version: null
+      },
+      PL_TRANSLATION
+    ];
+
+    const off = await mountDetail(
+      createFakeSupabase({
+        tables: {
+          publications: [
+            publishedRow({ publication_translations: readerTranslations })
+          ],
+          content_assets: [],
+          publication_files: []
+        }
+      }).client,
+      "en",
+      CANONICAL_SLUG
+    );
+    expect(off.find("[data-testid='download-original']").exists()).toBe(false);
+
+    const on = await mountDetail(
+      createFakeSupabase({
+        tables: {
+          publications: [
+            publishedRow({
+              allow_original_download: true,
+              publication_translations: readerTranslations
+            })
+          ],
+          content_assets: [],
+          publication_files: []
+        }
+      }).client,
+      "en",
+      CANONICAL_SLUG
+    );
+    const link = on.get("[data-testid='download-original']");
+    expect(link.attributes("href")).toBe(
+      "/.netlify/functions/content-original?kind=publication&slug=sample-publication"
+    );
+  });
+
   it("renders the requested-locale publication through the canonical slug", async () => {
     const fake = createFakeSupabase({
       tables: { publications: [publishedRow()] }

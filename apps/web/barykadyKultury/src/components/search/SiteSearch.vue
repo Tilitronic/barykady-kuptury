@@ -35,6 +35,7 @@
     class="site-search__trigger focus-ring"
     data-testid="site-search-trigger"
     :aria-label="t('search.trigger')"
+    :title="t('search.triggerTooltip')"
     @click="open"
   >
     <svg
@@ -51,6 +52,15 @@
       <circle cx="11" cy="11" r="7" />
       <line x1="21" y1="21" x2="16.5" y2="16.5" />
     </svg>
+
+    <!--
+      Header lane fix: the icon-only trigger sat unlabeled against the
+      social icons. Quasar's tooltip arms on parent mouseenter AND keyboard
+      focus (:focus-visible), so the short localized name appears exactly
+      where the pointer/caret is; the button keeps the FULL sentence as its
+      accessible name (aria-label beats title).
+    -->
+    <UiTooltip>{{ t("search.triggerTooltip") }}</UiTooltip>
   </button>
 
   <Teleport to="body">
@@ -276,6 +286,7 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { UiTooltip } from "@/components/ui";
 
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import { fetchPublishedPublicationYears } from "@/features/search/api";
@@ -567,6 +578,9 @@ watch(
      header budget — see the AppHeader compression band comment. */
   width: 2.25rem;
   height: 2.25rem;
+  /* Clear space from the social icons even in the compressed header band
+     (gap there is 2 px); the cluster gap stays untouched for the rest. */
+  margin-inline-end: 0.375rem;
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 0.375rem;

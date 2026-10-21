@@ -1144,3 +1144,126 @@ where (
   excluded.google_event_id,
   excluded.project_id
 );
+
+-- ===========================================================================
+-- Reader AST demo content (T-040 follow-up).
+-- The EN-edition statute and the P1 publication get a small versioned AST per
+-- locale so the long-form reader (rendered text + side TOC) is visible in the
+-- local demo. Fictional demo copy only. The write trigger derives `body`;
+-- the translation upserts above never touch body_ast/body_ast_version, so
+-- re-running this seed stays idempotent.
+-- ===========================================================================
+
+update public.organization_document_translations
+set body_ast = $${
+  "kind": "document",
+  "blocks": [
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "General provisions"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "This is a fictional demonstration statute used only to preview the long-form reader layout. It carries no legal meaning."}]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Membership"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Membership in the fictional association is open to everyone who supports its aims:"}]},
+    {"kind": "list", "ordered": false, "items": [
+      {"children": [{"kind": "text", "value": "regular members take part in projects and votes;"}]},
+      {"children": [{"kind": "text", "value": "supporting members help with resources and outreach."}]}
+    ]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Final provisions"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "This fictional text exists solely so the reader TOC, reading controls and language switch can be reviewed in the demo."}]}
+  ]
+}$$::jsonb,
+    body_ast_version = 1
+where id = '10000000-0000-4000-8000-000000006100';
+
+update public.organization_document_translations
+set body_ast = $${
+  "kind": "document",
+  "blocks": [
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Postanowienia ogólne"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "To fikcyjny statut demonstracyjny, służący wyłącznie do podglądu układu czytnika. Nie ma mocy prawnej."}]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Członkostwo"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Członkostwo w fikcyjnym stowarzyszeniu jest otwarte dla wszystkich, którzy popierają jego cele:"}]},
+    {"kind": "list", "ordered": false, "items": [
+      {"children": [{"kind": "text", "value": "członkowie zwyczajni biorą udział w projektach i głosowaniach;"}]},
+      {"children": [{"kind": "text", "value": "członkowie wspierający pomagają zasobami i promocją."}]}
+    ]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Postanowienia końcowe"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Ten fikcyjny tekst istnieje wyłącznie po to, by w środowisku demonstracyjnym sprawdzić spis treści, kontrolki czytania i przełącznik języka."}]}
+  ]
+}$$::jsonb,
+    body_ast_version = 1
+where id = '10000000-0000-4000-8000-000000006101';
+
+update public.organization_document_translations
+set body_ast = $${
+  "kind": "document",
+  "blocks": [
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Загальні положення"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Це фіктивний демонстраційний статут, потрібний лише для перегляду макета читача. Він не має юридичної сили."}]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Членство"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Членство у фіктивній спілці відкрите для всіх, хто підтримує її мету:"}]},
+    {"kind": "list", "ordered": false, "items": [
+      {"children": [{"kind": "text", "value": "дійсні члени беруть участь у проєктах і голосуваннях;"}]},
+      {"children": [{"kind": "text", "value": "підтримувальні члени допомагають ресурсами та поширенням."}]}
+    ]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Прикінцеві положення"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Цей фіктивний текст існує лише для того, щоб у демо перевірити зміст, елементи керування читанням і перемикач мови."}]}
+  ]
+}$$::jsonb,
+    body_ast_version = 1
+where id = '10000000-0000-4000-8000-000000006102';
+
+update public.publication_translations
+set body_ast = $${
+  "kind": "document",
+  "blocks": [
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Background"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "This fictional report summary demonstrates the publication reader. All people, numbers and events below are invented for design testing."}]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Method"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "The fictional editorial team reviewed three imaginary community projects and noted:"}]},
+    {"kind": "list", "ordered": false, "items": [
+      {"children": [{"kind": "text", "value": "shared language residencies build trust;"}]},
+      {"children": [{"kind": "text", "value": "small grants unlock disproportionate participation."}]}
+    ]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "What we learned"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Fictional conclusion: culture travels best through people, not paperwork."}]}
+  ]
+}$$::jsonb,
+    body_ast_version = 1
+where id = '00000000-0000-4000-8000-000000000411';
+
+update public.publication_translations
+set body_ast = $${
+  "kind": "document",
+  "blocks": [
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Tło"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "To fikcyjne streszczenie raportu pokazuje czytnik publikacji. Wszystkie osoby, liczby i wydarzenia zostały wymyślone na potrzeby testów projektu."}]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Metoda"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Fikcyjny zespół redakcyjny przejrzał trzy wymyślone projekty społeczne i odnotował:"}]},
+    {"kind": "list", "ordered": false, "items": [
+      {"children": [{"kind": "text", "value": "wspólne rezydencje językowe budują zaufanie;"}]},
+      {"children": [{"kind": "text", "value": "drobne granty dają nieproporcjonalnie duży udział."}]}
+    ]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Wnioski"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Fikcyjny wniosek: kultura najlepiej podróżuje przez ludzi, nie przez papiery."}]}
+  ]
+}$$::jsonb,
+    body_ast_version = 1
+where id = '00000000-0000-4000-8000-000000000412';
+
+update public.publication_translations
+set body_ast = $${
+  "kind": "document",
+  "blocks": [
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Передумови"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Цей фіктивний огляд звіту показує читач публікацій. Усі люди, числа й події нижче вигадані для тестування дизайну."}]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Метод"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Фіктивна редакційна команда переглянула три уявні громадські проєкти й занотувала:"}]},
+    {"kind": "list", "ordered": false, "items": [
+      {"children": [{"kind": "text", "value": "спільні мовні резиденції будують довіру;"}]},
+      {"children": [{"kind": "text", "value": "малі гранти дають непропорційно велику участь."}]}
+    ]},
+    {"kind": "heading", "level": 2, "children": [{"kind": "text", "value": "Висновки"}]},
+    {"kind": "paragraph", "children": [{"kind": "text", "value": "Фіктивний висновок: культура найкраще мандрує через людей, а не через папери."}]}
+  ]
+}$$::jsonb,
+    body_ast_version = 1
+where id = '00000000-0000-4000-8000-000000000413';

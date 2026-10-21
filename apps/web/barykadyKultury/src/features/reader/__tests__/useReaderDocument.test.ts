@@ -49,6 +49,7 @@ function model(
     language: null,
     publicationDate: null,
     externalUrl: null,
+    allowOriginalDownload: false,
     updatedAt: "2026-10-20T12:00:00Z"
   };
 }
@@ -278,6 +279,23 @@ describe("useReaderDocument", () => {
     expect(harness.model.value).toBeNull();
 
     harness.stop();
+  });
+
+  it("refresh preserves the current copy when the refetch fails", async () => {
+    fetchMock.mockResolvedValue({
+      kind: "ok",
+      items: [model([translation("en")])]
+    });
+    const harness = setup();
+    await flushPromises();
+    expect(harness.status.value).toBe("ready");
+
+    fetchMock.mockResolvedValueOnce({ kind: "unavailable" });
+    harness.refresh();
+    await flushPromises();
+
+    expect(harness.status.value).toBe("ready");
+    expect(harness.selected.value?.title).toBe("Title en");
   });
 
   it("reports unavailable when the fetch fails", async () => {

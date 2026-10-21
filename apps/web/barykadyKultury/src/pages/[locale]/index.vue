@@ -83,11 +83,11 @@
              location, description, action), SECTION_CAP rows. -->
         <div aria-hidden="true">
           <div v-for="n in SECTION_CAP" :key="n" class="home__skeleton-card">
-            <q-skeleton height="1.75rem" width="min(24rem, 80%)" />
-            <q-skeleton height="1.25rem" width="min(16rem, 60%)" />
-            <q-skeleton height="1rem" width="min(12rem, 50%)" />
-            <q-skeleton height="5rem" width="min(36rem, 100%)" />
-            <q-skeleton height="2.75rem" width="10rem" />
+            <UiSkeleton height="1.75rem" width="min(24rem, 80%)" />
+            <UiSkeleton height="1.25rem" width="min(16rem, 60%)" />
+            <UiSkeleton height="1rem" width="min(12rem, 50%)" />
+            <UiSkeleton height="5rem" width="min(36rem, 100%)" />
+            <UiSkeleton height="2.75rem" width="10rem" />
           </div>
         </div>
       </div>
@@ -136,9 +136,9 @@
              so the placeholder columns match the final card columns. -->
         <ul class="home__grid" aria-hidden="true">
           <li v-for="n in SECTION_CAP" :key="n" class="home__skeleton-card">
-            <q-skeleton class="home__skeleton-cover" />
-            <q-skeleton height="1.75rem" width="min(20rem, 80%)" />
-            <q-skeleton height="2.5rem" width="min(30rem, 100%)" />
+            <UiSkeleton class="home__skeleton-cover" />
+            <UiSkeleton height="1.75rem" width="min(20rem, 80%)" />
+            <UiSkeleton height="2.5rem" width="min(30rem, 100%)" />
           </li>
         </ul>
       </div>
@@ -198,7 +198,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
-import { QSkeleton } from "quasar";
+import { UiSkeleton } from "@/components/ui";
 import { useI18n } from "vue-i18n";
 
 import EventCard from "@/components/events/EventCard.vue";

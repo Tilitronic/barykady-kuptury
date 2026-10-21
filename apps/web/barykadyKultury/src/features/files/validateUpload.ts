@@ -21,7 +21,9 @@ export const MAX_UPLOAD_BYTES = 52_428_800;
 /**
  * SVG, HTML and JavaScript are absent by design: they can execute when served
  * inline. DOCX is included because D-12 recommends publishing the original
- * regulation documents alongside a PDF.
+ * regulation documents alongside a PDF. Markdown is included for the T-041
+ * private `content-sources` bucket (its `allowed_mime_types` already accepts
+ * `text/markdown` and `text/plain`).
  */
 export const ALLOWED_EXTENSIONS = [
   ".pdf",
@@ -29,7 +31,8 @@ export const ALLOWED_EXTENSIONS = [
   ".jpg",
   ".jpeg",
   ".webp",
-  ".docx"
+  ".docx",
+  ".md"
 ] as const;
 
 export type AllowedExtension = (typeof ALLOWED_EXTENSIONS)[number];
@@ -39,7 +42,11 @@ export const ALLOWED_MIME_TYPES = [
   "image/png",
   "image/jpeg",
   "image/webp",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/markdown",
+  // Browsers and some file managers report `.md` as plain text. The bucket
+  // allow-list accepts both, so the client guard must agree (T-041).
+  "text/plain"
 ] as const;
 
 export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
@@ -57,7 +64,8 @@ const MIME_BY_EXTENSION: Record<AllowedExtension, readonly AllowedMimeType[]> =
     ".webp": ["image/webp"],
     ".docx": [
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ]
+    ],
+    ".md": ["text/markdown", "text/plain"]
   };
 
 const ACTIVE_CONTENT_EXTENSIONS = new Set<string>([
@@ -137,6 +145,12 @@ export type UploadValidation = ValidatedUpload | UploadRejection;
 export interface ValidateUploadOptions {
   /** Names already present in the destination folder, for collision checks. */
   readonly existingNames?: readonly string[];
+  /**
+   * Caller-specific ceiling. The bucket policy remains the server authority;
+   * import uses a smaller limit than the generic 50 MiB upload path so a
+   * client-side conversion cannot be asked to inflate an unbounded document.
+   */
+  readonly maxBytes?: number;
 }
 
 function reject(code: UploadRejectionCode, message: string): UploadRejection {
@@ -149,7 +163,7 @@ function normalizeMimeType(raw: string): string {
   return (raw.split(";")[0] ?? "").trim().toLowerCase();
 }
 
-function extensionOf(name: string): string | null {
+export function extensionOf(name: string): string | null {
   const dot = name.lastIndexOf(".");
   // A leading dot (".pdf") has no stem and is not an acceptable file name.
   if (dot <= 0) {
@@ -273,11 +287,9 @@ export function validateUpload(
     return reject("invalid-size", "The file size is invalid.");
   }
 
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return reject(
-      "file-too-large",
-      `Files may not exceed ${MAX_UPLOAD_BYTES} bytes.`
-    );
+  const maxBytes = options.maxBytes ?? MAX_UPLOAD_BYTES;
+  if (file.size > maxBytes) {
+    return reject("file-too-large", `Files may not exceed ${maxBytes} bytes.`);
   }
 
   return {

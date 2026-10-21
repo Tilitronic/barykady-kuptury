@@ -135,4 +135,14 @@ function skipToMain(): void {
     padding: 1.5rem 1rem 3rem;
   }
 }
+
+/*
+ * Phone band (< 600 px): MobileBottomNav is a fixed bar — content must
+ * scroll clear of it, plus the device safe-area inset (home indicator).
+ */
+@media (max-width: 599px) {
+  .public-layout__main {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
 </style>

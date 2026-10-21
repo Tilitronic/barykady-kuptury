@@ -120,6 +120,35 @@ describe("DocumentsSection", () => {
     expect(wrapper.get(".documents-list__type").text()).toBe("Regulations");
   });
 
+  it("links file documents that carry a reader AST for the locale", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        organization_documents: [
+          documentRow({
+            id: "00000000-0000-4000-8000-000000000611",
+            slug: "annual-report-file",
+            storage_path: "documents/annual-report.pdf",
+            mime_type: "application/pdf",
+            organization_document_translations: [
+              translation({
+                body: null,
+                body_ast_version: 1,
+                title: "Annual report (file + reader)"
+              })
+            ]
+          })
+        ]
+      }
+    });
+    const wrapper = await mountSection(fake.client);
+
+    const link = wrapper.get(".documents-list__link");
+    expect(link.text()).toBe("Annual report (file + reader)");
+    expect(link.attributes("href")).toBe(
+      "/en/about/documents/annual-report-file"
+    );
+  });
+
   it("shows the translated empty state", async () => {
     const fake = createFakeSupabase({ tables: {} });
     const wrapper = await mountSection(fake.client);

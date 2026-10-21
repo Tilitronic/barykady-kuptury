@@ -286,6 +286,18 @@ export const routes: RouteRecordRaw[] = [
             descriptionKey: "admin.dashboardPage.description"
           }
         }
+      },
+      {
+        path: "import",
+        name: "admin-import",
+        component: () => import("@/pages/admin/AdminImportPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.import.title",
+            descriptionKey: "admin.import.description"
+          }
+        }
       }
     ]
   },

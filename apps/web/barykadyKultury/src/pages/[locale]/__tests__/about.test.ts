@@ -209,6 +209,56 @@ describe("About page — body sections (T-016 contract preserved)", () => {
   });
 });
 
+describe("About side rail — edge-docked layout (Vue docs pattern)", () => {
+  async function mountRail() {
+    const fake = createFakeSupabase({
+      tables: {
+        site_pages: [
+          aboutRow({
+            site_page_translations: [
+              {
+                locale: "en",
+                title: "About us",
+                body: FULL_EN_BODY,
+                meta_description: "About the association",
+                needs_review: false
+              }
+            ]
+          })
+        ],
+        team_members: [TEAM_ROW],
+        organization_documents: [DOC_ROW]
+      }
+    });
+    return mountAbout(fake.client);
+  }
+
+  /**
+   * The layout contract the rail redesign turns on: the TOC is a sibling of
+   * the content column inside a full-bleed wrapper (CSS pins it to the
+   * viewport edge), and the h1 lives INSIDE the column so the heading can
+   * never be shifted away from the body it titles. A symmetric mirror column
+   * keeps the column centered at wide viewports.
+   */
+  it("docks the TOC as a bleed-rail sibling of a centered column that owns the h1", async () => {
+    const wrapper = await mountRail();
+
+    const bleed = wrapper.get(".about-page__bleed");
+    expect(bleed.find("nav.about-page__rail").exists()).toBe(true);
+    expect(bleed.get("nav.about-page__rail").attributes("aria-label")).toBe(
+      "On this page"
+    );
+
+    const column = bleed.get(".about-page__column");
+    expect(column.find("h1.about-page__title").exists()).toBe(true);
+    expect(column.find("section#mission").exists()).toBe(true);
+    expect(bleed.find(".about-page__mirror").exists()).toBe(true);
+
+    // The old in-flow TOC column that shifted the content is gone.
+    expect(wrapper.find(".about-page__layout").exists()).toBe(false);
+  });
+});
+
 describe("About page — T-039 consolidation", () => {
   async function mountFull() {
     const fake = createFakeSupabase({

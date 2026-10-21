@@ -82,7 +82,11 @@ export default defineComponent({
 
 <style scoped>
 .localized-rich-text {
-  max-width: 65ch;
+  /* The reading surface (LongFormReader) publishes --prose-* hooks so the
+     article column has ONE measure and headings scale off the user's text
+     size step. Outside a reader the fallbacks keep DESIGN_SYSTEM defaults:
+     the 65ch prose measure and the fluid h2–h4 type scale. */
+  max-width: var(--prose-measure, 65ch);
   overflow-wrap: break-word;
 }
 
@@ -95,16 +99,16 @@ export default defineComponent({
 }
 
 .localized-rich-text :deep(h2) {
-  font-size: var(--font-size-h2);
+  font-size: var(--prose-h2-size, var(--font-size-h2));
 }
 
 .localized-rich-text :deep(h3) {
-  font-size: var(--font-size-h3);
+  font-size: var(--prose-h3-size, var(--font-size-h3));
 }
 
 /* Offset rendering (M1) can produce h4 from an authored "### ". */
 .localized-rich-text :deep(h4) {
-  font-size: var(--font-size-h4, var(--font-size-h3));
+  font-size: var(--prose-h4-size, var(--font-size-h4, var(--font-size-h3)));
 }
 
 .localized-rich-text :deep(p),

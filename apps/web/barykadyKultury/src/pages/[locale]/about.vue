@@ -13,68 +13,88 @@
     authored inline markup inside a heading degrades to text by design.
   -->
   <div class="about-page">
-    <h1 class="about-page__title">{{ pageTitle }}</h1>
+    <!--
+      Vue-docs rail layout: a full-bleed grid at ≥1440 px with [rail]
+      [column] [mirror]. The rail docks at the viewport edge; the mirror
+      column mirrors it on the right so the content column (and its h1)
+      stays centered at the shell's unchanged max width — the menu never
+      shifts or narrows the reading column. Between 1024 and 1439 px the
+      rail keeps the in-flow T-039 column (the gutter there cannot host a
+      docked rail without overlapping prose); below 1024 PageToc collapses
+      to its details disclosure above the content, 320 px safe.
+    -->
+    <div class="about-page__bleed">
+      <PageToc
+        class="about-page__rail"
+        :items="tocItems"
+        :ariaLabel="t('toc.onThisPage')"
+      />
 
-    <div class="about-page__layout">
-      <PageToc :items="tocItems" :ariaLabel="t('toc.onThisPage')" />
+      <div class="about-page__column">
+        <h1 class="about-page__title">{{ pageTitle }}</h1>
 
-      <div class="about-page__content">
-        <!-- Body section: states belong to THIS section only. -->
-        <p v-if="page?.isFallback" class="about-page__fallback" role="note">
-          {{
-            t("content.fallbackNote", {
-              language: t("content.fallbackLanguage")
-            })
-          }}
-        </p>
+        <div class="about-page__content">
+          <!-- Body section: states belong to THIS section only. -->
+          <p v-if="page?.isFallback" class="about-page__fallback" role="note">
+            {{
+              t("content.fallbackNote", {
+                language: t("content.fallbackLanguage")
+              })
+            }}
+          </p>
 
-        <div
-          v-if="result.kind === 'loading'"
-          class="about-page__state"
-          role="status"
-        >
-          {{ t("content.loading") }}
-        </div>
-        <div v-else-if="result.kind === 'empty'" class="about-page__state">
-          {{ t("content.empty") }}
-        </div>
-        <div
-          v-else-if="result.kind === 'unavailable'"
-          class="about-page__state"
-        >
-          {{ t("content.unavailable") }}
-        </div>
-        <template v-else-if="page">
-          <LocalizedRichText
-            v-if="intro.length > 0"
-            :blocks="intro"
-            :lang="bodyLang"
-            :new-tab-label="t('content.opensInNewTab')"
-            :label-lang="currentLocale"
-          />
-          <section
-            v-for="section in sections"
-            :id="section.id"
-            :key="section.id"
-            class="about-page__section"
+          <div
+            v-if="result.kind === 'loading'"
+            class="about-page__state"
+            role="status"
           >
-            <h2 class="about-page__section-title" tabindex="-1">
-              {{ section.title }}
-            </h2>
+            {{ t("content.loading") }}
+          </div>
+          <div v-else-if="result.kind === 'empty'" class="about-page__state">
+            {{ t("content.empty") }}
+          </div>
+          <div
+            v-else-if="result.kind === 'unavailable'"
+            class="about-page__state"
+          >
+            {{ t("content.unavailable") }}
+          </div>
+          <template v-else-if="page">
             <LocalizedRichText
-              :blocks="section.blocks"
+              v-if="intro.length > 0"
+              :blocks="intro"
               :lang="bodyLang"
               :new-tab-label="t('content.opensInNewTab')"
               :label-lang="currentLocale"
             />
-          </section>
-        </template>
+            <section
+              v-for="section in sections"
+              :id="section.id"
+              :key="section.id"
+              class="about-page__section"
+            >
+              <h2 class="about-page__section-title" tabindex="-1">
+                {{ section.title }}
+              </h2>
+              <LocalizedRichText
+                :blocks="section.blocks"
+                :lang="bodyLang"
+                :new-tab-label="t('content.opensInNewTab')"
+                :label-lang="currentLocale"
+              />
+            </section>
+          </template>
 
-        <!-- Independent sections: a team/documents failure never blanks
+          <!-- Independent sections: a team/documents failure never blanks
              the body, and vice versa (T-039 page structure). -->
-        <TeamSection :locale="currentLocale" />
-        <DocumentsSection :locale="currentLocale" />
+          <TeamSection :locale="currentLocale" />
+          <DocumentsSection :locale="currentLocale" />
+        </div>
       </div>
+
+      <!-- Symmetric spacer: keeps the content column viewport-centered
+           while the rail is docked at the left edge (≥1440 px only). -->
+      <div class="about-page__mirror" aria-hidden="true" />
     </div>
   </div>
 </template>
@@ -156,24 +176,68 @@ watchDeepLink({
 }
 
 /*
- * TOC + content grid (T-039): the left column is sticky via PageToc's own
- * `position: sticky`; below 1024 px the TOC collapses to its <details>
- * disclosure above the content, single column, 320 px safe.
+ * Vue-docs rail grid. Bands (owner screenshot pass):
+ *  - < 1024 px (tablet/phone): single column; PageToc renders its details
+ *    disclosure above the content — 320 px safe, unchanged T-039 fallback.
+ *  - ≥ 1024 px (all desktop widths): the wrapper bleeds to the viewport and
+ *    the [rail][column][mirror] grid docks the rail at the LEFT EDGE while
+ *    the column stays centered at the shell's max width. The rail is never
+ *    in-flow on desktop; the mirror column keeps the centering honest.
+ *    The bleed overshoots the scrollbar width on classic-scrollbar
+ *    platforms; app.scss clips the root horizontally while this page is
+ *    mounted.
  */
-.about-page__layout {
+.about-page__bleed {
   display: grid;
   gap: 2.5rem;
   align-items: start;
 }
 
+.about-page__mirror {
+  display: none;
+}
+
+.about-page__column,
+.about-page__content {
+  min-width: 0;
+}
+
 @media (min-width: 1024px) {
-  .about-page__layout {
-    grid-template-columns: 14rem minmax(0, 1fr);
+  .about-page__bleed {
+    grid-template-columns: minmax(0, 13rem) minmax(0, 72rem) minmax(0, 13rem);
+    justify-content: center;
+    column-gap: 1.5rem;
+    margin-inline: calc(50% - 50vw);
+    /* Panel edge sits 1rem off the viewport — reads as docked, leaves room
+       for the 3 px focus ring. */
+    padding-inline: 1rem;
+  }
+
+  .about-page__mirror {
+    display: block;
+  }
+
+  /*
+   * Theme-adaptive rail panel (owner screenshot fix): the About rail is a
+   * distinct component surface — surface-raised + border + shadow in BOTH
+   * themes (tokens flip with data-theme; nothing hardcoded). The link
+   * states (light tint hover, red-text active) are the shared PageToc
+   * contract and need no About-specific overrides.
+   */
+  .about-page__bleed :deep(.page-toc) {
+    padding: 1rem 0.625rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-sm);
   }
 }
 
-.about-page__content {
-  min-width: 0;
+/* Roomier rail once the viewport can afford it without squeezing prose. */
+@media (min-width: 1440px) {
+  .about-page__bleed {
+    grid-template-columns: minmax(0, 14rem) minmax(0, 72rem) minmax(0, 14rem);
+  }
 }
 
 /*

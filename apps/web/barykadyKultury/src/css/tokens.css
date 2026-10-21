@@ -314,6 +314,33 @@
    * for any transition so the preference is always honoured.
    */
   --motion-duration: 200ms;
+
+  /* --- Brand stroke -------------------------------------------------------- */
+
+  /**
+   * Height of the logotype at the header `md` token (BrandLogo size="md").
+   * Single source: BrandLogo and the nav stroke token below both derive
+   * from this value, so a size change moves the underline with it.
+   */
+  --brand-logo-height-md: 48px;
+
+  /**
+   * Left stem of the "B" monogram in the logotype, measured against the
+   * rendered wordmark height: Chromium raster of logotype_red_web.svg at
+   * 1000 px -> stem = 108 px -> ratio 0.108. The wordmark is a fill-path
+   * SVG, so the stem scales with height; the ratio is the scale-free
+   * constant.
+   */
+  --brand-wordmark-stem-ratio: 0.108;
+
+  /**
+   * The brand stroke: the active-page nav underline (desktop) and the
+   * active vertical rule (drawer) share this value so the header stays in
+   * exact agreement with the logo's own stroke weight. ~5.18 px at md/48 px.
+   */
+  --nav-active-stroke: calc(
+    var(--brand-logo-height-md) * var(--brand-wordmark-stem-ratio)
+  );
 }
 
 /* =========================================================================

@@ -37,6 +37,7 @@ type DocumentRow = {
   language: Database["public"]["Enums"]["content_locale"] | null;
   publication_date: string | null;
   updated_at: string;
+  allow_original_download: boolean;
   organization_document_translations: DocumentTranslationRow[];
 };
 
@@ -56,6 +57,7 @@ type PublicationRow = {
   publication_date: string | null;
   external_url: string | null;
   updated_at: string;
+  allow_original_download: boolean;
   publication_translations: PublicationTranslationRow[];
 };
 
@@ -86,6 +88,7 @@ const DOCUMENT_SELECT = [
   "language",
   "publication_date",
   "updated_at",
+  "allow_original_download",
   "organization_document_translations(locale, title, description, body, body_ast, body_ast_version)"
 ].join(", ");
 
@@ -96,6 +99,7 @@ const PUBLICATION_SELECT = [
   "publication_date",
   "external_url",
   "updated_at",
+  "allow_original_download",
   "publication_translations(locale, title, abstract, body, body_ast, body_ast_version)"
 ].join(", ");
 
@@ -195,7 +199,8 @@ function mapDocument(
     language: row.language,
     publicationDate: row.publication_date,
     externalUrl: null,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    allowOriginalDownload: row.allow_original_download === true
   };
 }
 
@@ -218,7 +223,8 @@ function mapPublication(
     language: row.language,
     publicationDate: row.publication_date,
     externalUrl: row.external_url,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    allowOriginalDownload: row.allow_original_download === true
   };
 }
 

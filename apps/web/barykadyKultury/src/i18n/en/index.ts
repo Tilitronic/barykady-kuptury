@@ -32,6 +32,8 @@ const en = {
    */
   search: {
     trigger: "Search the site",
+    /** Short label for the title attr + hover/focus tooltip (header lane). */
+    triggerTooltip: "Search",
     dialogTitle: "Site search",
     inputLabel: "Search",
     placeholder: "Search pages, projects, publications…",
@@ -199,11 +201,12 @@ const en = {
         wide: "Wide"
       },
       lineSpacing: "Line spacing",
-      paragraphSpacing: "Paragraph spacing",
       decrease: "Decrease",
       increase: "Increase",
       reset: "Reset settings",
-      resetDone: "Reading settings reset to defaults."
+      resetDone: "Reading settings reset to defaults.",
+      /* Original-file affordance (content-original endpoint). */
+      downloadOriginal: "Download the original file."
     },
     states: {
       empty: "This text is not available.",
@@ -224,6 +227,10 @@ const en = {
     closeMenu: "Close navigation menu",
     /** Accessible name for the header nav landmark. */
     mainNav: "Main navigation",
+    /** Phone band: the drawer holds the complete menu while the bottom bar is the main navigation. */
+    fullMenu: "Full menu",
+    /** Bottom-bar entry that opens the drawer with all destinations. */
+    more: "More",
     /** Top-level destinations (PRODUCT_REQUIREMENTS.md §4). */
     contact: "Contact",
     about: "About us",
@@ -504,6 +511,165 @@ const en = {
       message:
         "You are signed in, but this account does not have administrator access. Ask the organisation to invite you as an administrator, or sign in with a different account.",
       switchAccount: "Sign in with a different account"
+    },
+    import: {
+      title: "Import content",
+      description:
+        "Import a document or publication language version from Markdown, Word or Google Docs.",
+      heading: "Import content",
+      intro:
+        "Convert a file or a Google Doc, review the safe preview and metadata, then publish. Originals stay private.",
+      provider: {
+        legend: "Source",
+        file: "File",
+        google: "Google Docs"
+      },
+      fields: {
+        kind: "Content type",
+        document: "Document",
+        publication: "Publication",
+        locale: "Language",
+        title: "Title",
+        titleHint: "Required for every language version.",
+        description: "Description or abstract",
+        documentType: "Document type",
+        slug: "URL slug",
+        slugHint:
+          "Shared by every language; lowercase letters, numbers and hyphens.",
+        allowOriginalDownload: "Allow original download",
+        allowOriginalDownloadHint:
+          "Off by default. When on, the public reader offers a short-lived signed download."
+      },
+      file: {
+        label: "Markdown or Word file",
+        hint: "Accepted: .md and .docx. .odt/.docm are rejected with save-as-DOCX guidance.",
+        choose: "Choose a file",
+        selected: "Selected file",
+        converting: "Converting…"
+      },
+      google: {
+        label: "Google Doc ID or URL",
+        hint: "Drive export is DOCX; the public site renders the stored copy, never an iframe.",
+        import: "Import from Google",
+        syncNow: "Sync now",
+        check: "Check for changes",
+        syncing: "Checking Google Drive…"
+      },
+      preview: {
+        heading: "Safe preview",
+        empty: "Choose a file or a Google Doc to see a preview.",
+        blocking: "Resolve these issues before publishing:",
+        warning: "Conversion notes:",
+        altLabel: "Alternative text for {file}",
+        altHint: "Required for every informative image."
+      },
+      actions: {
+        publish: "Publish",
+        publishing: "Publishing…",
+        saveDraft: "Save draft",
+        savingDraft: "Saving…"
+      },
+      status: {
+        converted: "Converted. Review the preview and title, then publish.",
+        published: "Published. The public reader can now show this version.",
+        draftSaved: "Draft saved.",
+        unchanged: "No new changes in Google Drive.",
+        updateAvailable: "An update is available.",
+        checking: "Checking…",
+        failed: "The import did not complete."
+      },
+      sync: {
+        heading: "Google sync",
+        lastSynced: "Last synced: {time}",
+        never: "Never synced",
+        jobQueued: "Queued…",
+        jobRunning: "Syncing…",
+        jobSucceeded: "Sync complete.",
+        jobUnchanged: "Already up to date.",
+        jobBlocked: "Sync blocked by content issues.",
+        jobFailed: "Sync failed. The published copy was not changed.",
+        diffHeading: "Change summary",
+        blocks: "{previous} → {next} blocks",
+        headings: "{count} headings",
+        images: "{count} images",
+        tables: "{count} tables",
+        added: "Added: {items}",
+        removed: "Removed: {items}"
+      },
+      errors: {
+        titleRequired: "Enter a title.",
+        slugRequired: "Enter a URL slug.",
+        noFile: "Choose a file first.",
+        conversionFailed: "The file could not be converted.",
+        publishFailed: "The import could not be saved.",
+        googleFailed: "Google sync could not be started.",
+        noSupabase: "The content service is not configured.",
+        blocking: "Missing image alt text blocks publishing."
+      },
+      schedule: {
+        heading: "Scheduled freshness",
+        description:
+          "A nightly job checks Google Docs and updates changed copies. Manual sync remains an override.",
+        lastRun: "Last scheduled run",
+        checked: "Checked {count}",
+        updated: "Updated {count}",
+        failed: "Failed {count}",
+        skipped: "Skipped {count}",
+        none: "No scheduled run recorded yet."
+      }
+    }
+  },
+  /**
+   * T-041 content import. The converter returns stable issue/error codes;
+   * these strings are the only user-facing text (EN/PL/UK parity is enforced
+   * by the catalogue test).
+   */
+  import: {
+    title: "Import content",
+    description:
+      "Import a Markdown or Word (.docx) file and review the converted content before publishing.",
+    acceptedFormats: "Accepted formats: Markdown (.md) and Word (.docx).",
+    errors: {
+      emptyFile: "The selected file is empty.",
+      fileTooLarge: "The file is too large to import.",
+      invalidSize: "The file size is invalid.",
+      invalidFileName: "The file name is not valid.",
+      unsupportedExtension:
+        "This file type cannot be imported. Use Markdown (.md) or Word (.docx).",
+      unsupportedMime: "The file's reported type is not supported.",
+      mimeExtensionMismatch: "The file name and file type do not match.",
+      activeContent:
+        "Active content such as HTML, SVG or JavaScript cannot be imported.",
+      odtDeferred:
+        "OpenDocument text (.odt) is not supported yet. Save the document as Word (.docx) in your editor, then import the .docx file.",
+      docmRejected:
+        "Macro-enabled Word documents (.docm) are not accepted. Save the document as .docx without macros, then import it.",
+      docxUnsafeZip:
+        "The Word file is damaged or exceeds the safe import limits.",
+      docxMacros:
+        "The Word file contains macros, which are not allowed. Save it as .docx without macros.",
+      docxInvalid: "The Word file could not be read.",
+      emptyDocument: "The file contains no readable content.",
+      conversionFailed:
+        "The file could not be converted. Check the file and try again.",
+      conversionTimeout: "Conversion took too long and was stopped."
+    },
+    warnings: {
+      rawHtmlDropped: "Raw HTML was removed from the Markdown.",
+      unsafeLink:
+        "A link with an unsupported address was converted to plain text.",
+      remoteImageStripped:
+        "A remote image was removed. Upload the image to the site and insert its asset reference instead.",
+      imageUnresolved:
+        "An image could not be linked to an uploaded asset and was removed.",
+      nestedListFlattened:
+        "A nested list was flattened to match the reader format.",
+      unsupportedFormatting: "Some formatting was simplified for the reader.",
+      imageAltMissing:
+        "An image has no alternative text. Add a description before publishing.",
+      imageUnsupported:
+        "An image in an unsupported format was removed. Use PNG, JPEG or WebP.",
+      docxWarning: "The Word file produced a conversion warning."
     }
   },
   notFound: {
@@ -512,6 +678,9 @@ const en = {
     message: "The page you requested could not be found."
   },
   content: {
+    updateAvailable: "An update is available.",
+    showUpdate: "Show update",
+    updating: "Loading the update…",
     loading: "Loading…",
     empty: "This page is not available.",
     unavailable: "This content is temporarily unavailable.",
