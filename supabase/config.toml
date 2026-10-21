@@ -225,8 +225,14 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-# Disabled for the same reason as the project-wide flag above (D-08).
-enable_signup = false
+# MUST stay true: the CLI maps this onto GOTRUE_EXTERNAL_EMAIL_ENABLED, i.e.
+# the whole email provider — setting it false disables password sign-in for
+# every existing user (422 email_provider_disabled), not just new signups
+# (upstream supabase/cli#7055, still present in CLI 2.121 + GoTrue v2.197).
+# Public self-registration stays blocked by the project-wide
+# [auth] enable_signup = false (GOTRUE_DISABLE_SIGNUP, D-08); demo/admin
+# accounts are provisioned via the Admin API with email_confirm: true.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true

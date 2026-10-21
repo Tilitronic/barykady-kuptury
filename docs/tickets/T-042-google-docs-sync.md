@@ -82,3 +82,48 @@ pnpm demo:reset && pnpm demo:check
 ## Log
 
 - (author) start:
+
+## Addendum — S9 stale-while-revalidate + schedule (2026-10-21)
+
+**Approved v1 scope change:** manual file upload is parked; only Google Docs
+import/sync is exposed. The MD converter/worker/limits files remain in the tree
+for a separate branch but are not wired into the admin route.
+
+**S3 persistence:** `persist_reader_import_v1` writes the root source metadata,
+`content_assets` (owner+locale checked) and the AST translation in one
+transaction; `body` is still derived by the reader trigger.
+
+**S4 signed original:** `GET /.netlify/functions/content-original` redirects to a
+60-second signed URL only for a published row with
+`allow_original_download=true` and a private `source_path`. The service key is
+server-only.
+
+**S5/S6/S7/S8:** the admin import route is Google-only (bare Quasar controls,
+no bespoke CSS, lazy route split). A job row is created under admin RLS; the
+background function verifies the admin JWT, resolves oauth_admin/service_account
+credentials server-side, exports DOCX (10 MB cap), reuses the S0–S2 converter,
+persists through S3 and records status/diff for "Sync now".
+
+**S9 revalidation:** reader pages render the stored copy immediately, then call
+`GET /api/content-check?kind=&slug=` after mount. `claim_content_check_v1`
+atomically throttles per document (`source_checked_at`, default 15 minutes,
+exponential backoff capped at 24 h) and returns only safe metadata. A newer
+Drive `modifiedTime` enqueues the same S7 pipeline via
+`enqueue_content_sync_job_v1` (single-flight). The banner is non-blocking; the
+user must activate "Show update". A failed check/sync is silent and leaves the
+published copy untouched.
+
+**Schedule:** `content-sync-scheduled` runs `@daily` by default
+(`CONTENT_SYNC_SCHEDULE` override), lists published `source_provider='google_doc'`
+rows, processes at most three concurrently, skips documents with an active job
+(`claim_scheduled_content_sync_job_v1`), isolates failures, and writes an
+aggregate to `content_sync_runs` (shown in the admin). The on-view check remains
+the fast path for visited pages; the admin "Sync now" is a manual override.
+
+**Server environment (Netlify, never `VITE_*`):**
+`SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_URL` + service key), Google
+credentials (`GOOGLE_OAUTH_CLIENT_ID/SECRET/REFRESH_TOKEN` by default, or
+`GOOGLE_IMPORT_AUTH_MODE=service_account` with
+`GOOGLE_SERVICE_ACCOUNT_EMAIL/PRIVATE_KEY`), optional
+`GOOGLE_SHARED_DRIVE_ID`, and optional `CONTENT_SYNC_SCHEDULE` (default
+`@daily`). The browser only ever sees the publishable key and the admin JWT.

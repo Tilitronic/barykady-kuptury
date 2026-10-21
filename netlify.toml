@@ -11,6 +11,14 @@
 [functions]
   directory = "netlify/functions"
 
+# T-042 S9 — public stale-while-revalidate endpoint. Keep it before the SPA
+# catch-all; the function returns only metadata (never a source path/secret).
+[[redirects]]
+  from = "/api/content-check"
+  to = "/.netlify/functions/content-check"
+  status = 200
+  force = true
+
 # Client-side routing: every unknown path resolves to the SPA entry point.
 # Netlify evaluates functions before redirects, so the calendar function is not
 # shadowed by this catch-all.
@@ -20,13 +28,15 @@
   status = 200
 
 # T-044: response-level security headers. The CSP mirrors index.html's meta
-# policy (default/script/style/connect/img/font/object/base/form), plus
-# frame-ancestors. The Supabase wildcard is provisional until T-034 pins the
-# hosted project origin (D-08); update both the meta and this header together.
+# policy (default/script/style/connect/img/font/object/base/form/worker),
+# plus frame-ancestors. The Supabase wildcard is provisional until T-034 pins
+# the hosted project origin (D-08); update both the meta and this header
+# together. T-041: worker-src must also match the dev meta because the import
+# converter runs in a same-origin Vite module worker.
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https://*.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; img-src 'self' data: https://*.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:; frame-ancestors 'none'"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
