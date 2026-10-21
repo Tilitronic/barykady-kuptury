@@ -65,7 +65,7 @@ and restart churn; they do not relax any verification requirement above.
 | 8 | T-037, T-026 | Local demo environment + admin auth shell | ~70% |
 | 9 | T-038 | One canonical slug per entity (D-24), naming pass, security review | ~60% |
 | 10 | T-039 | Consolidated pages + two-source search | done |
-| 11 | T-040…T-043 | Reader fixes; content import; Google Docs sync; social links | ~70% |
+| 11 | T-040…T-043 | Unified reader done; social links done; content import/Google Docs next | ~75% |
 
 **Session stop rule:** stop opening new tickets at ~55% context usage, even mid-session.
 Finish or park the current ticket, run its review gate, then:

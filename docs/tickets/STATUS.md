@@ -46,7 +46,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-040 | Unified long-form reader for documents/publications (language `?lang=`, TOC, reading controls, images, a11y) | 11 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | ff7788e | 2026-10-21 |
 | T-041 | Content import pipeline (MD, DOCX) + private source files + admin preview (no editor); ODT deferred | 10 | todo | — | — | — |
 | T-042 | Google Docs import/sync (Drive export → stored sanitized copy; no iframe) | 11 | todo | — | — | — |
-| T-043 | Social links (Facebook, Instagram, Telegram) in header, footer and contact | 11 | todo | — | — | — |
+| T-043 | Social links (Facebook, Instagram, Telegram) in header, footer and contact | 11 | done | @designer + live smoke | 400a884 | 2026-10-21 |
 
 ## Session log
 
@@ -62,7 +62,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | 8 | 2026-10-19 | 2026-10-19 (T-037 + T-026 done & reviewed; local demo env, calendar mock, admin shell, carry-over fixes; review hardening: RLS boundary check, PID identity, architecture record; post-close demo env/CSP defect fixed and browser-verified) | `HANDOFF-S8-2026-10-19.md` | pending (push pending; run `pnpm demo` with `DEMO_DEV_PORT=9200` + `pnpm demo:check`) |
 | 9 | 2026-10-20 | 2026-10-20 (T-038 done & reviewed; canonical slugs across all content URLs, redirect machinery deleted, naming pass, 404 back-links, CSP/redirect hardening, UX regressions fixed, demo seed collision fixed) | — | pending (push pending) |
 | 10 | 2026-10-20 | 2026-10-20 (T-039 done & reviewed; About/area pages with TOC, two-source site search, review fixes; 916 unit / 115 E2E / 300 pgTAP; live smoke 12/12) | — | pending (push pending) |
-| 11 | 2026-10-21 | 2026-10-21 (T-040 done & reviewed; unified reader, AST/assets, `?lang=`, TOC/controls, publication metadata; 1009 unit / 130 E2E / 397 pgTAP; handoff + T-043 social plan written) | `HANDOFF-S11-2026-10-21.md` | pending (push pending) |
+| 11 | 2026-10-21 | 2026-10-21 (T-040 done & reviewed; unified reader, AST/assets, `?lang=`, TOC/controls, publication metadata; T-043 social links + search-close fix; 1031 unit / 136 E2E / 397 pgTAP; live smoke) | `HANDOFF-S11-2026-10-21.md` | pending (push pending) |
 
 ## Next session (planned)
 

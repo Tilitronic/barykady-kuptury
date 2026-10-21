@@ -111,3 +111,39 @@ pnpm demo:reset && pnpm demo:check
 ## Log
 
 - (author) start:
+- (designer) 2026-10-21 — D-05 CLOSED for three channels: owner-supplied,
+  page-title-verified 2026-10-21 URLs registered in
+  `src/config/organization.ts` (Facebook `https://www.facebook.com/BARYKADYKULTURY/`,
+  Instagram `https://www.instagram.com/barykadykultury/`,
+  Telegram `https://t.me/barykadykultury`). No other platform URLs invented;
+  youtube/twitter/linkedin stay supported with empty URLs (render nothing).
+- (designer) 2026-10-21 — implementation deltas vs. this ticket:
+  1. `SocialLink.platform` union gains `telegram`; icon set is inline SVG in
+     a 24×24 stroke language (round caps, currentColor) — Facebook/Instagram
+     get brand glyphs, Telegram a paper plane, every other platform a globe
+     fallback. No icon-library dependency.
+  2. `SocialLinks.vue` gains `variant?: "icon" | "labeled"` (default icon).
+     Icon links are 2.25rem squares with localized `aria-label`+`title` from
+     `social.labels.<platform>` (en/pl/uk), falling back to `link.label`.
+     Labeled links pair the icon with the visible platform name.
+  3. Header fit measured live: at 1280 px with the existing compression band
+     the icon cluster (116 px) fits inline in all three locales with ≈ 67 px
+     nav/controls clearance (uk worst) — so **no drawer fallback was needed
+     at 1280–1439** and the socials render inline at ≥ 1280 plus in the ≤ 1279
+     drawer from the same DOM. E2E asserts 1280 inline fit (≥ 36 px targets,
+     no overflow, axe) and 320 px drawer reachability.
+  4. Contact page renders a `contact.followUs` h2 + labeled SocialLinks after
+     the channel block; the heading is gated by `hasSocialLinks` (same
+     "non-empty URL = configured" rule) so an empty config renders nothing.
+- (designer) 2026-10-21 — unblocks related fix: `SiteSearch.vue` dialog close
+  button restructured from absolute-over-input (user-reported glyph overlap at
+  320 px) into a flex field row; E2E asserts non-overlap + input→close→chip
+  tab order at 320 px. Not part of T-043 scope, shipped in the same session.
+- [x] Facebook, Instagram and Telegram appear in header, footer and contact
+      with accessible names; each opens with `target=_blank` +
+      `rel=noopener noreferrer`.
+- [x] Empty URLs render nothing anywhere (component contract + config test).
+- [x] Telegram supported; text abbreviations replaced by inline SVG.
+- [x] 1280 inline fit measured ≥ 16 px clearance (all locales); 320 drawer
+      reachability asserted; axe passes on shell + contact.
+- [x] Only owner-verified URLs used; no invented values.
