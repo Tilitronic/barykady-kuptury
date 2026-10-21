@@ -64,6 +64,8 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | 9 | 2026-10-20 | 2026-10-20 (T-038 done & reviewed; canonical slugs across all content URLs, redirect machinery deleted, naming pass, 404 back-links, CSP/redirect hardening, UX regressions fixed, demo seed collision fixed) | — | pending (push pending) |
 | 10 | 2026-10-20 | 2026-10-20 (T-039 done & reviewed; About/area pages with TOC, two-source site search, review fixes; 916 unit / 115 E2E / 300 pgTAP; live smoke 12/12) | — | pending (push pending) |
 | 11 | 2026-10-21 | 2026-10-21 (T-040, T-043 and T-044 done; unified reader, social links, search-close fix, security headers, route splitting, lean payloads, readability; 1065 unit / 136 E2E / 397 pgTAP; live smoke) | `HANDOFF-S11-2026-10-21.md` | pending (push pending) |
+| 12 | 2026-10-21 | 2026-10-21 (S12 handoff written; ledger updated; no new ticket closes) | `HANDOFF-S12-2026-10-21.md` | pending (push pending) |
+| 13 | 2026-10-21 | closed (post-restart: TUI 3.0.5 live, code-navigator/designer smokes green, designer UI queue reconciled + reviewer rev-1 gated, 3 session commits; T-041/T-042 stay todo, Google vertical wants a reviewer gate) | `HANDOFF-S13-2026-10-21.md` | pending (push pending: main 80+ commits ahead, feature/file-import local) |
 
 ## Next session (planned)
 
