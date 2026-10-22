@@ -11,6 +11,11 @@
  *   The gate now covers ALL 7 font-size tokens (not just display + body),
  *   plus all line-height, weight, and measure tokens. A future edit to
  *   scale.ts that is not mirrored in typography.css will fail this suite.
+ *
+ * D-40 (brand typeface → GNU FreeSerif): the file inventory, weight literals
+ *   and real-face invariants below encode the replacement — 9 static faces,
+ *   weights restricted to {400, 700}, real italic for <em>/fallback styles,
+ *   and the brand-critical Polish + Ukrainian unicode ranges gated in CSS.
  */
 
 import { readFileSync } from "node:fs";
@@ -108,35 +113,95 @@ function strippedCss(text: string): string {
 // ─── 3. Font file coverage in typography.css ─────────────────────────────────
 //
 // WHY: The font loading strategy must be proven, not assumed (T-007 scope).
-// We read typography.css as a plain string and assert that the @font-face
-// declarations reference both latin-ext and cyrillic woff2 files, providing
-// real glyph coverage for Polish diacritics and Ukrainian Cyrillic as required
-// by DESIGN_SYSTEM.md §2.
+// D-40 replaces Inter with GNU FreeSerif: three static weights-worth of faces
+// (normal 400, bold 700, italic 400) across three unicode-range subsets. This
+// gate pins the distributed file inventory and the brand-critical unicode
+// ranges inside the CSS so a future edit cannot silently drop Polish or
+// Ukrainian coverage.
 
-describe("typography.css — font subset coverage", () => {
+/** Extract @font-face blocks (comment-stripped) from the raw CSS source. */
+function fontFaceBlocks(text: string): string[] {
+  const withoutComments = text.replace(/\/\*[\s\S]*?\*\//g, "");
+  return withoutComments.match(/@font-face\s*\{[^}]+\}/g) ?? [];
+}
+
+describe("typography.css — FreeSerif subset coverage (D-40)", () => {
   let cssText = "";
 
   beforeAll(() => {
     cssText = readFileSync(TYPOGRAPHY_CSS_PATH, "utf-8");
   });
 
-  it("references inter-latin-ext-wght-normal.woff2 (Polish diacritics — latin-ext subset)", () => {
-    expect(cssText).toContain("inter-latin-ext-wght-normal.woff2");
+  const subsets = ["latin", "latin-ext", "cyrillic"] as const;
+  const faces = ["normal", "bold", "italic"] as const;
+
+  for (const subset of subsets) {
+    for (const face of faces) {
+      it(`references freeserif-${subset}-${face}.woff2`, () => {
+        expect(cssText).toContain(`freeserif-${subset}-${face}.woff2`);
+      });
+    }
+  }
+
+  it("declares exactly 9 @font-face rules (3 subsets × 3 faces)", () => {
+    expect(fontFaceBlocks(cssText)).toHaveLength(9);
   });
 
-  it("references inter-cyrillic-wght-normal.woff2 (Ukrainian Cyrillic subset)", () => {
-    expect(cssText).toContain("inter-cyrillic-wght-normal.woff2");
+  it("every @font-face declares the FreeSerif family (no Inter remnants)", () => {
+    for (const block of fontFaceBlocks(cssText)) {
+      expect(block).toMatch(/font-family:\s*"FreeSerif"/);
+      expect(block).not.toMatch(/Inter/);
+    }
   });
 
-  it("references inter-latin-wght-normal.woff2 (Latin baseline subset)", () => {
-    expect(cssText).toContain("inter-latin-wght-normal.woff2");
+  it("every @font-face pins a real weight: 400 or 700 only (no faux-bold axis)", () => {
+    // FreeSerif ships static instances; a range like `font-weight: 100 900`
+    // or an intermediate 500/600 would mean the browser picks a nearest
+    // face and the design token no longer describes what renders.
+    for (const block of fontFaceBlocks(cssText)) {
+      const match = /font-weight:\s*([^;]+);/.exec(block);
+      expect(match?.[1]?.trim()).toMatch(/^(400|700)$/);
+    }
+  });
+
+  it("every @font-face declares one of the real styles: normal or italic", () => {
+    for (const block of fontFaceBlocks(cssText)) {
+      expect(block).toMatch(/font-style:\s*(normal|italic);/);
+    }
+    const italics = fontFaceBlocks(cssText).filter(b =>
+      /font-style:\s*italic/.test(b)
+    );
+    // <em> (reader + richText) and the card fallback styles use italic — the
+    // real face must exist for every subset, never the synthesized oblique.
+    expect(italics).toHaveLength(3);
+  });
+
+  it("cyrillic subset claims the Ukrainian letters (U+0400-045F + Ґ U+0490-0491)", () => {
+    const cyrillic = fontFaceBlocks(cssText).filter(b =>
+      b.includes("freeserif-cyrillic")
+    );
+    expect(cyrillic).toHaveLength(3);
+    for (const block of cyrillic) {
+      expect(block).toContain("U+0400-045F");
+      expect(block).toContain("U+0490-0491");
+    }
+  });
+
+  it("latin-ext subset claims the Polish Latin Ext-A range (U+0100-02BA)", () => {
+    const latinExt = fontFaceBlocks(cssText).filter(b =>
+      b.includes("freeserif-latin-ext")
+    );
+    expect(latinExt.length).toBeGreaterThan(0);
+    for (const block of latinExt) {
+      expect(block).toContain("U+0100-02BA");
+    }
   });
 
   it("all @font-face declarations use font-display: swap", () => {
     // Every @font-face block must opt into swap display (T-007 scope).
-    const fontFaceBlocks = cssText.match(/@font-face\s*\{[^}]+\}/g) ?? [];
-    expect(fontFaceBlocks.length).toBeGreaterThan(0);
-    for (const block of fontFaceBlocks) {
+    const fontFaceBlocksParsed = fontFaceBlocks(cssText);
+    expect(fontFaceBlocksParsed.length).toBeGreaterThan(0);
+    for (const block of fontFaceBlocksParsed) {
       expect(block).toContain("font-display: swap");
     }
   });
@@ -210,15 +275,15 @@ describe("typography.css — font-weight tokens match scale.ts weights", () => {
     css = strippedCss(readFileSync(TYPOGRAPHY_CSS_PATH, "utf-8"));
   });
 
-  it("--font-weight-display equals weights.display (500 — Medium, A3)", () => {
+  it("--font-weight-display equals weights.display (400 — D-40: real Regular, size-led display)", () => {
     expect(css).toContain(`--font-weight-display: ${weights.display}`);
   });
 
-  it("--font-weight-heading equals weights.heading (700 — Bold)", () => {
+  it("--font-weight-heading equals weights.heading (700 — real Bold)", () => {
     expect(css).toContain(`--font-weight-heading: ${weights.heading}`);
   });
 
-  it("--font-weight-h4 equals weights.h4 (600 — Semi-bold, A2)", () => {
+  it("--font-weight-h4 equals weights.h4 (700 — D-40: real Bold, no Semi axis)", () => {
     expect(css).toContain(`--font-weight-h4: ${weights.h4}`);
   });
 
@@ -228,6 +293,34 @@ describe("typography.css — font-weight tokens match scale.ts weights", () => {
 
   it("--font-weight-small equals weights.small (400 — Regular)", () => {
     expect(css).toContain(`--font-weight-small: ${weights.small}`);
+  });
+});
+
+// ─── 5b. D-40 weight contract (literal, not just CSS↔TS mirroring) ───────────
+//
+// WHY literals: the mirror gate above proves CSS and scale.ts agree, but both
+// could agree on a value FreeSerif cannot render. GNU FreeSerif ships exactly
+// two weights (Regular 400, Bold 700) — any intermediate token (500, 600)
+// would silently re-map to a neighbour face, making the token a lie about what
+// renders ("faux" hierarchy). D-40 therefore freezes the token vocabulary to
+// the real faces and rebuilds hierarchy through size/tracking instead.
+
+describe("scale.ts — D-40 real-face weight contract", () => {
+  it("display is 400 — Medium (500) does not exist in FreeSerif; dominance via size", () => {
+    expect(weights.display).toBe(400);
+  });
+
+  it("h4 is 700 — Semi-bold (600) does not exist; h3/h4 separate by size (24/20 px)", () => {
+    expect(weights.h4).toBe(700);
+  });
+
+  it("every weight token is a face the build actually ships (400 or 700)", () => {
+    for (const [name, value] of Object.entries(weights)) {
+      expect(
+        [400, 700],
+        `weights.${name} = ${value} has no real face`
+      ).toContain(value);
+    }
   });
 });
 

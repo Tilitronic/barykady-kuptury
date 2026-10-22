@@ -11,6 +11,7 @@
     "format": "pnpm --dir apps/web/barykadyKultury format",
     "format:check": "pnpm --dir apps/web/barykadyKultury format:check",
     "typecheck": "pnpm --dir apps/web/barykadyKultury typecheck",
+    "fonts:build": "pnpm --dir apps/web/barykadyKultury fonts:build",
     "test": "pnpm --dir apps/web/barykadyKultury test",
     "test:coverage": "pnpm --dir apps/web/barykadyKultury test:coverage",
     "test:e2e": "pnpm --dir apps/web/barykadyKultury test:e2e",

@@ -32,19 +32,23 @@
     <script src="/theme-init.js"></script>
 
     <!--
-      T-007: Preload the latin subset of Inter Variable (the primary weight file).
+      D-40 (T-007): Preload the latin subset of GNU FreeSerif Regular — the
+      above-the-fold primary face of the brand typeface (latin-ext/cyrillic
+      and the bold/italic faces are fetched on demand by unicode-range).
       Using a stable /fonts/ path (public/ directory) so the href here and the
       src: url() in typography.css are IDENTICAL — no hash mismatch possible.
       `crossorigin` is required for font preloads even on same-origin to match
       the CORS-enabled font fetch the browser performs when loading the CSS rule.
       The CSP `default-src 'self'` covers same-origin font-src requests without
       an explicit `font-src` directive.
+      Binaries are built by `pnpm fonts:build` (hard codepoint gate + woff2
+      conversion; GPL-3.0+font-exception provenance in public/fonts/).
     -->
     <link
       rel="preload"
       as="font"
       type="font/woff2"
-      href="/fonts/inter-latin-wght-normal.woff2"
+      href="/fonts/freeserif-latin-normal.woff2"
       crossorigin
     />
 

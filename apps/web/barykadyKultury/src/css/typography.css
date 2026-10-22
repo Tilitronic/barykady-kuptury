@@ -1,122 +1,185 @@
 /**
- * T-007 — Typography: self-hosted Inter Variable + fluid type scale
+ * D-40 — Typography: self-hosted GNU FreeSerif + fluid type scale
  * ==================================================================
+ *
+ * BRAND TYPEFACE (decision D-40, supersedes the brandbook's Inter §2.5)
+ * ---------------------------------------------------------------------
+ * GNU FreeSerif (FreeFont 20120503) is the brand typeface. FreeSerif ships
+ * three real faces used here — Regular (400), Bold (700) and true Italic
+ * (400) — and NO variable weight axis, NO Medium/Semi-bold. Every weight
+ * token below must therefore name a face that actually exists; hierarchy is
+ * built with size and leading, not with intermediate weights (no faux-bold).
+ * Italic is shipped as a real face because <em> (reader + richText) and the
+ * card fallback styles use it — synthesis is never acceptable.
  *
  * FONT LOADING STRATEGY
  * ---------------------
- * Chosen approach: stable paths under /fonts/ (public/ directory), with
- * hand-written @font-face declarations and a <link rel="preload"> in index.html.
+ * Stable paths under /fonts/ (public/ directory), hand-written @font-face
+ * declarations and a <link rel="preload"> in index.html. The woff2 binaries
+ * are produced by `pnpm fonts:build` (scripts/build-fonts.sh →
+ * scripts/fonts/build_freefont.py), which downloads the pinned upstream zip,
+ * verifies its sha256, enforces the hard codepoint gate (Ґґ Єє Іі Її + the
+ * full Polish set must be native in every face AND survive subsetting in the
+ * subset that claims their range), subsets per unicode-range and converts
+ * TTF → woff2 (fonttools + brotli; upstream ships woff1 only). A gate failure
+ * stops the build — silent substitution is forbidden.
  *
- * WHY this approach over importing the package CSS:
- *   Importing @fontsource-variable/inter/wght.css causes Vite to emit woff2
- *   files with content hashes (e.g. `inter-latin-wght-normal-XXXXXXXX.woff2`).
- *   A <link rel="preload"> in index.html must reference the same URL as the
- *   CSS font-src — but content hashes are only known after the build, making
- *   it impossible to hard-code a stable preload href in the source HTML.
- *   A Vite plugin could scan the manifest and inject the correct hash at build
- *   time, but that adds complexity and is brittle across Vite version changes.
+ * WHY stable public/ paths over bundler-managed assets:
+ *   A <link rel="preload"> must reference the exact URL the CSS will request.
+ *   Bundler content hashes are only known after the build, so hash-free paths
+ *   keep the preload href and the CSS src identical at all times — zero
+ *   chance of a preload/load mismatch.
  *
- *   Self-hosting in public/ gives stable, hash-free paths that are identical
- *   in the source HTML and in the CSS at all times — one URL per font file,
- *   zero chance of preload/load mismatch.
+ * SUBSETS INCLUDED (3, per D-40)
+ * ------------------------------
+ *   latin       — ASCII + common Western European, Polish ó/Ó, punctuation, €
+ *   latin-ext   — Polish Latin Ext-A diacritics: ą ć ę ł ń ś ź ż + capitals
+ *                 (U+0100..U+02BA and companions)
+ *   cyrillic    — Ukrainian core incl. Ґ/ґ: U+0400-045F + U+0490-0491
  *
- * TRADE-OFF:
- *   The four woff2 files are checked in to public/fonts/. When
- *   @fontsource-variable/inter is upgraded, they must be re-copied from
- *   node_modules/@fontsource-variable/inter/files/ to public/fonts/.
- *   A `postinstall` hook could automate this; deferred to a future ticket.
- *
- * SUBSETS INCLUDED
- * ----------------
- * Four of the six subsets in wght.css are included:
- *   latin           — ASCII and common Western European characters
- *   latin-ext       — Polish diacritics: ą ć ę ł ń ó ś ź ż (U+0100..U+02BA)
- *   cyrillic        — Ukrainian core: і ї є ґ (U+0400..U+045F range)
- *   cyrillic-ext    — Extended Cyrillic used in some Ukrainian orthography
- *
- * Greek and Vietnamese subsets are NOT included — not needed for the NGO's
- * three content languages (Polish, Ukrainian, English).
+ * Greek and Vietnamese ranges are not needed for the NGO's three content
+ * languages (Polish, Ukrainian, English). The former cyrillic-ext range was
+ * dropped with Inter — the brand languages never used it.
  *
  * Each @font-face has font-display: swap so text renders immediately in the
- * fallback stack; Inter swaps in when downloaded.
+ * fallback stack; FreeSerif swaps in when downloaded.
  *
  * CSP NOTE
  * --------
- * The existing CSP in index.html has `default-src 'self'`. There is no explicit
- * `font-src` directive, so fonts fall back to `default-src 'self'`, which
- * allows same-origin /fonts/*.woff2 requests. No CSP change is needed.
+ * The existing CSP in index.html has `default-src 'self'`. There is no
+ * explicit `font-src` directive, so fonts fall back to `default-src 'self'`,
+ * which allows same-origin /fonts/*.woff2 requests. No CSP change is needed.
  *
  * SINGLE SOURCE OF TRUTH (HAND-MIRRORED, MACHINE-GATED)
  * -------------------------------------------------------
- * All CSS custom properties for font sizes, weights, line-heights, and the
- * prose measure are HAND-MIRRORED from src/shared/typography/scale.ts.
- * They are NOT auto-generated. scale.test.ts asserts that every token in this
- * file matches the corresponding exported value in scale.ts — edit scale.ts
- * first, then update this file; the test will fail if they diverge.
- *
- * unicode-range values below are copied verbatim from
- * @fontsource-variable/inter/wght.css (package version 5.3.0).
+ * All CSS custom properties for font sizes, weights, line-heights and the
+ * prose measure are HAND-MIRRORED from src/shared/typography/scale.ts and
+ * machine-gated by scale.test.ts (including the D-40 real-face weight
+ * invariants and the 9-face / unicode-range structure asserted below).
+ * unicode-range values here are mirrored 1:1 by the RANGES table in
+ * scripts/fonts/build_freefont.py — if you edit one, edit the other; the
+ * font-subset gate in scale.test.ts pins the brand-critical ranges.
  *
  * LICENSE
  * -------
- * The Inter font binaries redistributed in public/fonts/ are licensed under the
- * SIL Open Font License 1.1 (Copyright 2016 The Inter Project Authors,
- * https://github.com/rsms/inter). The full license text ships alongside the
- * binaries at public/fonts/OFL.txt (copied from
- * @fontsource-variable/inter/LICENSE, package version 5.3.0).
+ * The FreeSerif binaries redistributed in public/fonts/ are licensed under
+ * GPL-3.0-or-later WITH the GNU font-embedding exception (NOT OFL). The
+ * verbatim license texts, upstream AUTHORS file and a sha256 provenance note
+ * ship alongside the binaries: public/fonts/GPL-3.0.txt,
+ * GNU-FONT-EMBEDDING-EXCEPTION.txt, AUTHORS.txt, PROVENANCE.md (all written
+ * by `pnpm fonts:build`).
  */
 
 /* ==========================================================================
-   1. @font-face — Inter Variable (self-hosted, stable paths)
+   1. @font-face — GNU FreeSerif (self-hosted woff2, stable paths, D-40)
    ========================================================================== */
 
-/* --- cyrillic-ext: Extended Cyrillic (some Ukrainian orthography variants) -- */
+/* --- normal (Regular 400) --------------------------------------------------- */
+
+/* latin: ASCII + common Western European + Polish ó/Ó (preloaded subset) ------ */
 @font-face {
-  font-family: "Inter Variable";
+  font-family: "FreeSerif";
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  src: url("/fonts/inter-cyrillic-ext-wght-normal.woff2")
-    format("woff2-variations");
+  font-weight: 400;
+  src: url("/fonts/freeserif-latin-normal.woff2") format("woff2");
   unicode-range:
-    U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
 }
 
-/* --- cyrillic: Core Ukrainian Cyrillic (і ї є ґ at U+0456, U+0457, U+0454, U+0491) --- */
+/* latin-ext: Polish diacritics (ą ć ę ł ń ś ź ż + capitals live here) --------- */
 @font-face {
-  font-family: "Inter Variable";
+  font-family: "FreeSerif";
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  src: url("/fonts/inter-cyrillic-wght-normal.woff2") format("woff2-variations");
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-
-/* --- latin-ext: Polish diacritics (ą ć ę ł ń ó ś ź ż live in this range) --- */
-@font-face {
-  font-family: "Inter Variable";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url("/fonts/inter-latin-ext-wght-normal.woff2")
-    format("woff2-variations");
+  font-weight: 400;
+  src: url("/fonts/freeserif-latin-ext-normal.woff2") format("woff2");
   unicode-range:
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
     U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
     U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* --- latin: ASCII + common Western European (preloaded subset) ------------- */
+/* cyrillic: Ukrainian core incl. Ґ ґ (U+0490-0491), Єє Іі Її (U+0400-045F) ---- */
 @font-face {
-  font-family: "Inter Variable";
+  font-family: "FreeSerif";
   font-style: normal;
   font-display: swap;
-  font-weight: 100 900;
-  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 400;
+  src: url("/fonts/freeserif-cyrillic-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+/* --- bold (real Bold 700 — the only bold FreeSerif offers) ------------------ */
+
+@font-face {
+  font-family: "FreeSerif";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("/fonts/freeserif-latin-bold.woff2") format("woff2");
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
     U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "FreeSerif";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("/fonts/freeserif-latin-ext-bold.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "FreeSerif";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("/fonts/freeserif-cyrillic-bold.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+/* --- italic (true FreeSerif Italic — <em> + card fallbacks; never synthesized) */
+
+@font-face {
+  font-family: "FreeSerif";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/freeserif-latin-italic.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "FreeSerif";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/freeserif-latin-ext-italic.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "FreeSerif";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/freeserif-cyrillic-italic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 /* ==========================================================================
@@ -130,11 +193,14 @@
   /* --- Font family -------------------------------------------------------- */
 
   /**
-   * Sans-serif stack. Inter Variable first; `Inter` as a non-variable
-   * fallback for older browsers that don't support variable fonts but do have
-   * Inter static installed; system-ui and generic sans-serif as last resort.
+   * Body stack. "FreeSerif" (the brand face) first, Georgia as the closest
+   * high-quality serif fallback during the swap window, generic serif last.
+   *
+   * The token KEEPS the name `--font-family-sans` (D-40): it is the site's
+   * primary-text token, not a literal serif/sans classification — renaming it
+   * would churn every consumer for zero behavior change.
    */
-  --font-family-sans: "Inter Variable", Inter, system-ui, sans-serif;
+  --font-family-sans: "FreeSerif", Georgia, serif;
 
   /* --- Font sizes (fluid) ------------------------------------------------- */
   /*
@@ -143,7 +209,8 @@
    * See src/shared/typography/scale.ts for derivation.
    *
    * Brandbook anchors verified at desktop (1280 px):
-   *   display  → 64 px  (brandbook p. 13, Medium/Bold)
+   *   display  → 64 px  (brandbook p. 13; D-40 renders it in real Regular,
+   *                       dominance by size — the book sanctions BOLD here too)
    *   h2       → 34 px  (brandbook p. 13, section heading, Bold)
    *   body     → 16 px  (brandbook p. 14, Regular)
    */
@@ -185,26 +252,27 @@
   /* --- Font weights ------------------------------------------------------- */
 
   /**
-   * Inter Variable supports the full 100–900 weight axis.
+   * D-40 REAL-FACE CONTRACT: FreeSerif ships only 400 and 700. Every token
+   * below must name one of those two values (scale.test.ts gates it) — an
+   * intermediate value would be a lie about what the browser renders, and
+   * `font-synthesis: none` on <body> forbids synthetic weights anyway.
    *
-   * display: 500 (Medium) — editorial register at 40–64 px; achieves dominance
-   *   through size, not weight. Stronger contrast with 700 headings below it.
-   *   Brandbook p. 13 sanctions both "Medium" and "Bold" for display.
-   *   Decision: Medium chosen (A3 review finding, see scale.ts for rationale).
+   * display: 400 (real Regular) — at 40–64 px the face achieves dominance
+   *   through SIZE, not weight ("display via size, no faux-bold", D-40).
+   *   The brandbook's own ladder permits BOLD at display sizes; Regular was
+   *   chosen to keep a visible gap to the 700 headings below it.
    *
-   * heading (h1–h3): 700 (Bold) — brandbook anchor for section headings.
+   * heading (h1–h3): 700 (real Bold) — brandbook anchor for section headings.
    *
-   * h4: 600 (Semi-bold) — A2 review finding: h3 (18 px, 700) and h4 (16 px)
-   *   with the same weight creates only a 2 px size gap. 600 vs 700 is visibly
-   *   distinct in Inter Variable at 16–18 px; h4 reads as a sub-heading rather
-   *   than a slightly smaller heading.
+   * h4: 700 (real Bold) — D-40 supersedes the old Semi-bold (600) token, a
+   *   face FreeSerif does not ship. h3 (18–24 px) vs h4 (16–20 px) now
+   *   separate by SIZE + leading rather than by a fake weight step.
    *
-   * body: 400 (Regular) — brandbook anchor.
-   * small: 400 (Regular) — consistent with body.
+   * body / small: 400 (Regular) — brandbook anchors.
    */
-  --font-weight-display: 500;
+  --font-weight-display: 400;
   --font-weight-heading: 700;
-  --font-weight-h4: 600;
+  --font-weight-h4: 700;
   --font-weight-body: 400;
   --font-weight-small: 400;
 
@@ -221,9 +289,9 @@
 }
 
 /* ==========================================================================
-   3. Global baseline — apply Inter Variable to the document
+   3. Global baseline — apply FreeSerif to the document
    ==========================================================================
-   Setting font-family on body ensures Quasar components inherit Inter.
+   Setting font-family on body ensures Quasar components inherit FreeSerif.
    Font-size and line-height use the body tokens as the root values.
    ========================================================================== */
 
@@ -238,6 +306,15 @@ body {
    * hierarchy. tokens.css owns the value; typography.css owns the body rule.
    */
   background-color: var(--color-background);
+  /*
+   * D-40 synthesis guard: only REAL faces may render. If a future token or
+   * component requests a weight/style FreeSerif lacks (Medium 500, Semi-bold
+   * 600, oblique), the browser must degrade to the nearest real face instead
+   * of faking bold via stroke or slanting Roman glyphs (scale.test.ts pins
+   * the tokens to {400, 700} in normal + true italic, so this guard should
+   * never be hit — it exists to make a regression loud, not silent).
+   */
+  font-synthesis: none;
   font-feature-settings:
     "kern" 1,
     "liga" 1;
@@ -264,7 +341,9 @@ body {
    spacing through their own styles. This is the minimal safe choice.
 
    A4 advisory: h4 weight is set explicitly on the element to ensure it is
-   never accidentally inherited from a heavier parent element.
+   never accidentally inherited from a heavier parent element. Since D-40 it
+   equals the heading weight (real Bold 700) — set explicitly anyway so
+   inheritance can never silently change the face.
    ========================================================================== */
 
 h1,
@@ -291,7 +370,7 @@ h3 {
 
 h4 {
   font-size: var(--font-size-h4);
-  /* A2 + A4: explicit weight — 600 distinguishes h4 from h3 (700) at 16–18 px. */
+  /* D-40 + A4: explicit real-Bold weight; h3/h4 separation is by size now. */
   font-weight: var(--font-weight-h4);
 }
 

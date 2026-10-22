@@ -30,3 +30,7 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# D-40 font build cache (upstream zip + extracted faces, rebuilt by pnpm fonts:build)
+scripts/fonts/.cache/
+scripts/fonts/.venv/

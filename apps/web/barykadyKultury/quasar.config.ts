@@ -28,8 +28,9 @@ export default defineConfig(ctx => {
       // 'eva-icons',
       // 'themify',
       // 'line-awesome',
-      // T-007: roboto-font removed — Inter Variable is self-hosted via
-      // public/fonts/ and declared in src/css/typography.css.
+      // T-007/D-40: roboto-font removed — GNU FreeSerif is self-hosted via
+      // public/fonts/ (pnpm fonts:build) and declared in src/css/typography.css;
+      // the Quasar stack is overridden in src/css/quasar.variables.scss.
       // T-044/F4b: material-icons removed — the app uses project SVGs and
       // zero qi-* icon classes, so the ~125 KB font was never downloaded.
     ],

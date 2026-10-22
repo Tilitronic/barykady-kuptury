@@ -2,9 +2,9 @@
  * T-007 — Type scale: single source of truth.
  *
  * Brandbook anchors (DESIGN_SYSTEM.md §2, brandbook p. 13–14):
- *   display:         64 px (Medium / Bold)
- *   section heading: 34 px (Bold)   — mapped to h2
- *   body:            16 px (Regular)
+ *   display:         64 px (Medium / Bold)  — rendered via REAL faces only
+ *   section heading: 34 px (Bold)   — mapped to h2     (D-40: 400/700, no faux
+ *   body:            16 px (Regular)                   steps; see weights)
  *
  * Design widths:
  *   mobile:  375 px viewport  (smallest safe phone width)
@@ -125,18 +125,23 @@ export const scale: TypeScale = {
 //
 // DESIGN DECISIONS
 // ----------------
-// A2 (review finding): h4 weight set to 600 (Semi-bold) rather than 700.
-//   h3 (18 px, 700) vs h4 (16 px, 700) produces a 2 px size gap at the same
-//   weight, which is not reliably distinct.  600 vs 700 is visibly different in
-//   Inter Variable across the 16–18 px range, creating clear hierarchy without
-//   relying on size alone.
+// D-40 (brand typeface → GNU FreeSerif) supersedes review findings A2/A3.
 //
-// A3 (review finding): display weight set to 500 (Medium), not 700 (Bold).
-//   Brandbook p. 13 lists "Medium/Bold" for display — two sanctioned options.
-//   At 40–64 px, 500 reads as a more refined editorial register appropriate for
-//   a cultural NGO, and creates stronger contrast with the 700 heading weight
-//   below it.  The display achieves dominance through sheer size; weight 500
-//   keeps it from competing with h1/h2 in visual density.
+// A3 (superseded): display was 500 (Medium) — a variable-font affordance of
+//   Inter. FreeSerif ships only Regular (400) and Bold (700), so display is
+//   now 400 and achieves dominance through SIZE at 40–64 px, exactly as D-40
+//   prescribes ("display via size, no faux-bold"). The brandbook's own ladder
+//   (BOLD at display sizes) sanctioned Regular display as long as hierarchy
+//   stays readable — the 700 headings below provide the contrast.
+//
+// A2 (superseded): h4 was 600 (Semi-bold) to separate it from h3 at the same
+//   nominal size step. 600 has no real face; h4 is now 700 (real Bold) and
+//   separates from h3 by the existing size ladder (18→16 mobile, 24→20
+//   desktop px) plus leading.
+//
+// The weight vocabulary is frozen to {400, 700} by scale.test.ts. Any new
+// token value would either fake-synthesize (banned: `font-synthesis: none`
+// on body) or silently re-map to a neighbouring face.
 
 /**
  * Line-height tokens.
@@ -155,18 +160,20 @@ export const lineHeights = {
 
 /**
  * Font-weight tokens.
- * Numeric values matching CSS `font-weight`.
+ * Numeric values matching CSS `font-weight`. D-40: FreeSerif ships exactly
+ * two weights — these tokens may only ever be 400 or 700 (machine-gated by
+ * scale.test.ts; `font-synthesis: none` forbids synthetic faces).
  */
 export const weights = {
-  /** Medium — editorial display register (A3: see note above). */
-  display: 500,
+  /** Regular — display (D-40: dominance via size at 40–64 px, no faux-medium). */
+  display: 400,
   /** Bold — all headings h1–h3 use this weight. */
   heading: 700,
   /**
-   * Semi-bold — h4 only (A2: see note above).
-   * 600 vs 700 is visibly distinct in Inter Variable at 16–18 px.
+   * Bold — h4 (D-40 supersedes the 600 Semi-bold token: no such face).
+   * Separates from h3 by size (24 vs 20 px desktop) and leading, not weight.
    */
-  h4: 600,
+  h4: 700,
   /** Regular — body text. */
   body: 400,
   /** Regular — small / caption text. */

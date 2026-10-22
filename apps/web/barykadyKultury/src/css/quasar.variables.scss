@@ -34,6 +34,14 @@ $scarlet: #c60001; // Brand accent
 $nero: #262424; // Brand dark surface / primary text
 $gray93: #ededed; // Brand background
 
+// ─── Brand typography (D-40) ─────────────────────────────────────────────────
+// GNU FreeSerif replaces Inter/Roboto as the brand typeface. This MUST stay
+// identical to --font-family-sans in src/css/typography.css (the self-hosted
+// faces live there); Quasar uses it in its base typography CSS, so without
+// this override Quasar's Roboto-first default could win anywhere the app's
+// own body rule does not reach.
+$typography-font-family: "FreeSerif", Georgia, serif;
+
 // ─── Quasar semantic variables ───────────────────────────────────────────────
 
 // Primary action colour — SCARLET is the brand's dominant accent.
