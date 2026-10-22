@@ -293,4 +293,82 @@ test.describe("admin projects", () => {
 
     await anonContext.close();
   });
+
+  /**
+   * T-045 gate fix — the RPC mock must mirror the database's all-or-nothing
+   * contract. A payload that stages a root change and one valid translation
+   * before failing on a blank title must leave the in-memory store untouched;
+   * otherwise the E2E mock could mask a partial-write regression in the app.
+   */
+  test("a failed save RPC leaves the mock store untouched", async ({
+    page
+  }) => {
+    const projectId = "e2e10000-0000-4000-8000-000000000001";
+    const translationId = "e2e11000-0000-4000-8000-000000000001";
+    const store = createProjectStore({
+      projects: [
+        {
+          id: projectId,
+          slug: "t045-stable-slug",
+          status: "draft",
+          featured_rank: null,
+          cover_path: null,
+          start_date: null,
+          end_date: null,
+          published_at: null,
+          created_at: "2026-06-01T12:00:00.000Z",
+          updated_at: "2026-06-01T12:00:00.000Z"
+        }
+      ],
+      translations: [
+        {
+          id: translationId,
+          project_id: projectId,
+          locale: "en",
+          title: "Original title",
+          summary: null,
+          body: null
+        }
+      ]
+    });
+
+    await mockSupabaseAuth(page, { user: ADMIN_AUTH_USER });
+    await mockProjectApi(page, store);
+    await page.goto("/en/admin/sign-in");
+
+    const before = structuredClone(store);
+
+    const response = await page.evaluate(
+      async ({ id }) => {
+        const result = await fetch("/rest/v1/rpc/save_project_v1", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            p_id: id,
+            p_slug: "t045-should-not-stick",
+            p_status: "draft",
+            p_featured_rank: null,
+            p_cover_path: null,
+            p_start_date: null,
+            p_end_date: null,
+            p_published_at: null,
+            p_translations: [
+              {
+                locale: "en",
+                title: "Staged title",
+                summary: null,
+                body: null
+              },
+              { locale: "pl", title: "   ", summary: null, body: null }
+            ]
+          })
+        });
+        return { status: result.status, code: (await result.json()).code };
+      },
+      { id: projectId }
+    );
+
+    expect(response).toEqual({ status: 400, code: "23514" });
+    expect(store).toEqual(before);
+  });
 });

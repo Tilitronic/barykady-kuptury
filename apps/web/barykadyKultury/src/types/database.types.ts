@@ -848,6 +848,20 @@ export type Database = {
         Args: { p_entity_id: string; p_kind: string; p_success: boolean };
         Returns: undefined;
       };
+      save_project_v1: {
+        Args: {
+          p_cover_path: string;
+          p_end_date: string;
+          p_featured_rank: number;
+          p_id: string;
+          p_published_at: string;
+          p_slug: string;
+          p_start_date: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+          p_translations: Json;
+        };
+        Returns: string;
+      };
       search_published_content: {
         Args: {
           result_kinds?: string[];
@@ -864,6 +878,14 @@ export type Database = {
           slug: string;
           title: string;
         }[];
+      };
+      transition_project_v1: {
+        Args: {
+          p_id: string;
+          p_published_at?: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+        };
+        Returns: undefined;
       };
       validate_reader_ast_v1: {
         Args: { ast: Json; ast_version: number };

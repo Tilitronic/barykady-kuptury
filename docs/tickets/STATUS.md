@@ -31,7 +31,8 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-025 | Homepage composition | 7 | done | @reviewer (rev-3) + @designer (des-1/des-4) | d6dc4cf | 2026-10-19 |
 | T-026 | Admin auth & layout | 8 | done | @reviewer (rev-1) + @designer (des-1, des-2) | 5b86d33 | 2026-10-19 |
 | T-027 | Admin projects CRUD | 15 | done | @reviewer (rev-1) + @architector | — | — |
-| T-045 | Admin mutation hardening (transactional save + lifecycle invariant, from T-027 gates) | — | todo | — | — | — |
+| T-045 | Admin mutation hardening (transactional save + lifecycle invariant, from T-027 gates) | 15 | done | @reviewer (rev-1) + @architector (approve-with-follow-ups) | — | — |
+| T-046 | Capability-scoped admin roles (D-42, blocks T-028/T-029) | — | todo | — | — | — |
 | T-028 | Admin site pages & team CRUD | 6 | todo | — | — | — |
 | T-029 | Admin publications, documents, uploads | 6 | todo | — | — | — |
 | T-030 | Admin featured ordering | 6 | todo | — | — | — |

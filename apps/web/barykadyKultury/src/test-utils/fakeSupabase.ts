@@ -52,7 +52,11 @@ export interface FakeSupabaseOptions {
    */
   readonly rpc?: {
     readonly data?: unknown;
-    readonly error?: { readonly message: string } | null;
+    /** `code` mirrors PostgREST's SQLSTATE so callers can map 23505. */
+    readonly error?: {
+      readonly message: string;
+      readonly code?: string;
+    } | null;
   };
   /**
    * Per-table failures (T-039): tables listed here resolve to an error while

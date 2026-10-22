@@ -61,6 +61,59 @@ function nextId(): string {
 
 const FIXED_TIMESTAMP = "2026-06-01T12:00:00.000Z";
 
+/** Mirrors the D-24 canonical slug check on public.projects. */
+const CANONICAL_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+interface SaveProjectRpcInput {
+  p_id?: string | null;
+  p_slug: string;
+  p_status: ProjectStoreRow["status"];
+  p_featured_rank?: number | null;
+  p_cover_path?: string | null;
+  p_start_date?: string | null;
+  p_end_date?: string | null;
+  p_published_at?: string | null;
+  p_translations?: {
+    locale: ProjectTranslationRow["locale"];
+    title: string;
+    summary: string | null;
+    body: string | null;
+  }[];
+}
+
+interface MockRpcFailure {
+  readonly status: number;
+  readonly code: string;
+  readonly message: string;
+}
+
+/**
+ * Deep-enough copy for the write paths: every mutation replaces scalar fields
+ * on root/translation rows, never nested structures, so one level is enough.
+ */
+function cloneProjectStore(store: ProjectStore): ProjectStore {
+  return {
+    projects: store.projects.map(row => ({ ...row })),
+    translations: store.translations.map(row => ({ ...row }))
+  };
+}
+
+function respondRpcFailure(
+  route: Route,
+  failure: MockRpcFailure
+): Promise<void> {
+  return route.fulfill({
+    status: failure.status,
+    contentType: "application/json",
+    body: JSON.stringify({
+      code: failure.code,
+      message: failure.message,
+      details: null,
+      hint: null
+    })
+  });
+}
+
 function withTranslations(store: ProjectStore, row: ProjectStoreRow) {
   return {
     ...row,
@@ -260,6 +313,216 @@ async function handleTranslations(
 }
 
 /**
+ * T-045 — transactional save RPC stand-in. The admin module now sends one
+ * request (`save_project_v1`) instead of separate root/translation writes, so
+ * the mock applies the same all-or-nothing intent to the in-memory store.
+ *
+ * All mutations are staged on a copy and committed only after every row has
+ * been validated. That mirrors the database function: a failure while staging
+ * (for example a blank translation title, or a duplicate slug) leaves the real
+ * store untouched, so E2E cannot accidentally prove a partial-write behaviour.
+ */
+function stageSaveProject(
+  source: ProjectStore,
+  args: SaveProjectRpcInput
+):
+  | {
+      readonly ok: true;
+      readonly next: ProjectStore;
+      readonly row: ProjectStoreRow;
+    }
+  | { readonly ok: false; readonly failure: MockRpcFailure } {
+  const next = cloneProjectStore(source);
+
+  if (typeof args.p_slug !== "string" || !CANONICAL_SLUG.test(args.p_slug)) {
+    return {
+      ok: false,
+      failure: { status: 400, code: "23514", message: "invalid canonical slug" }
+    };
+  }
+
+  // The database check constraint rejects a published row without a timestamp.
+  if (args.p_status === "published" && !args.p_published_at) {
+    return {
+      ok: false,
+      failure: {
+        status: 400,
+        code: "23514",
+        message: "published_at is required for a published project"
+      }
+    };
+  }
+
+  // The unique slug constraint excludes the row being updated.
+  if (
+    next.projects.some(
+      candidate => candidate.slug === args.p_slug && candidate.id !== args.p_id
+    )
+  ) {
+    return {
+      ok: false,
+      failure: {
+        status: 409,
+        code: "23505",
+        message: "duplicate canonical slug"
+      }
+    };
+  }
+
+  const root = {
+    slug: args.p_slug,
+    status: args.p_status,
+    featured_rank: args.p_featured_rank ?? null,
+    cover_path: args.p_cover_path ?? null,
+    start_date: args.p_start_date ?? null,
+    end_date: args.p_end_date ?? null,
+    published_at: args.p_published_at ?? null,
+    updated_at: FIXED_TIMESTAMP
+  };
+
+  let row: ProjectStoreRow | undefined;
+  if (args.p_id === null || args.p_id === undefined) {
+    row = {
+      id: nextId(),
+      created_at: FIXED_TIMESTAMP,
+      ...root
+    };
+    next.projects.push(row);
+  } else {
+    row = next.projects.find(candidate => candidate.id === args.p_id);
+    if (!row) {
+      return {
+        ok: false,
+        failure: { status: 404, code: "PGRST116", message: "project not found" }
+      };
+    }
+    Object.assign(row, root);
+  }
+
+  const translations = args.p_translations ?? [];
+  const locales = new Set(translations.map(entry => entry.locale));
+
+  // The payload is the complete intended set: omitted locales are cleared.
+  next.translations = next.translations.filter(
+    translation =>
+      translation.project_id !== row.id || locales.has(translation.locale)
+  );
+
+  for (const entry of translations) {
+    // This is deliberately inside the staging loop: earlier entries (and the
+    // root update) have already been applied to the copy when a later invalid
+    // entry aborts, exactly like the pgTAP fault-injection proof.
+    if (typeof entry.title !== "string" || entry.title.trim() === "") {
+      return {
+        ok: false,
+        failure: {
+          status: 400,
+          code: "23514",
+          message: "translation title must not be blank"
+        }
+      };
+    }
+
+    const existing = next.translations.find(
+      translation =>
+        translation.project_id === row.id && translation.locale === entry.locale
+    );
+    if (existing) {
+      Object.assign(existing, entry);
+    } else {
+      next.translations.push({
+        id: nextId(),
+        project_id: row.id,
+        locale: entry.locale,
+        title: entry.title,
+        summary: entry.summary,
+        body: entry.body
+      });
+    }
+  }
+
+  return { ok: true, next, row };
+}
+
+async function handleSaveProjectRpc(
+  route: Route,
+  store: ProjectStore
+): Promise<void> {
+  let args: SaveProjectRpcInput;
+  try {
+    const parsed: unknown = route.request().postDataJSON();
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
+      await respondRpcFailure(route, {
+        status: 400,
+        code: "22P02",
+        message: "invalid JSON body"
+      });
+      return;
+    }
+    args = parsed as SaveProjectRpcInput;
+  } catch {
+    await respondRpcFailure(route, {
+      status: 400,
+      code: "22P02",
+      message: "invalid JSON body"
+    });
+    return;
+  }
+
+  const staged = stageSaveProject(store, args);
+  if (!staged.ok) {
+    await respondRpcFailure(route, staged.failure);
+    return;
+  }
+
+  // Commit: the only point where the shared store changes.
+  store.projects = staged.next.projects;
+  store.translations = staged.next.translations;
+
+  // A scalar-returning PostgREST function responds with a JSON string.
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(staged.row.id)
+  });
+}
+
+/** T-045 lifecycle RPC stand-in: status and published_at move together. */
+async function handleTransitionProjectRpc(
+  route: Route,
+  store: ProjectStore
+): Promise<void> {
+  const args = route.request().postDataJSON() as {
+    p_id: string;
+    p_status: ProjectStoreRow["status"];
+    p_published_at?: string | null;
+  };
+
+  const row = store.projects.find(candidate => candidate.id === args.p_id);
+  if (!row) {
+    await route.fulfill({ status: 404, body: "" });
+    return;
+  }
+
+  row.status = args.p_status;
+  row.published_at =
+    args.p_status === "published"
+      ? (args.p_published_at ?? FIXED_TIMESTAMP)
+      : null;
+  row.updated_at = FIXED_TIMESTAMP;
+
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: "null"
+  });
+}
+
+/**
  * Installs the project/translation/storage handlers on `page`. The same `store`
  * may be installed on several pages (for example an admin page and an anonymous
  * context) so a write is visible to the public read.
@@ -268,6 +531,19 @@ export async function mockProjectApi(
   page: Page,
   store: ProjectStore
 ): Promise<void> {
+  // Register the more specific RPC handlers first; Playwright consults the
+  // most recently registered matching route first.
+  await page.route("**/rest/v1/rpc/save_project_v1", async (route: Route) => {
+    await handleSaveProjectRpc(route, store);
+  });
+
+  await page.route(
+    "**/rest/v1/rpc/transition_project_v1",
+    async (route: Route) => {
+      await handleTransitionProjectRpc(route, store);
+    }
+  );
+
   await page.route("**/rest/v1/projects*", async (route: Route) => {
     const url = new URL(route.request().url());
     await handleProjects(route, store, url.searchParams);

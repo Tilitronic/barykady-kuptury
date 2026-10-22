@@ -6,7 +6,7 @@ import {
 } from "@/features/files/validateUpload";
 import { SUPPORTED_LOCALES, type Locale } from "@/features/i18n/locales";
 import { PROJECT_COVER_BUCKET } from "@/features/projects/cover";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 import {
   emptyTranslation,
@@ -23,10 +23,20 @@ import {
  * injected client, returns a discriminated result, and lets the page decide how
  * to announce it. No optimistic state: callers await, then re-read.
  *
- * Security boundary: these calls run as the signed-in admin. PostgreSQL RLS
- * (`projects_insert_admin` / `projects_update_admin` / `projects_delete_admin`,
- * T-013) is the authorization authority; the route guard is only navigation
- * UX (docs/PRODUCT_REQUIREMENTS.md §6, docs/architecture.md §6).
+ * T-045 hardening: the root write, translation upserts, per-locale deletes and
+ * lifecycle transition now travel as PostgreSQL RPCs
+ * (`save_project_v1`, `transition_project_v1`) rather than as a sequence of
+ * independent table requests. A mid-flight failure therefore leaves no partial
+ * root/translation state; the database transaction is the unit of success.
+ * This module keeps the exact result-union contract, so the editor page did not
+ * change.
+ *
+ * Security boundary: these calls run as the signed-in admin, and the RPCs are
+ * SECURITY INVOKER with an in-function `is_admin()` check (T-045). PostgreSQL
+ * RLS (`projects_insert_admin` / `projects_update_admin` /
+ * `projects_delete_admin`, T-013) remains a second, independent authorization
+ * authority; the route guard is only navigation UX
+ * (docs/PRODUCT_REQUIREMENTS.md §6, docs/architecture.md §6).
  */
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
@@ -95,6 +105,13 @@ const ADMIN_PROJECT_SELECT =
 
 /** PostgREST's unique-violation code (the D-24 constraint's final word). */
 const UNIQUE_VIOLATION = "23505";
+
+/**
+ * T-045 — the two transactional mutation seams. Keeping the names as literals
+ * gives a single place to audit the client/server contract.
+ */
+const SAVE_PROJECT_RPC = "save_project_v1" as const;
+const TRANSITION_PROJECT_RPC = "transition_project_v1" as const;
 
 /** Image MIME types accepted for a project cover (T-014 storage policy). */
 const COVER_MIME_PREFIX = "image/";
@@ -242,12 +259,18 @@ export interface SaveProjectOptions {
 }
 
 /**
- * Persists the root row and every non-empty translation.
+ * Persists the root row, every non-empty translation, and the requested
+ * lifecycle state through one transaction (T-045).
  *
  * A locale row exists only when it has a title (the column is NOT NULL);
  * summary/body may be blank in a draft, which is exactly what makes an
  * incomplete draft savable (T-027 acceptance criterion 1). Clearing a title
- * removes that locale's row so stale text cannot silently survive.
+ * removes that locale's row so stale text cannot silently survive. The RPC
+ * treats the payload as the complete intended translation set, so passing an
+ * omitted locale is the clear signal.
+ *
+ * The advisory slug pre-check stays for immediate field feedback; 23505 from
+ * the RPC is still mapped to the same recoverable `duplicate-slug` result.
  *
  * @returns the project id on success; `duplicate-slug` is a recoverable field
  *   error (both the pre-check and the unique constraint map to it).
@@ -264,108 +287,89 @@ export async function saveProject(
   if (!availability.ok) return availability;
   if (!availability.available) return failure("duplicate-slug");
 
-  const id = options.id ?? null;
   const publishedAt =
     values.status === "published"
       ? (options.existingPublishedAt ?? new Date().toISOString())
       : null;
 
-  const root: Database["public"]["Tables"]["projects"]["Insert"] = {
-    slug,
-    status: values.status,
-    featured_rank: values.featured ? (options.existingFeaturedRank ?? 1) : null,
-    cover_path: values.coverPath,
-    start_date: nullable(values.startDate),
-    end_date: nullable(values.endDate),
-    published_at: publishedAt
-  };
-
-  let projectId = id;
-
-  if (id === null) {
-    const { data, error } = await supabase
-      .from("projects")
-      .insert(root)
-      .select("id")
-      .single();
-
-    if (error) {
-      return error.code === UNIQUE_VIOLATION
-        ? failure("duplicate-slug")
-        : failure("failed", error.message);
-    }
-
-    const inserted = Array.isArray(data) ? data[0] : data;
-    if (!inserted || typeof inserted.id !== "string") {
-      return failure("failed", "The inserted project id was not returned.");
-    }
-    projectId = inserted.id;
-  } else {
-    const { error } = await supabase.from("projects").update(root).eq("id", id);
-
-    if (error) {
-      return error.code === UNIQUE_VIOLATION
-        ? failure("duplicate-slug")
-        : failure("failed", error.message);
-    }
-  }
-
-  if (projectId === null) return failure("failed");
-
-  const rows = SUPPORTED_LOCALES.filter(
+  const translations = SUPPORTED_LOCALES.filter(
     locale => !isBlank(values.translations[locale].title)
-  ).map(locale => {
-    const translation = values.translations[locale];
-    return {
-      project_id: projectId,
-      locale,
-      title: translation.title.trim(),
-      summary: nullable(translation.summary),
-      body: nullable(translation.body)
-    };
-  });
+  ).map(locale => ({
+    locale,
+    title: values.translations[locale].title.trim(),
+    summary: nullable(values.translations[locale].summary),
+    body: nullable(values.translations[locale].body)
+  }));
 
-  if (rows.length > 0) {
-    const { error } = await supabase
-      .from("project_translations")
-      .upsert(rows, { onConflict: "project_id,locale" });
-
-    if (error) return failure("failed", error.message);
-  }
-
-  // An update that clears a locale title must remove the row, otherwise the
-  // public reader would keep serving text the editor believes is gone.
-  const clearedLocales = SUPPORTED_LOCALES.filter(locale =>
-    isBlank(values.translations[locale].title)
+  const { data, error } = await supabase.rpc(
+    SAVE_PROJECT_RPC,
+    saveProjectArgs(values, options, slug, publishedAt, translations)
   );
 
-  for (const locale of clearedLocales) {
-    const { error } = await supabase
-      .from("project_translations")
-      .delete()
-      .eq("project_id", projectId)
-      .eq("locale", locale);
-
-    if (error) return failure("failed", error.message);
+  if (error) {
+    return error.code === UNIQUE_VIOLATION
+      ? failure("duplicate-slug")
+      : failure("failed", error.message);
   }
 
-  return { ok: true, id: projectId };
+  // A scalar-returning PostgREST function yields the id directly. Anything
+  // else means the contract drifted; fail closed instead of returning `ok`.
+  if (typeof data !== "string" || data.length === 0) {
+    return failure("failed", "The saved project id was not returned.");
+  }
+
+  return { ok: true, id: data };
 }
 
-/** Publish: status + a fresh `published_at` (never an optimistic flip). */
+type SaveProjectRpcArgs =
+  Database["public"]["Functions"]["save_project_v1"]["Args"];
+
+/**
+ * The generated function Args type marks every SQL argument non-null, even
+ * though several parameters are nullable by design. PostgREST accepts explicit
+ * nulls; keeping the casts in one helper documents the mismatch and prevents
+ * it from leaking into the mutation logic (same pattern as the import
+ * persistence RPC).
+ */
+function saveProjectArgs(
+  values: ProjectFormValues,
+  options: SaveProjectOptions,
+  slug: string,
+  publishedAt: string | null,
+  translations: readonly {
+    readonly locale: Locale;
+    readonly title: string;
+    readonly summary: string | null;
+    readonly body: string | null;
+  }[]
+): SaveProjectRpcArgs {
+  return {
+    p_id: (options.id ?? null) as unknown as string,
+    p_slug: slug,
+    p_status: values.status,
+    // Preserves the T-030 ordering slot when the featured flag is unchanged.
+    p_featured_rank: (values.featured
+      ? (options.existingFeaturedRank ?? 1)
+      : null) as unknown as number,
+    p_cover_path: values.coverPath as unknown as string,
+    p_start_date: nullable(values.startDate) as unknown as string,
+    p_end_date: nullable(values.endDate) as unknown as string,
+    p_published_at: publishedAt as unknown as string,
+    p_translations: translations as unknown as Json
+  };
+}
+
+/**
+ * Publish: status + a fresh `published_at`, computed by the same database
+ * statement (T-045), so the invariant holds even if the client is interrupted
+ * after the request is sent.
+ */
 export async function publishProject(
   supabase: SupabaseClient<Database> | null,
   id: string,
   now: Date = new Date()
 ): Promise<AdminMutationResult> {
-  if (!supabase) return failure("unavailable");
-
-  const { error } = await supabase
-    .from("projects")
-    .update({ status: "published", published_at: now.toISOString() })
-    .eq("id", id);
-
-  return error ? failure("failed", error.message) : { ok: true };
+  return transitionProject(supabase, id, "published", now.toISOString());
 }
 
 /** Unpublish: back to draft so the public query can no longer see it. */
@@ -373,7 +377,7 @@ export async function unpublishProject(
   supabase: SupabaseClient<Database> | null,
   id: string
 ): Promise<AdminMutationResult> {
-  return setLifecycle(supabase, id, "draft");
+  return transitionProject(supabase, id, "draft", null);
 }
 
 /** Archive: retained for admins, absent from public listings. */
@@ -381,20 +385,33 @@ export async function archiveProject(
   supabase: SupabaseClient<Database> | null,
   id: string
 ): Promise<AdminMutationResult> {
-  return setLifecycle(supabase, id, "archived");
+  return transitionProject(supabase, id, "archived", null);
 }
 
-async function setLifecycle(
+type TransitionProjectRpcArgs =
+  Database["public"]["Functions"]["transition_project_v1"]["Args"];
+
+/**
+ * One RPC for every lifecycle transition: status and published_at are derived
+ * together inside the database, never as two client-side requests.
+ */
+async function transitionProject(
   supabase: SupabaseClient<Database> | null,
   id: string,
-  status: ProjectStatus
+  status: ProjectStatus,
+  publishedAt: string | null
 ): Promise<AdminMutationResult> {
   if (!supabase) return failure("unavailable");
 
-  const { error } = await supabase
-    .from("projects")
-    .update({ status, published_at: null })
-    .eq("id", id);
+  const args: TransitionProjectRpcArgs = {
+    p_id: id,
+    p_status: status,
+    // The generated Args type models this as optional/non-null; the SQL
+    // parameter is nullable and PostgREST accepts an explicit null.
+    p_published_at: publishedAt as unknown as string
+  };
+
+  const { error } = await supabase.rpc(TRANSITION_PROJECT_RPC, args);
 
   return error ? failure("failed", error.message) : { ok: true };
 }

@@ -17,13 +17,19 @@ import {
 
 /**
  * Spec axis: docs/tickets/T-027-admin-projects.md (TDD plan step 3),
- * docs/architecture.md §4 (lifecycle + published_at) and §6 (RLS is the real
- * write boundary; this module is the only client write path).
+ * docs/tickets/T-045-admin-mutation-hardening.md (one transactional RPC),
+ * docs/architecture.md §4 (lifecycle + published_at) and §6 (authorization at
+ * the data boundary).
  *
- * Optimistic-free contract: publish/unpublish return the persisted outcome and
- * the caller re-reads. These tests assert the exact row payload sent to
- * PostgREST — status transitions cannot silently drop `published_at`.
+ * T-045 cutover: the module still owns the discriminated result union and the
+ * page contract, but it no longer orchestrates root/translation/lifecycle
+ * requests itself. These tests therefore assert the RPC envelope — name and
+ * argument payload — and that no independent table write is issued. Atomicity
+ * itself is proven by supabase/tests/admin_project_mutations_test.sql.
  */
+
+const PROJECT_ID = "00000000-0000-4000-8000-000000000301";
+const EXISTING_ID = "00000000-0000-4000-8000-000000000201";
 
 function form(overrides: Partial<ProjectFormValues> = {}): ProjectFormValues {
   const base = emptyProjectForm();
@@ -44,32 +50,158 @@ function callsOf(fake: ReturnType<typeof createFakeSupabase>, method: string) {
   return fake.calls.filter(call => call.method === method);
 }
 
+describe("saveProject", () => {
+  it("sends the root and complete translation set in one RPC call", async () => {
+    const fake = createFakeSupabase({
+      tables: { projects: [] },
+      rpc: { data: PROJECT_ID }
+    });
+
+    const result = await saveProject(
+      fake.client,
+      form({
+        translations: {
+          en: { title: "Draft title", summary: "", body: "" },
+          pl: { title: "", summary: "", body: "" },
+          uk: { title: "", summary: "", body: "" }
+        }
+      })
+    );
+
+    expect(result).toEqual({ ok: true, id: PROJECT_ID });
+
+    expect(fake.rpcCalls).toHaveLength(1);
+    expect(fake.rpcCalls[0]).toMatchObject({
+      name: "save_project_v1",
+      args: {
+        p_id: null,
+        p_slug: "spring-workshop",
+        p_status: "draft",
+        p_featured_rank: null,
+        p_cover_path: null,
+        p_start_date: null,
+        p_end_date: null,
+        p_published_at: null,
+        // A locale row exists only when it has a title; blank summary/body
+        // become null. This is exactly what makes an incomplete draft savable.
+        p_translations: [
+          {
+            locale: "en",
+            title: "Draft title",
+            summary: null,
+            body: null
+          }
+        ]
+      }
+    });
+
+    // T-045: the browser must not issue the old multi-request write sequence.
+    expect(callsOf(fake, "insert")).toHaveLength(0);
+    expect(callsOf(fake, "update")).toHaveLength(0);
+    expect(callsOf(fake, "upsert")).toHaveLength(0);
+    expect(callsOf(fake, "delete")).toHaveLength(0);
+  });
+
+  it("refuses a duplicate canonical slug before writing", async () => {
+    const fake = createFakeSupabase({
+      tables: {
+        projects: [{ id: "other", slug: "spring-workshop" }]
+      }
+    });
+
+    const result = await saveProject(fake.client, form());
+
+    expect(result).toEqual({ ok: false, code: "duplicate-slug" });
+    expect(fake.rpcCalls).toHaveLength(0);
+  });
+
+  it("maps a database unique violation to a field-level slug error", async () => {
+    // The pre-check is advisory; the database constraint is authoritative. A
+    // concurrent insert must surface as a recoverable field error, not a crash.
+    const fake = createFakeSupabase({
+      tables: { projects: [] },
+      rpc: {
+        error: { message: "duplicate key value", code: "23505" }
+      }
+    });
+
+    expect(await saveProject(fake.client, form())).toEqual({
+      ok: false,
+      code: "duplicate-slug"
+    });
+  });
+
+  it("updates the root row instead of inserting when an id is supplied", async () => {
+    const fake = createFakeSupabase({
+      rpc: { data: EXISTING_ID }
+    });
+
+    await saveProject(
+      fake.client,
+      form({ status: "published", featured: true }),
+      {
+        id: EXISTING_ID,
+        existingFeaturedRank: 3,
+        existingPublishedAt: "2026-04-01T09:00:00Z"
+      }
+    );
+
+    expect(fake.rpcCalls[0]).toMatchObject({
+      name: "save_project_v1",
+      args: {
+        p_id: EXISTING_ID,
+        p_status: "published",
+        // Featured keeps its existing rank (ordering is T-030); publishing
+        // keeps the original publication timestamp.
+        p_featured_rank: 3,
+        p_published_at: "2026-04-01T09:00:00Z"
+      }
+    });
+    expect(callsOf(fake, "insert")).toHaveLength(0);
+    expect(callsOf(fake, "update")).toHaveLength(0);
+  });
+
+  it("stamps a fresh publication time when publishing without one", async () => {
+    const fake = createFakeSupabase({ rpc: { data: PROJECT_ID } });
+
+    await saveProject(fake.client, form({ status: "published" }));
+
+    const args = fake.rpcCalls[0]?.args ?? {};
+    expect(args.p_status).toBe("published");
+    expect(typeof args.p_published_at).toBe("string");
+    expect(args.p_published_at).toEqual(expect.any(String));
+  });
+
+  it("reports unavailable without a client", async () => {
+    expect(await saveProject(null, form())).toEqual({
+      ok: false,
+      code: "unavailable"
+    });
+  });
+});
+
 describe("publishProject", () => {
-  it("sets status published and a published_at timestamp", async () => {
-    const fake = createFakeSupabase({ tables: { projects: [] } });
+  it("sends one atomic lifecycle transition with a publication timestamp", async () => {
+    const fake = createFakeSupabase();
 
     const result = await publishProject(
       fake.client,
-      "00000000-0000-4000-8000-000000000201",
+      EXISTING_ID,
       new Date("2026-05-01T10:00:00Z")
     );
 
     expect(result).toEqual({ ok: true });
-
-    const update = callsOf(fake, "update")[0];
-    expect(update?.table).toBe("projects");
-    expect(update?.args[0]).toMatchObject({
-      status: "published",
-      published_at: "2026-05-01T10:00:00.000Z"
-    });
-    expect(
-      fake.calls.some(
-        call =>
-          call.method === "eq" &&
-          call.args[0] === "id" &&
-          call.args[1] === "00000000-0000-4000-8000-000000000201"
-      )
-    ).toBe(true);
+    expect(fake.rpcCalls).toEqual([
+      {
+        name: "transition_project_v1",
+        args: {
+          p_id: EXISTING_ID,
+          p_status: "published",
+          p_published_at: "2026-05-01T10:00:00.000Z"
+        }
+      }
+    ]);
+    expect(callsOf(fake, "update")).toHaveLength(0);
   });
 
   it("reports unavailable without a client", async () => {
@@ -78,22 +210,36 @@ describe("publishProject", () => {
       code: "unavailable"
     });
   });
+
+  it("maps a denied or failed transition to the shared failure contract", async () => {
+    const fake = createFakeSupabase({
+      rpc: { error: { message: "admin role required" } }
+    });
+
+    expect(await publishProject(fake.client, EXISTING_ID)).toEqual({
+      ok: false,
+      code: "failed",
+      message: "admin role required"
+    });
+  });
 });
 
 describe("unpublishProject", () => {
-  it("returns the project to draft and clears published_at", async () => {
+  it("returns the project to draft and clears published_at atomically", async () => {
     const fake = createFakeSupabase();
 
-    const result = await unpublishProject(
-      fake.client,
-      "00000000-0000-4000-8000-000000000201"
-    );
+    const result = await unpublishProject(fake.client, EXISTING_ID);
 
     expect(result).toEqual({ ok: true });
-    expect(callsOf(fake, "update")[0]?.args[0]).toMatchObject({
-      status: "draft",
-      published_at: null
+    expect(fake.rpcCalls[0]).toEqual({
+      name: "transition_project_v1",
+      args: {
+        p_id: EXISTING_ID,
+        p_status: "draft",
+        p_published_at: null
+      }
     });
+    expect(callsOf(fake, "update")).toHaveLength(0);
   });
 
   it("unpublished rows disappear from the public query", async () => {
@@ -101,7 +247,7 @@ describe("unpublishProject", () => {
     // shared translation selector rejects a non-published root even if a
     // payload leaks it — the app-layer complement to RLS (architecture §6).
     const draftRow = {
-      id: "00000000-0000-4000-8000-000000000201",
+      id: EXISTING_ID,
       slug: "spring-workshop",
       status: "draft" as const,
       featured_rank: null,
@@ -128,21 +274,26 @@ describe("unpublishProject", () => {
 });
 
 describe("archiveProject", () => {
-  it("sets archived and clears published_at", async () => {
+  it("sets archived and clears published_at atomically", async () => {
     const fake = createFakeSupabase();
 
     expect(await archiveProject(fake.client, "project-1")).toEqual({
       ok: true
     });
-    expect(callsOf(fake, "update")[0]?.args[0]).toMatchObject({
-      status: "archived",
-      published_at: null
+    expect(fake.rpcCalls[0]).toEqual({
+      name: "transition_project_v1",
+      args: {
+        p_id: "project-1",
+        p_status: "archived",
+        p_published_at: null
+      }
     });
+    expect(callsOf(fake, "update")).toHaveLength(0);
   });
 
   it("an archived row is absent from the public listing", async () => {
     const archivedRow = {
-      id: "00000000-0000-4000-8000-000000000201",
+      id: EXISTING_ID,
       slug: "spring-workshop",
       status: "archived" as const,
       featured_rank: null,
@@ -163,113 +314,10 @@ describe("archiveProject", () => {
   });
 });
 
-describe("saveProject", () => {
-  it("creates the root row and stores an incomplete draft translation", async () => {
-    const fake = createFakeSupabase({
-      tables: { projects: [] },
-      writes: { data: { id: "00000000-0000-4000-8000-000000000301" } }
-    });
-
-    const result = await saveProject(
-      fake.client,
-      form({
-        translations: {
-          en: { title: "Draft title", summary: "", body: "" },
-          pl: { title: "", summary: "", body: "" },
-          uk: { title: "", summary: "", body: "" }
-        }
-      })
-    );
-
-    expect(result).toEqual({
-      ok: true,
-      id: "00000000-0000-4000-8000-000000000301"
-    });
-
-    const insert = callsOf(fake, "insert")[0];
-    expect(insert?.table).toBe("projects");
-    expect(insert?.args[0]).toMatchObject({
-      slug: "spring-workshop",
-      status: "draft",
-      featured_rank: null,
-      cover_path: null,
-      start_date: null,
-      end_date: null,
-      published_at: null
-    });
-
-    const translationWrite = fake.calls.find(
-      call => call.table === "project_translations" && call.method === "upsert"
-    );
-    expect(translationWrite?.args[0]).toEqual([
-      {
-        project_id: "00000000-0000-4000-8000-000000000301",
-        locale: "en",
-        title: "Draft title",
-        summary: null,
-        body: null
-      }
-    ]);
-  });
-
-  it("refuses a duplicate canonical slug before writing", async () => {
-    const fake = createFakeSupabase({
-      tables: {
-        projects: [{ id: "other", slug: "spring-workshop" }]
-      }
-    });
-
-    const result = await saveProject(fake.client, form());
-
-    expect(result).toEqual({ ok: false, code: "duplicate-slug" });
-    expect(callsOf(fake, "insert")).toHaveLength(0);
-  });
-
-  it("maps a database unique violation to a field-level slug error", async () => {
-    // The pre-check is advisory; the database constraint is authoritative. A
-    // concurrent insert must surface as a recoverable field error, not a crash.
-    const fake = createFakeSupabase({
-      tables: { projects: [] },
-      writes: {
-        error: { message: "duplicate key value", code: "23505" }
-      }
-    });
-
-    expect(await saveProject(fake.client, form())).toEqual({
-      ok: false,
-      code: "duplicate-slug"
-    });
-  });
-
-  it("updates the root row instead of inserting when an id is supplied", async () => {
-    const fake = createFakeSupabase();
-
-    await saveProject(
-      fake.client,
-      form({ status: "published", featured: true }),
-      {
-        id: "00000000-0000-4000-8000-000000000201",
-        existingFeaturedRank: 3,
-        existingPublishedAt: "2026-04-01T09:00:00Z"
-      }
-    );
-
-    expect(callsOf(fake, "insert")).toHaveLength(0);
-    expect(callsOf(fake, "update")[0]?.args[0]).toMatchObject({
-      slug: "spring-workshop",
-      status: "published",
-      // Featured keeps its existing rank (ordering is T-030); publishing keeps
-      // the original publication timestamp.
-      featured_rank: 3,
-      published_at: "2026-04-01T09:00:00Z"
-    });
-  });
-});
-
 describe("fetchAdminProject", () => {
   it("maps the row and its translations into the admin domain model", async () => {
     const row = {
-      id: "00000000-0000-4000-8000-000000000201",
+      id: EXISTING_ID,
       slug: "spring-workshop",
       status: "draft",
       featured_rank: null,
@@ -291,10 +339,7 @@ describe("fetchAdminProject", () => {
       tables: { projects: [row] }
     });
 
-    const result = await fetchAdminProject(
-      fake.client,
-      "00000000-0000-4000-8000-000000000201"
-    );
+    const result = await fetchAdminProject(fake.client, EXISTING_ID);
 
     expect(result).toEqual({
       ok: true,

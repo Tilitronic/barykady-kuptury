@@ -1,7 +1,7 @@
 # T-045 — Admin mutation hardening (transactional save + lifecycle invariant)
 
-**Session:** — · **Lane:** feature/admin · **Owner:** unassigned · **Status:** todo
-**Reviewers:** @reviewer + @architector
+**Session:** 15 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1: 0 hard violations; mock-rollback fidelity fixed) + @architector (APPROVE-WITH-FOLLOW-UPS)
 **Depends on:** T-027 · **Blocks:** T-028, T-029 (same save-path pattern will copy it)
 
 ## Origin
