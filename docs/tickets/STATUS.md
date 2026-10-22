@@ -66,6 +66,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | 11 | 2026-10-21 | 2026-10-21 (T-040, T-043 and T-044 done; unified reader, social links, search-close fix, security headers, route splitting, lean payloads, readability; 1065 unit / 136 E2E / 397 pgTAP; live smoke) | `HANDOFF-S11-2026-10-21.md` | pending (push pending) |
 | 12 | 2026-10-21 | 2026-10-21 (S12 handoff written; ledger updated; no new ticket closes) | `HANDOFF-S12-2026-10-21.md` | pending (push pending) |
 | 13 | 2026-10-21 | closed (post-restart: TUI 3.0.5 live, code-navigator/designer smokes green, designer UI queue reconciled + reviewer rev-1 gated, 3 session commits; T-041/T-042 stay todo, Google vertical wants a reviewer gate) | `HANDOFF-S13-2026-10-21.md` | pending (push pending: main 80+ commits ahead, feature/file-import local) |
+| 14 | 2026-10-22 | closed (D-40 FreeSerif applied + reviewer rev-2 gated: 9 subset woff2, coverage gate, Inter dep dropped; 1240 unit, typography E2E, build green; observer lane unfunded so brandbook audit done by orchestrator via text extraction — owner visual pass outstanding) | `HANDOFF-S13-2026-10-21.md` | pending (push pending — owner runs `git push origin main` + `git push -u origin feature/file-import`; second push needed after any follow-ups) |
 
 ## Next session (planned)
 
