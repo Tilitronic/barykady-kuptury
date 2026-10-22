@@ -8,6 +8,7 @@
  * fast path for visited pages.
  */
 
+import { readServerSupabaseConfig } from "../../apps/web/barykadyKultury/src/features/import/serverEnv";
 import { runScheduledSync } from "../../apps/web/barykadyKultury/src/features/import/syncSchedule";
 import { runServerGoogleSync } from "../../apps/web/barykadyKultury/src/features/import/serverGoogleSync";
 import {
@@ -23,10 +24,8 @@ export const config = {
 };
 
 function supabaseConfig(): ServerSupabaseConfig | null {
-  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  if (url.trim() === "" || serviceKey.trim() === "") return null;
-  return { url, serviceKey };
+  // T-042 review fix: server-only names, fail closed. No `VITE_*` fallback.
+  return readServerSupabaseConfig(process.env);
 }
 
 interface TargetRow {
@@ -139,6 +138,17 @@ export default async function contentSyncScheduled(): Promise<Response> {
         started_at: new Date().toISOString(),
       });
 
+      // The scheduled path has no human at call time. It rides the document's
+      // link owner (the latest attributed job for this entity), never an
+      // implicit shared token.
+      const jobRows = await selectRows(
+        supabase,
+        "content_sync_jobs",
+        `select=requested_by&id=eq.${encodeURIComponent(jobId)}&limit=1`,
+      );
+      const requestedBy =
+        typeof jobRows[0]?.requested_by === "string" ? (jobRows[0].requested_by as string) : null;
+
       try {
         const result = await runServerGoogleSync(
           { supabase, googleEnv: process.env },
@@ -148,6 +158,7 @@ export default async function contentSyncScheduled(): Promise<Response> {
             locale: target.locale as never,
             fileId: target.fileId,
             mode: "apply",
+            requestedBy,
           },
         );
 

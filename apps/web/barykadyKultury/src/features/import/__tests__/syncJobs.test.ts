@@ -74,13 +74,16 @@ function createClient(rows: readonly unknown[] = [ROW]) {
 describe("syncJobs", () => {
   it("inserts a queued job with non-secret request metadata", async () => {
     const fake = createClient();
-    await expect(createSyncJob(fake.client, REQUEST)).resolves.toBe("job-1");
+    await expect(createSyncJob(fake.client, REQUEST, "user-1")).resolves.toBe(
+      "job-1"
+    );
 
     expect(fake.inserts[0]).toMatchObject({
       kind: "document",
       locale: "en",
       status: "queued",
-      request: REQUEST
+      request: REQUEST,
+      requested_by: "user-1"
     });
   });
 
@@ -102,7 +105,7 @@ describe("syncJobs", () => {
     } as unknown as SupabaseClient<Database>;
 
     await expect(
-      createSyncJob(client, { ...REQUEST, entityId: "entity-1" })
+      createSyncJob(client, { ...REQUEST, entityId: "entity-1" }, "user-1")
     ).resolves.toBe("job-active");
   });
 

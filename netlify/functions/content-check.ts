@@ -9,22 +9,18 @@
 
 import { createContentCheckHandler } from "../../apps/web/barykadyKultury/src/features/import/contentCheckHandler";
 import { createGoogleDriveClient } from "../../apps/web/barykadyKultury/src/features/import/googleDriveClient";
-import {
-  exchangeGoogleCredentials,
-  resolveGoogleCredentials,
-} from "../../apps/web/barykadyKultury/src/features/import/googleCredentials";
+import { readServerSupabaseConfig } from "../../apps/web/barykadyKultury/src/features/import/serverEnv";
+import { resolveServerGoogleAuth } from "../../apps/web/barykadyKultury/src/features/import/serverGoogleAuth";
 import {
   callServiceRpc,
+  selectRows,
   type ServerSupabaseConfig,
 } from "../../apps/web/barykadyKultury/src/features/import/serverSupabase";
 
 const BASE_INTERVAL_MINUTES = 15;
 
 function config(): ServerSupabaseConfig | null {
-  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  if (url.trim() === "" || serviceKey.trim() === "") return null;
-  return { url, serviceKey };
+  return readServerSupabaseConfig(process.env);
 }
 
 function json(body: unknown, status = 200): Response {
@@ -86,32 +82,48 @@ async function claim(
   };
 }
 
-async function getDriveToken(): Promise<string | null> {
-  const credentials = resolveGoogleCredentials(process.env);
-  if (credentials.mode === "unavailable") return null;
-  const token = await exchangeGoogleCredentials(credentials, async (request) => {
-    const response = await fetch(request.url, {
-      method: "POST",
-      headers: request.headers,
-      body: request.body,
-    });
-    if (!response.ok) return null;
-    return response.json();
-  });
-  return token?.accessToken ?? null;
+async function linkOwner(
+  supabase: ServerSupabaseConfig,
+  target: { kind: string; entityId: string },
+): Promise<string | null> {
+  const rows = await selectRows(
+    supabase,
+    "content_sync_jobs",
+    "select=requested_by" +
+      `&kind=eq.${encodeURIComponent(target.kind)}` +
+      `&entity_id=eq.${encodeURIComponent(target.entityId)}` +
+      "&requested_by=not.is.null&order=created_at.desc&limit=1",
+  );
+  const value = rows[0]?.requested_by;
+  return typeof value === "string" ? value : null;
 }
 
 export default async function contentCheck(request: Request): Promise<Response> {
   const supabase = config();
   if (supabase === null) return json({ updateAvailable: false });
 
+  let currentTarget: { kind: string; entityId: string } | null = null;
+
   return createContentCheckHandler({
-    claimCheck: (kind, slug) => claim(supabase, kind, slug),
+    claimCheck: async (kind, slug) => {
+      const result = await claim(supabase, kind, slug);
+      currentTarget =
+        result.outcome === "checked" && result.target !== undefined
+          ? { kind, entityId: result.target.entityId }
+          : null;
+      return result;
+    },
     getModifiedTime: async (fileId) => {
-      const token = await getDriveToken();
-      if (token === null) throw new Error("credentials-unavailable");
+      if (currentTarget === null) throw new Error("missing-target");
+      const owner = await linkOwner(supabase, currentTarget);
+      const auth = await resolveServerGoogleAuth(
+        { supabase, googleEnv: process.env },
+        { requestedBy: owner },
+      );
+      if (!auth.ok) throw new Error(auth.error);
       const metadata = await createGoogleDriveClient({
-        accessToken: token,
+        accessToken: auth.accessToken,
+        sharedFolderId: auth.sharedFolderId,
       }).getFileMetadata(fileId);
       return metadata.modifiedTime;
     },

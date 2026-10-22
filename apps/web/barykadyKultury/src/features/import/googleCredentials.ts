@@ -1,16 +1,23 @@
 /**
  * T-042 / D-31 — Google credential resolver (server-side only).
  *
- * Two supported modes:
- * - `oauth_admin` (default): per-admin OAuth refresh token, least-privilege
- *   `drive.file` scope. No `drive.readonly`/`documents.readonly`.
- * - `service_account`: Workspace shared-drive export, long-lived key managed by
- *   the organisation.
+ * D-41 (owner-locked) auth model:
+ * - `per_admin_oauth` (default): every admin connects their own Google profile;
+ *   the refresh token lives in the encrypted, service-role-only vault and is
+ *   exchanged by the server. Least-privilege `drive.file` only.
+ * - `service_account`: retained as the optional Workspace mode behind an
+ *   explicit toggle (pending the A3 scope spike).
+ * - `env_oauth`: DEPRECATED dev/demo fixture (one shared refresh token in
+ *   Netlify env). The old `oauth_admin` name still resolves here so existing
+ *   local setups keep working, but the shared credential is not the terminal
+ *   model and is slated for removal.
  *
  * This module never logs, returns tokens to a page, or reads `import.meta.env`.
  * The Netlify binding passes `process.env`; tests pass explicit fake objects.
  * Private keys are normalised in memory only (escaped newlines from env).
  */
+
+import { withAbortTimeout } from "./timeouts";
 
 export const GOOGLE_DRIVE_FILE_SCOPE =
   "https://www.googleapis.com/auth/drive.file";
@@ -23,10 +30,20 @@ export interface GoogleCredentialEnv {
   readonly GOOGLE_IMPORT_AUTH_MODE?: string | undefined;
   readonly GOOGLE_OAUTH_CLIENT_ID?: string | undefined;
   readonly GOOGLE_OAUTH_CLIENT_SECRET?: string | undefined;
+  /** @deprecated dev/demo only — the per-admin vault is the production path. */
   readonly GOOGLE_OAUTH_REFRESH_TOKEN?: string | undefined;
+  readonly GOOGLE_OAUTH_REDIRECT_URI?: string | undefined;
   readonly GOOGLE_SERVICE_ACCOUNT_EMAIL?: string | undefined;
   readonly GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?: string | undefined;
   readonly GOOGLE_SHARED_DRIVE_ID?: string | undefined;
+  /** The single shared NGO folder every import must belong to. */
+  readonly GOOGLE_SHARED_DRIVE_FOLDER_ID?: string | undefined;
+  /** AES-256-GCM key for the refresh-token vault (server-only). */
+  readonly GOOGLE_TOKEN_ENCRYPTION_KEY?: string | undefined;
+  /** Google Cloud project number for the Picker (public, server-configured). */
+  readonly GOOGLE_PICKER_APP_ID?: string | undefined;
+  /** Browser API key for the Picker (referrer-restricted, not a secret). */
+  readonly GOOGLE_PICKER_API_KEY?: string | undefined;
 }
 
 export type ResolvedGoogleCredentials =
@@ -102,6 +119,96 @@ export function resolveGoogleCredentials(
   };
 }
 
+export type GoogleAuthStrategy =
+  | {
+      readonly mode: "per_admin_oauth";
+      readonly clientId: string;
+      readonly clientSecret: string;
+      readonly sharedFolderId: string | null;
+      readonly scope: typeof GOOGLE_DRIVE_FILE_SCOPE;
+    }
+  | {
+      readonly mode: "service_account";
+      readonly clientEmail: string;
+      readonly privateKey: string;
+      readonly sharedDriveId: string | null;
+      readonly sharedFolderId: string | null;
+      readonly scope: typeof GOOGLE_DRIVE_FILE_SCOPE;
+    }
+  | {
+      /** @deprecated dev/demo fixture; remove after the vault rollout. */
+      readonly mode: "env_oauth";
+      readonly deprecated: true;
+      readonly clientId: string;
+      readonly clientSecret: string;
+      readonly refreshToken: string;
+      readonly sharedFolderId: string | null;
+      readonly scope: typeof GOOGLE_DRIVE_FILE_SCOPE;
+    }
+  | GoogleCredentialsUnavailable;
+
+/**
+ * Decides which credential source the server uses. Production defaults to the
+ * per-admin vault; the shared env token is only reachable by explicitly asking
+ * for `env_oauth` (or the legacy `oauth_admin` name) and is marked deprecated.
+ */
+export function resolveGoogleAuthStrategy(
+  env: GoogleCredentialEnv
+): GoogleAuthStrategy {
+  const requested = nonEmpty(env.GOOGLE_IMPORT_AUTH_MODE) ?? "per_admin_oauth";
+  const sharedFolderId = nonEmpty(env.GOOGLE_SHARED_DRIVE_FOLDER_ID);
+  if (requested === "service_account") {
+    const resolved = resolveGoogleCredentials(env);
+    if (resolved.mode === "unavailable") return resolved;
+    if (resolved.mode !== "service_account") {
+      return { mode: "unavailable", reason: "missing_config" };
+    }
+    return {
+      mode: "service_account",
+      clientEmail: resolved.clientEmail,
+      privateKey: resolved.privateKey,
+      sharedDriveId: resolved.sharedDriveId,
+      sharedFolderId,
+      scope: GOOGLE_DRIVE_FILE_SCOPE
+    };
+  }
+  if (requested === "env_oauth" || requested === "oauth_admin") {
+    const resolved = resolveGoogleCredentials({
+      ...env,
+      GOOGLE_IMPORT_AUTH_MODE: "oauth_admin"
+    });
+    if (resolved.mode === "unavailable") return resolved;
+    if (resolved.mode !== "oauth_admin") {
+      return { mode: "unavailable", reason: "missing_config" };
+    }
+    return {
+      mode: "env_oauth",
+      deprecated: true,
+      clientId: resolved.clientId,
+      clientSecret: resolved.clientSecret,
+      refreshToken: resolved.refreshToken,
+      sharedFolderId,
+      scope: GOOGLE_DRIVE_FILE_SCOPE
+    };
+  }
+  if (requested !== "per_admin_oauth") {
+    return { mode: "unavailable", reason: "unsupported_mode" };
+  }
+
+  const clientId = nonEmpty(env.GOOGLE_OAUTH_CLIENT_ID);
+  const clientSecret = nonEmpty(env.GOOGLE_OAUTH_CLIENT_SECRET);
+  if (clientId === null || clientSecret === null) {
+    return { mode: "unavailable", reason: "missing_config" };
+  }
+  return {
+    mode: "per_admin_oauth",
+    clientId,
+    clientSecret,
+    sharedFolderId,
+    scope: GOOGLE_DRIVE_FILE_SCOPE
+  };
+}
+
 export interface GoogleAccessToken {
   readonly accessToken: string;
   /** Epoch milliseconds; the caller refreshes before expiry. */
@@ -112,6 +219,7 @@ export interface GoogleTokenRequest {
   readonly url: string;
   readonly headers: Readonly<Record<string, string>>;
   readonly body: string;
+  readonly signal?: AbortSignal;
 }
 
 export type GoogleTokenFetch = (
@@ -223,9 +331,11 @@ export async function exchangeGoogleCredentials(
   options: {
     readonly now?: () => Date;
     readonly signer?: ServiceAccountSigner;
+    readonly timeoutMs?: number;
   } = {}
 ): Promise<GoogleAccessToken | null> {
   const now = (options.now ?? (() => new Date()))();
+  const timeoutMs = options.timeoutMs ?? 10_000;
 
   if (credentials.mode === "oauth_admin") {
     const body = new URLSearchParams({
@@ -235,11 +345,14 @@ export async function exchangeGoogleCredentials(
       refresh_token: credentials.refreshToken
     }).toString();
 
-    const payload = await tokenFetch({
-      url: GOOGLE_TOKEN_ENDPOINT,
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body
-    });
+    const payload = await withAbortTimeout("token-timeout", timeoutMs, signal =>
+      tokenFetch({
+        url: GOOGLE_TOKEN_ENDPOINT,
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body,
+        signal
+      })
+    );
     return readTokenResponse(payload);
   }
 
@@ -253,11 +366,14 @@ export async function exchangeGoogleCredentials(
     assertion
   }).toString();
 
-  const payload = await tokenFetch({
-    url: GOOGLE_TOKEN_ENDPOINT,
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body
-  });
+  const payload = await withAbortTimeout("token-timeout", timeoutMs, signal =>
+    tokenFetch({
+      url: GOOGLE_TOKEN_ENDPOINT,
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body,
+      signal
+    })
+  );
   return readTokenResponse(payload);
 }
 

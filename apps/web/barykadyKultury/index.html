@@ -12,15 +12,17 @@
     />
     <!--
       CSP baseline: object-src/base-uri/form-action close plugin, <base>-hijack
-      and form-redirect vectors; script-src stays 'self'. The
-      https://*.supabase.co connect/img source is provisional until D-08/T-034
-      pins the exact hosted project origin. `worker-src 'self' blob:` is the
-      T-041 import worker; the same-origin module file is preferred, blob is a
-      bundler fallback (keep it aligned with netlify.toml).
+      and form-redirect vectors. `script-src` allows only the Google Picker
+      loader (`apis.google.com`, which pulls gapi modules from `gstatic.com`);
+      no other third-party script is permitted. `frame-src` is the Picker's
+      Docs iframe. The https://*.supabase.co connect/img source is provisional
+      until D-08/T-034 pins the exact hosted project origin. `worker-src 'self'
+      blob:` is the T-041 import worker; the same-origin module file is
+      preferred, blob is a bundler fallback (keep aligned with netlify.toml).
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;<% if (ctx.dev) { %> connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://127.0.0.1:54321 http://localhost:54321; img-src 'self' data: http://127.0.0.1:54321 http://localhost:54321;<% } else { %> connect-src 'self' https://*.supabase.co; img-src 'self' data: https://*.supabase.co;<% } %>"
+      content="default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:; frame-src https://docs.google.com https://*.google.com;<% if (ctx.dev) { %> connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://127.0.0.1:54321 http://localhost:54321 https://*.googleapis.com; img-src 'self' data: http://127.0.0.1:54321 http://localhost:54321 https://*.googleusercontent.com;<% } else { %> connect-src 'self' https://*.supabase.co https://*.googleapis.com; img-src 'self' data: https://*.supabase.co https://*.googleusercontent.com;<% } %>"
     />
 
     <!--

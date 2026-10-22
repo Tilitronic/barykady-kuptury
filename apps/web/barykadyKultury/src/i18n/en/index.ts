@@ -630,10 +630,10 @@ const en = {
     import: {
       title: "Import content",
       description:
-        "Import a document or publication language version from Markdown, Word or Google Docs.",
+        "Import a document or publication language version from Google Docs in the shared NGO Drive folder.",
       heading: "Import content",
       intro:
-        "Convert a file or a Google Doc, review the safe preview and metadata, then publish. Originals stay private.",
+        "Connect your Google account, open a Google Doc from the shared NGO Drive folder, review the safe preview and metadata, then publish. The public site renders the stored copy, never an iframe.",
       provider: {
         legend: "Source",
         file: "File",
@@ -668,7 +668,26 @@ const en = {
         import: "Import from Google",
         syncNow: "Sync now",
         check: "Check for changes",
-        syncing: "Checking Google Drive…"
+        syncing: "Checking Google Drive…",
+        connectionHeading: "Google account",
+        connect: "Connect Google account",
+        picker: "Choose from Google Drive",
+        pickerHint:
+          "Primary path. The Picker shows only documents in the shared NGO Drive folder.",
+        pickerSelected: "Selected “{name}”. Add a title, then import.",
+        pickerUnavailable:
+          "Google Picker is unavailable. Paste a Google Doc link below instead.",
+        manualLabel: "Fallback: Google Doc ID or URL",
+        manualHint:
+          "Use this only when the Picker is unavailable or your deployment uses a server-owned credential.",
+        reconnect: "Reconnect Google account",
+        connectedAs: "Connected as {email}",
+        disconnect: "Disconnect Google account",
+        connectionRequired:
+          "Connect your Google account to import from the shared NGO Drive folder.",
+        connectionUnavailable: "Google connection status is unavailable.",
+        folderHint:
+          "Only documents in the shared NGO Drive folder can be imported."
       },
       preview: {
         heading: "Safe preview",
@@ -718,6 +737,18 @@ const en = {
         conversionFailed: "The file could not be converted.",
         publishFailed: "The import could not be saved.",
         googleFailed: "Google sync could not be started.",
+        googleConnectRequired:
+          "Connect your Google account before importing from Google Docs.",
+        googleReconnectRequired:
+          "Your Google access expired or was revoked. Reconnect your Google account.",
+        googleOutOfFolder:
+          "This Google Doc is outside the shared NGO folder. Move it into the shared folder and try again.",
+        googleFolderNotConfigured:
+          "The shared Google Drive folder is not configured. Ask the site administrator.",
+        googleTokenTimeout: "Google sign-in timed out. Try again.",
+        googleMetadataTimeout:
+          "Google Drive did not respond in time. Try again.",
+        googleExportTimeout: "The Google Doc export timed out. Try again.",
         noSupabase: "The content service is not configured.",
         blocking: "Missing image alt text blocks publishing."
       },
@@ -732,6 +763,20 @@ const en = {
         skipped: "Skipped {count}",
         none: "No scheduled run recorded yet."
       }
+    },
+    scopes: {
+      label: "Your access",
+      pages: "Pages",
+      projects: "Projects",
+      publications: "Publications",
+      documents: "Documents",
+      team: "Team",
+      events: "Events",
+      media: "Media",
+      importer: "Content import",
+      deniedTitle: "Not available for your role",
+      deniedMessage:
+        "You are signed in, but your administrator access does not include this area. Ask a root administrator to grant it."
     }
   },
   /**

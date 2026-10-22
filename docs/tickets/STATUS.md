@@ -32,7 +32,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-026 | Admin auth & layout | 8 | done | @reviewer (rev-1) + @designer (des-1, des-2) | 5b86d33 | 2026-10-19 |
 | T-027 | Admin projects CRUD | 15 | done | @reviewer (rev-1) + @architector | — | — |
 | T-045 | Admin mutation hardening (transactional save + lifecycle invariant, from T-027 gates) | 15 | done | @reviewer (rev-1) + @architector (approve-with-follow-ups) | — | — |
-| T-046 | Capability-scoped admin roles (D-42, blocks T-028/T-029) | — | todo | — | — | — |
+| T-046 | Capability-scoped admin roles (D-42, blocks T-028/T-029) | 15 | done | @reviewer (rev-1 security) + @architector (approve-with-follow-ups) | — | — |
 | T-028 | Admin site pages & team CRUD | 6 | todo | — | — | — |
 | T-029 | Admin publications, documents, uploads | 6 | todo | — | — | — |
 | T-030 | Admin featured ordering | 6 | todo | — | — | — |
@@ -46,8 +46,8 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-038 | One canonical slug per entity across all locales (D-24) | 9 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | cfc67a6 | 2026-10-20 |
 | T-039 | Consolidated area pages with TOC + two-source site search (D-25, D-26) | 10 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | d61b5dc | 2026-10-20 |
 | T-040 | Unified long-form reader for documents/publications (language `?lang=`, TOC, reading controls, images, a11y) | 11 | done | @reviewer (rev-1) + @architector (arc-3) + @designer (des-2) | ff7788e | 2026-10-21 |
-| T-041 | Content import pipeline (MD, DOCX) + private source files + admin preview (no editor); ODT deferred | 12 | todo | — | — | — |
-| T-042 | Google Docs import/sync (Drive export → stored sanitized copy; no iframe) | 12 | todo | — | — | — |
+| T-041 | Content import pipeline (MD, DOCX) + private source files + admin preview (no editor); ODT deferred | 12 | todo (converters + validators in tree; MD/DOCX upload UI parked in `feature/file-import` — merge/exposure decision pending) | — | — | — |
+| T-042 | Google Docs import/sync (Drive export → stored sanitized copy; no iframe) | 15 | done | @reviewer (rev-1 FIX, rev-2 CLOSE) | — | — |
 | T-043 | Social links (Facebook, Instagram, Telegram) in header, footer and contact | 11 | done | @designer + live smoke | 400a884 | 2026-10-21 |
 | T-044 | Post-review remediation: security, performance, readability | 11 | done | security/performance/readability reviews + remediation | 93065fa | 2026-10-21 |
 

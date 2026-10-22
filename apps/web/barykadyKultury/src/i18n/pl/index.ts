@@ -532,10 +532,10 @@ const pl: MessageSchema = {
     import: {
       title: "Import treści",
       description:
-        "Importuj wersję językową dokumentu lub publikacji z Markdown, Worda lub Google Docs.",
+        "Importuj wersję językową dokumentu lub publikacji z Google Docs w udostępnionym folderze NGO na Dysku Google.",
       heading: "Import treści",
       intro:
-        "Przekonwertuj plik lub dokument Google, sprawdź bezpieczny podgląd i metadane, a następnie opublikuj. Oryginały pozostają prywatne.",
+        "Połącz swoje konto Google, otwórz dokument Google z udostępnionego folderu NGO na Dysku Google, sprawdź bezpieczny podgląd i metadane, a następnie opublikuj. Strona publiczna renderuje zapisaną kopię, nigdy iframe.",
       provider: {
         legend: "Źródło",
         file: "Plik",
@@ -570,7 +570,27 @@ const pl: MessageSchema = {
         import: "Importuj z Google",
         syncNow: "Synchronizuj teraz",
         check: "Sprawdź zmiany",
-        syncing: "Sprawdzanie Google Drive…"
+        syncing: "Sprawdzanie Google Drive…",
+        connectionHeading: "Konto Google",
+        connect: "Połącz konto Google",
+        picker: "Wybierz z Google Drive",
+        pickerHint:
+          "Ścieżka główna. Wybór pokazuje tylko dokumenty z udostępnionego folderu NGO na Dysku Google.",
+        pickerSelected:
+          "Wybrano „{name}”. Dodaj tytuł, a następnie zaimportuj.",
+        pickerUnavailable:
+          "Wybór Google jest niedostępny. Wklej poniżej link do dokumentu Google.",
+        manualLabel: "Zapasowo: identyfikator lub URL dokumentu Google",
+        manualHint:
+          "Użyj tej opcji tylko wtedy, gdy wybór jest niedostępny lub wdrożenie używa poświadczenia serwera.",
+        reconnect: "Ponownie połącz konto Google",
+        connectedAs: "Połączono jako {email}",
+        disconnect: "Odłącz konto Google",
+        connectionRequired:
+          "Połącz swoje konto Google, aby importować z udostępnionego folderu NGO na Dysku Google.",
+        connectionUnavailable: "Stan połączenia z Google jest niedostępny.",
+        folderHint:
+          "Importować można tylko dokumenty z udostępnionego folderu NGO na Dysku Google."
       },
       preview: {
         heading: "Bezpieczny podgląd",
@@ -623,6 +643,20 @@ const pl: MessageSchema = {
         conversionFailed: "Nie udało się przekonwertować pliku.",
         publishFailed: "Nie udało się zapisać importu.",
         googleFailed: "Nie udało się uruchomić synchronizacji Google.",
+        googleConnectRequired:
+          "Przed importem z Google Docs połącz swoje konto Google.",
+        googleReconnectRequired:
+          "Dostęp do Google wygasł lub został cofnięty. Połącz konto Google ponownie.",
+        googleOutOfFolder:
+          "Ten dokument Google znajduje się poza udostępnionym folderem NGO. Przenieś go do udostępnionego folderu i spróbuj ponownie.",
+        googleFolderNotConfigured:
+          "Udostępniony folder Google Drive nie jest skonfigurowany. Skontaktuj się z administratorem strony.",
+        googleTokenTimeout:
+          "Logowanie do Google trwało zbyt długo. Spróbuj ponownie.",
+        googleMetadataTimeout:
+          "Dysk Google nie odpowiedział na czas. Spróbuj ponownie.",
+        googleExportTimeout:
+          "Eksport dokumentu Google trwał zbyt długo. Spróbuj ponownie.",
         noSupabase: "Usługa treści nie jest skonfigurowana.",
         blocking: "Brak tekstu alternatywnego obrazu blokuje publikację."
       },
@@ -637,6 +671,20 @@ const pl: MessageSchema = {
         skipped: "Pominięto {count}",
         none: "Nie zapisano jeszcze uruchomienia harmonogramu."
       }
+    },
+    scopes: {
+      label: "Twoje uprawnienia",
+      pages: "Strony",
+      projects: "Projekty",
+      publications: "Publikacje",
+      documents: "Dokumenty",
+      team: "Zespół",
+      events: "Wydarzenia",
+      media: "Pliki multimedialne",
+      importer: "Import treści",
+      deniedTitle: "Niedostępne dla Twojej roli",
+      deniedMessage:
+        "Jesteś zalogowany(-a), ale Twoje uprawnienia administratora nie obejmują tego obszaru. Poproś administratora głównego o ich przyznanie."
     }
   },
   /**

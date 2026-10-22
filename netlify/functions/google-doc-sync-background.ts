@@ -12,6 +12,7 @@ import {
   runServerGoogleSync,
   type ServerGoogleSyncInitial,
 } from "../../apps/web/barykadyKultury/src/features/import/serverGoogleSync";
+import { readServerSupabaseConfig } from "../../apps/web/barykadyKultury/src/features/import/serverEnv";
 import {
   selectRows,
   updateRows,
@@ -34,10 +35,8 @@ interface SyncRequest {
 }
 
 function config(): ServerSupabaseConfig | null {
-  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  if (url.trim() === "" || serviceKey.trim() === "") return null;
-  return { url, serviceKey };
+  // T-042 review fix: server-only names, fail closed. No `VITE_*` fallback.
+  return readServerSupabaseConfig(process.env);
 }
 
 function bearer(request: Request): string {
@@ -103,7 +102,7 @@ export default async function googleDocSyncBackground(request: Request): Promise
   const jobRows = await selectRows(
     supabase,
     "content_sync_jobs",
-    `select=id,status,entity_id,locale,request&id=eq.${encodeURIComponent(jobId)}&limit=1`,
+    `select=id,status,entity_id,locale,request,requested_by&id=eq.${encodeURIComponent(jobId)}&limit=1`,
   );
   const job = jobRows[0];
   if (job === undefined) return json({ error: "not_found" }, 404);
@@ -118,9 +117,17 @@ export default async function googleDocSyncBackground(request: Request): Promise
     return json({ ok: true });
   }
 
+  const jobOwner = typeof job.requested_by === "string" ? job.requested_by : null;
+  if (jobOwner !== null && jobOwner !== identity.id) {
+    // A queued job belongs to its requester. Honouring another admin's job id
+    // would let this invocation spend that admin's Drive token.
+    return json({ error: "forbidden" }, 403);
+  }
+
   await updateJob(supabase, jobId, {
     status: "running",
     started_at: new Date().toISOString(),
+    ...(jobOwner === null ? { requested_by: identity.id } : {}),
   });
 
   const syncRequest = job.request as SyncRequest;
@@ -164,6 +171,7 @@ export default async function googleDocSyncBackground(request: Request): Promise
         locale,
         fileId,
         mode,
+        requestedBy: jobOwner ?? identity.id,
         ...(initial !== undefined ? { initial } : {}),
       },
     );

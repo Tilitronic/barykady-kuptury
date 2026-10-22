@@ -16,10 +16,14 @@ const REQUEST: SyncJobRequest = {
 
 function client(
   rows: readonly unknown[],
-  token: string | null = "admin-token"
+  token: string | null = "admin-token",
+  inserts: Record<string, unknown>[] = []
 ) {
   const builder = {
-    insert: () => builder,
+    insert: (value: Record<string, unknown>) => {
+      inserts.push(value);
+      return builder;
+    },
     select: () => builder,
     eq: () => builder,
     single: async () => ({ data: { id: "job-1" }, error: null }),
@@ -29,7 +33,15 @@ function client(
     from: () => builder,
     auth: {
       getSession: async () => ({
-        data: { session: token === null ? null : { access_token: token } }
+        data: {
+          session:
+            token === null
+              ? null
+              : {
+                  access_token: token,
+                  user: { id: "user-1", email: "admin@demo.local" }
+                }
+        }
       })
     }
   } as unknown as SupabaseClient<Database>;
@@ -61,6 +73,15 @@ describe("googleSyncClient", () => {
       startGoogleSync(client([]), REQUEST, { startBackground })
     ).resolves.toBe("job-1");
     expect(startBackground).toHaveBeenCalledWith("job-1", "admin-token");
+  });
+
+  it("attributes the job to the acting admin (requested_by)", async () => {
+    const inserts: Record<string, unknown>[] = [];
+    await startGoogleSync(client([], "admin-token", inserts), REQUEST, {
+      startBackground: async () => new Response("{}", { status: 202 })
+    });
+
+    expect(inserts[0]).toMatchObject({ requested_by: "user-1" });
   });
 
   it("refuses to invoke the function without a session", async () => {

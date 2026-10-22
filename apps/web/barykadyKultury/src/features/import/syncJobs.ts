@@ -72,7 +72,8 @@ function mapJob(row: JobRow): SyncJob {
 
 export async function createSyncJob(
   client: SupabaseClient<Database>,
-  request: SyncJobRequest
+  request: SyncJobRequest,
+  requestedBy: string
 ): Promise<string> {
   const { data, error } = await client
     .from("content_sync_jobs")
@@ -81,6 +82,8 @@ export async function createSyncJob(
       entity_id: request.entityId ?? null,
       locale: request.locale,
       status: "queued",
+      // D-41: attribution is enforced at the row, not inferred from the token.
+      requested_by: requestedBy,
       request: request as unknown as NonNullable<Json>
     })
     .select("id")

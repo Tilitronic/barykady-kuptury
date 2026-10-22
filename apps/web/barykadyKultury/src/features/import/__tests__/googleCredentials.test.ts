@@ -5,6 +5,7 @@ import {
   describeGoogleCredentialMode,
   exchangeGoogleCredentials,
   GOOGLE_DRIVE_FILE_SCOPE,
+  resolveGoogleAuthStrategy,
   resolveGoogleCredentials,
   type ServiceAccountSigner
 } from "../googleCredentials";
@@ -140,5 +141,57 @@ describe("exchangeGoogleCredentials", () => {
         async () => ({ error: "invalid_grant" })
       )
     ).resolves.toBeNull();
+  });
+});
+
+describe("resolveGoogleAuthStrategy (D-41)", () => {
+  it("defaults to per-admin OAuth in the vault, not a shared env token", () => {
+    expect(
+      resolveGoogleAuthStrategy({
+        GOOGLE_OAUTH_CLIENT_ID: "client-id",
+        GOOGLE_OAUTH_CLIENT_SECRET: "client-secret",
+        GOOGLE_SHARED_DRIVE_FOLDER_ID: "ngo-folder"
+      })
+    ).toMatchObject({
+      mode: "per_admin_oauth",
+      clientId: "client-id",
+      sharedFolderId: "ngo-folder",
+      scope: GOOGLE_DRIVE_FILE_SCOPE
+    });
+  });
+
+  it("keeps the legacy env refresh token only as an explicit deprecated mode", () => {
+    expect(
+      resolveGoogleAuthStrategy({
+        ...OAUTH_ENV,
+        GOOGLE_IMPORT_AUTH_MODE: "env_oauth"
+      })
+    ).toMatchObject({
+      mode: "env_oauth",
+      deprecated: true,
+      refreshToken: "refresh-token"
+    });
+    // The old mode name still resolves, but to the deprecated env path.
+    expect(
+      resolveGoogleAuthStrategy({
+        ...OAUTH_ENV,
+        GOOGLE_IMPORT_AUTH_MODE: "oauth_admin"
+      })
+    ).toMatchObject({ mode: "env_oauth", deprecated: true });
+  });
+
+  it("retains service_account behind the explicit toggle", () => {
+    expect(resolveGoogleAuthStrategy(SERVICE_ENV)).toMatchObject({
+      mode: "service_account",
+      clientEmail: SERVICE_ENV.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      sharedFolderId: null
+    });
+  });
+
+  it("reports unusable per-admin configuration without throwing", () => {
+    expect(resolveGoogleAuthStrategy({})).toEqual({
+      mode: "unavailable",
+      reason: "missing_config"
+    });
   });
 });

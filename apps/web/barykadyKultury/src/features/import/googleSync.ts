@@ -5,6 +5,9 @@ import { ImportConversionError, isImportConversionError } from "./errors";
 import {
   DOCX_MIME,
   DriveExportTooLargeError,
+  DriveFolderNotConfiguredError,
+  DriveOutOfFolderError,
+  DriveTimeoutError,
   GOOGLE_DOC_MIME,
   DriveRequestError,
   type DriveClient,
@@ -38,7 +41,13 @@ export type GoogleSyncErrorCode =
   | "export-failed"
   | "conversion-failed"
   | "persist-failed"
-  | "invalid-target";
+  | "invalid-target"
+  | "out-of-folder"
+  | "folder-not-configured"
+  | "reconnect-required"
+  | "token-timeout"
+  | "drive-metadata-timeout"
+  | "drive-export-timeout";
 
 export interface GoogleSyncTarget {
   readonly kind: "document" | "publication";
@@ -148,6 +157,15 @@ export async function syncGoogleDoc(
   try {
     metadata = await dependencies.driveClient.getFileMetadata(target.fileId);
   } catch (error) {
+    if (error instanceof DriveOutOfFolderError) {
+      return failed("out-of-folder");
+    }
+    if (error instanceof DriveFolderNotConfiguredError) {
+      return failed("folder-not-configured");
+    }
+    if (error instanceof DriveTimeoutError) {
+      return failed(error.code);
+    }
     return failed(
       "drive-unavailable",
       error instanceof DriveRequestError ? String(error.status) : undefined
@@ -168,6 +186,15 @@ export async function syncGoogleDoc(
   } catch (error) {
     if (error instanceof DriveExportTooLargeError) {
       return failed("export-too-large");
+    }
+    if (error instanceof DriveTimeoutError) {
+      return failed(error.code);
+    }
+    if (error instanceof DriveOutOfFolderError) {
+      return failed("out-of-folder");
+    }
+    if (error instanceof DriveFolderNotConfiguredError) {
+      return failed("folder-not-configured");
     }
     if (error instanceof DriveRequestError) {
       return failed("drive-unavailable", String(error.status));

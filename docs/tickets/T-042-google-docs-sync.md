@@ -1,6 +1,7 @@
 # T-042 — Google Docs import/sync
 
-**Session:** 10 · **Lane:** integrations · **Owner:** @coder
+**Session:** 10 · **Lane:** integrations · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1 FIX + rev-2 re-gate CLOSE, 0 findings) + @architector (T-046 gate covered shared model)
 **Reviewers:** @reviewer + @architector (security/credentials) + @designer (admin UX)
 **Depends on:** T-041 (converter/source model) · **Blocks:** none
 **Decisions:** D-28 (MD + DOCX + Google Docs), D-30 (source files), D-31 (both auth modes)
@@ -82,6 +83,11 @@ pnpm demo:reset && pnpm demo:check
 ## Log
 
 - (author) start:
+- Session 15: D-41 model implemented (per-admin OAuth vault + Picker primary,
+  shared-folder-only fail-closed in all modes, requested_by everywhere,
+  VITE_* removed, Google-only copy, E2E + timeouts, atomic OAuth state).
+  Reviewer rev-2 re-gate: CLOSE, 0 findings. Verified: pgTAP 592, units 1379,
+  full E2E 182/182, typecheck/lint/build clean.
 
 ## Addendum — S9 stale-while-revalidate + schedule (2026-10-21)
 

@@ -214,6 +214,68 @@ export type Database = {
         };
         Relationships: [];
       };
+      google_connections: {
+        Row: {
+          connected_at: string;
+          consent_status: string;
+          google_email: string | null;
+          last_used_at: string | null;
+          refresh_token_ciphertext: string;
+          revoked_at: string | null;
+          scope: string;
+          token_format: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          connected_at?: string;
+          consent_status?: string;
+          google_email?: string | null;
+          last_used_at?: string | null;
+          refresh_token_ciphertext: string;
+          revoked_at?: string | null;
+          scope?: string;
+          token_format?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          connected_at?: string;
+          consent_status?: string;
+          google_email?: string | null;
+          last_used_at?: string | null;
+          refresh_token_ciphertext?: string;
+          revoked_at?: string | null;
+          scope?: string;
+          token_format?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      google_oauth_states: {
+        Row: {
+          created_at: string;
+          expires_at: string;
+          state: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          expires_at: string;
+          state: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string;
+          state?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       organization_document_translations: {
         Row: {
           body: string | null;
@@ -801,6 +863,7 @@ export type Database = {
         };
         Returns: string;
       };
+      has_capability: { Args: { p_scope: string }; Returns: boolean };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_published: {
         Args: { p_status: Database["public"]["Enums"]["content_status"] };

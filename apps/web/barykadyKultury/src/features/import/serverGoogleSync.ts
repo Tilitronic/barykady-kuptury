@@ -4,12 +4,7 @@ import type { Json } from "../../types/database.types";
 
 import { convertSource } from "./convertSource";
 import { createGoogleDriveClient, type DriveClient } from "./googleDriveClient";
-import {
-  exchangeGoogleCredentials,
-  resolveGoogleCredentials,
-  type GoogleCredentialEnv,
-  type GoogleTokenFetch
-} from "./googleCredentials";
+import type { GoogleCredentialEnv } from "./googleCredentials";
 import {
   syncGoogleDoc,
   type GoogleSyncMode,
@@ -20,6 +15,7 @@ import {
   persistConvertedTranslation,
   type PersistConvertedInput
 } from "./persistConvertedTranslation";
+import { resolveServerGoogleAuth } from "./serverGoogleAuth";
 import {
   createServerSupabaseClient,
   selectRows,
@@ -58,6 +54,11 @@ export interface ServerGoogleSyncParams {
   readonly mode: GoogleSyncMode;
   readonly force?: boolean;
   readonly initial?: ServerGoogleSyncInitial;
+  /**
+   * The acting admin (D-41). The vault token is keyed by this id; a null value
+   * is only valid for the deprecated env demo path.
+   */
+  readonly requestedBy?: string | null;
 }
 
 function tableFor(kind: "document" | "publication"): string {
@@ -186,18 +187,6 @@ async function loadTarget(
   return targetFromRows(params, root, translation);
 }
 
-function tokenFetch(fetchImpl: typeof fetch): GoogleTokenFetch {
-  return async request => {
-    const response = await fetchImpl(request.url, {
-      method: "POST",
-      headers: request.headers,
-      body: request.body
-    });
-    if (!response.ok) return null;
-    return response.json();
-  };
-}
-
 export async function runServerGoogleSync(
   config: ServerGoogleSyncConfig,
   params: ServerGoogleSyncParams
@@ -207,27 +196,27 @@ export async function runServerGoogleSync(
     return { status: "failed", error: "invalid-target" };
   }
 
-  const credentials = resolveGoogleCredentials(config.googleEnv);
-  if (credentials.mode === "unavailable") {
+  const auth = await resolveServerGoogleAuth(
+    {
+      supabase: config.supabase,
+      googleEnv: config.googleEnv,
+      ...(config.fetchImpl !== undefined ? { fetchImpl: config.fetchImpl } : {})
+    },
+    { requestedBy: params.requestedBy ?? null }
+  );
+  if (!auth.ok) {
     return {
       status: "failed",
-      error: "credentials-unavailable",
-      detail: credentials.reason
+      error: auth.error,
+      ...(auth.detail !== undefined ? { detail: auth.detail } : {})
     };
   }
 
   const fetchImpl = config.fetchImpl ?? fetch;
-  const token = await exchangeGoogleCredentials(
-    credentials,
-    tokenFetch(fetchImpl)
-  );
-  if (token === null) {
-    return { status: "failed", error: "credentials-unavailable" };
-  }
-
   const driveClient: DriveClient = createGoogleDriveClient({
-    accessToken: token.accessToken,
-    fetchImpl
+    accessToken: auth.accessToken,
+    fetchImpl,
+    sharedFolderId: auth.sharedFolderId
   });
   const serviceClient = createServerSupabaseClient(config.supabase);
 

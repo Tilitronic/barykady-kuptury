@@ -63,6 +63,88 @@ describe("AdminImportPage (Google v1)", () => {
     expect(wrapper.text()).not.toContain("dropzone");
   });
 
+  it("uses Google-only, shared-folder copy (no file-upload wording)", async () => {
+    const wrapper = await mountImport();
+
+    expect(wrapper.text()).toContain("shared NGO Drive folder");
+    expect(wrapper.text()).not.toContain("Convert a file");
+    expect(wrapper.text()).not.toContain("Markdown");
+    expect(wrapper.text()).not.toContain("Word (.docx)");
+  });
+
+  it("offers a connect action when the admin has no Google connection", async () => {
+    const getConnection = vi.fn(async () => null);
+    const wrapper = await mountImport({ getConnection });
+
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Connect Google account");
+    expect(wrapper.text()).toContain("shared NGO Drive folder");
+  });
+
+  it("uses the Google Picker as the primary path and fills the selected doc id", async () => {
+    const getPickerSession = vi.fn(async () => ({
+      accessToken: "short-lived-token",
+      folderId: "shared-folder-1",
+      appId: null,
+      developerKey: null
+    }));
+    const openPicker = vi.fn(async () => ({
+      id: "picked-drive-1",
+      name: "Picked Doc"
+    }));
+    const wrapper = await mountImport({ getPickerSession, openPicker });
+
+    await wrapper.get("[data-testid='import-picker']").trigger("click");
+    await flushPromises();
+
+    expect(getPickerSession).toHaveBeenCalledWith(expect.anything());
+    expect(openPicker).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessToken: "short-lived-token",
+        folderId: "shared-folder-1"
+      })
+    );
+    expect(
+      (
+        wrapper.get("input[data-testid='import-google-id']")
+          .element as HTMLInputElement
+      ).value
+    ).toBe("picked-drive-1");
+  });
+
+  it("keeps manual URL/ID entry as the documented fallback", async () => {
+    const getPickerSession = vi.fn(async () => null);
+    const wrapper = await mountImport({ getPickerSession });
+
+    await wrapper.get("[data-testid='import-picker']").trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Google Picker is unavailable");
+    expect(wrapper.find("input[data-testid='import-google-id']").exists()).toBe(
+      true
+    );
+    expect(wrapper.text()).toContain("Fallback");
+  });
+
+  it("shows a distinct out-of-folder error instead of a generic failure", async () => {
+    const startGoogle = vi.fn(async () => "job-1");
+    const waitForJob = vi.fn(async () => ({
+      ...JOB,
+      status: "failed" as const,
+      errorCode: "out-of-folder"
+    }));
+    const wrapper = await mountImport({ startGoogle, waitForJob });
+
+    await fillGoogle(wrapper);
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+
+    expect(wrapper.get("[data-testid='import-status']").text()).toContain(
+      "outside the shared NGO folder"
+    );
+  });
+
   it("validates title/slug before starting a Drive job", async () => {
     const startGoogle = vi.fn(async () => "job-1");
     const wrapper = await mountImport({ startGoogle });

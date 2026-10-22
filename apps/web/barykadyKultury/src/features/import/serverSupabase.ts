@@ -1,5 +1,6 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 
+import { hasCapability, isAdminUser } from "../auth/adminClaim";
 import type { Database, Json } from "../../types/database.types";
 
 /**
@@ -104,6 +105,53 @@ export async function insertRows(
     : null;
 }
 
+/**
+ * PostgREST upsert. `resolution=merge-duplicates` maps to `ON CONFLICT DO
+ * UPDATE`, so a re-consent replaces the previous vault row atomically.
+ */
+export async function upsertRows(
+  config: ServerSupabaseConfig,
+  table: string,
+  value: Record<string, unknown>,
+  onConflict: string
+): Promise<Record<string, unknown> | null> {
+  const fetchImpl = config.fetchImpl ?? fetch;
+  const response = await fetchImpl(
+    `${normalizedUrl(config)}/rest/v1/${table}?on_conflict=${encodeURIComponent(
+      onConflict
+    )}`,
+    {
+      method: "POST",
+      headers: headers(config, {
+        "content-type": "application/json",
+        prefer: "resolution=merge-duplicates,return=representation"
+      }),
+      body: JSON.stringify(value)
+    }
+  );
+  if (!response.ok) return null;
+  const payload: unknown = await response.json();
+  return Array.isArray(payload) && typeof payload[0] === "object"
+    ? (payload[0] as Record<string, unknown>)
+    : null;
+}
+
+export async function deleteRows(
+  config: ServerSupabaseConfig,
+  table: string,
+  query: string
+): Promise<boolean> {
+  const fetchImpl = config.fetchImpl ?? fetch;
+  const response = await fetchImpl(
+    `${normalizedUrl(config)}/rest/v1/${table}?${query}`,
+    {
+      method: "DELETE",
+      headers: headers(config, { prefer: "return=minimal" })
+    }
+  );
+  return response.ok;
+}
+
 export async function callServiceRpc(
   config: ServerSupabaseConfig,
   name: string,
@@ -150,10 +198,20 @@ export async function verifyAdminToken(
   const user = payload as {
     id?: unknown;
     email?: unknown;
-    app_metadata?: { role?: unknown };
+    app_metadata?: Record<string, unknown>;
   };
   if (typeof user.id !== "string") return null;
-  if (user.app_metadata?.role !== "admin") return null;
+
+  // D-17/T-046: the function gate mirrors the DB expression
+  // `is_admin() OR has_capability('importer')`. Root keeps its full bypass; a
+  // scoped editor must carry the exact `importer` capability. The parser reads
+  // only app_metadata, so user_metadata self-escalation stays impossible.
+  const claimCarrier = {
+    app_metadata: user.app_metadata ?? {}
+  } as Pick<User, "app_metadata">;
+  if (!isAdminUser(claimCarrier) && !hasCapability(claimCarrier, "importer")) {
+    return null;
+  }
 
   return {
     id: user.id,

@@ -5,6 +5,9 @@ import type { ReaderDocumentV1 } from "@/features/reader/types";
 import { ImportConversionError } from "../errors";
 import {
   DriveExportTooLargeError,
+  DriveFolderNotConfiguredError,
+  DriveOutOfFolderError,
+  DriveTimeoutError,
   GOOGLE_DOC_MIME,
   type DriveClient,
   type DriveFileMetadata
@@ -27,7 +30,8 @@ const METADATA: DriveFileMetadata = {
   id: "drive-file-1",
   name: "Statute",
   mimeType: GOOGLE_DOC_MIME,
-  modifiedTime: MODIFIED
+  modifiedTime: MODIFIED,
+  parents: ["shared-folder-1"]
 };
 
 function ast(text = "Imported"): ReaderDocumentV1 {
@@ -168,6 +172,70 @@ describe("syncGoogleDoc", () => {
       error: "export-too-large"
     });
     expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("refuses an out-of-folder Google Doc without writing", async () => {
+    const { persist, deps: dependencies } = deps({
+      driveClient: drive({
+        getFileMetadata: async () => {
+          throw new DriveOutOfFolderError();
+        }
+      })
+    });
+
+    await expect(syncGoogleDoc(target(), dependencies)).resolves.toEqual({
+      status: "failed",
+      error: "out-of-folder"
+    });
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the shared folder is not configured", async () => {
+    const { persist, deps: dependencies } = deps({
+      driveClient: drive({
+        getFileMetadata: async () => {
+          throw new DriveFolderNotConfiguredError();
+        }
+      })
+    });
+
+    await expect(syncGoogleDoc(target(), dependencies)).resolves.toEqual({
+      status: "failed",
+      error: "folder-not-configured"
+    });
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("keeps the old copy on distinct metadata/export timeouts", async () => {
+    const metadataTimeout = await syncGoogleDoc(
+      target(),
+      deps({
+        driveClient: drive({
+          getFileMetadata: async () => {
+            throw new DriveTimeoutError("drive-metadata-timeout");
+          }
+        })
+      }).deps
+    );
+    expect(metadataTimeout).toEqual({
+      status: "failed",
+      error: "drive-metadata-timeout"
+    });
+
+    const exportTimeout = await syncGoogleDoc(
+      target(),
+      deps({
+        driveClient: drive({
+          exportDocx: async () => {
+            throw new DriveTimeoutError("drive-export-timeout");
+          }
+        })
+      }).deps
+    );
+    expect(exportTimeout).toEqual({
+      status: "failed",
+      error: "drive-export-timeout"
+    });
   });
 
   it("keeps the old copy when conversion fails", async () => {

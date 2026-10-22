@@ -217,6 +217,40 @@ export const VIEWER_AUTH_USER: E2EAuthUser = {
   user_metadata: { email: "viewer@demo.local" }
 };
 
+/**
+ * T-046 fixture: a publications editor. `importer` is included because the
+ * shipped publication-publishing surface is the import page; the scenario's
+ * point is that no project/team/document capability is present. The DB proof
+ * that this account may write publications and not projects lives in
+ * `supabase/tests/scoped_admin_matrix_test.sql`.
+ */
+export const PUBLICATIONS_EDITOR_AUTH_USER: E2EAuthUser = {
+  ...ADMIN_AUTH_USER,
+  id: "00000000-0000-4000-8000-000000000003",
+  email: "editor@demo.local",
+  app_metadata: {
+    provider: "email",
+    providers: ["email"],
+    role: "editor",
+    scopes: ["publications:write", "importer"]
+  },
+  user_metadata: { email: "editor@demo.local" }
+};
+
+/** T-046 fixture: the mirror case — project editor without import access. */
+export const PROJECT_EDITOR_AUTH_USER: E2EAuthUser = {
+  ...ADMIN_AUTH_USER,
+  id: "00000000-0000-4000-8000-000000000004",
+  email: "projects@demo.local",
+  app_metadata: {
+    provider: "email",
+    providers: ["email"],
+    role: "editor",
+    scopes: ["projects:write"]
+  },
+  user_metadata: { email: "projects@demo.local" }
+};
+
 export interface MockSupabaseAuthOptions {
   /**
    * User granted by a successful password sign-in. Defaults to the admin
@@ -362,5 +396,218 @@ export async function mockSearchRpc(
       contentType: "application/json",
       body: JSON.stringify(matched)
     });
+  });
+}
+
+/* ── Google import pipeline (T-041/T-042 review fix) ─────────────────────── */
+
+export interface MockImportJobOptions {
+  /** Terminal status the polling GET observes. */
+  status?:
+    | "queued"
+    | "running"
+    | "succeeded"
+    | "unchanged"
+    | "blocked"
+    | "failed";
+  /** Distinct job error code surfaced by the admin UI. */
+  errorCode?: string | null;
+  entityId?: string | null;
+  summary?: unknown;
+  /** Rows returned for `organization_documents` reads (reader + admin). */
+  documents?: readonly unknown[];
+  /** Connection metadata returned by the OAuth status action. */
+  connection?: { connected: boolean; googleEmail?: string | null };
+  /** Picker session response. `available:false` simulates a missing folder. */
+  picker?: {
+    available?: boolean;
+    error?: string;
+    folderId?: string;
+  };
+}
+
+/**
+ * Deterministic Google-import harness.
+ *
+ * Covers the three network surfaces the admin import route uses:
+ * - `content_sync_jobs` insert + polling (the job row is the only state),
+ * - the background function acknowledgement (never a real Google call),
+ * - the OAuth connection status card (never a real Google consent).
+ *
+ * Content reads are served from fixtures and honour PostgREST `eq` filters so
+ * the published-copy-unchanged journey reads the same row before and after a
+ * failed sync.
+ */
+export async function mockImportPipeline(
+  page: Page,
+  options: MockImportJobOptions = {}
+): Promise<void> {
+  const {
+    status = "succeeded",
+    errorCode = null,
+    entityId = "00000000-0000-4000-8000-0000000009f1",
+    summary = null,
+    documents = [],
+    connection = { connected: true, googleEmail: "admin@demo.local" },
+    picker = { available: true }
+  } = options;
+
+  const job = {
+    id: "job-1",
+    kind: "document",
+    entity_id: entityId,
+    locale: "en",
+    status,
+    error_code: errorCode,
+    summary,
+    request: {
+      mode: "apply",
+      kind: "document",
+      fileId: "drive-1",
+      locale: "en"
+    },
+    requested_by: ADMIN_AUTH_USER.id,
+    created_at: "2030-05-01T00:00:00Z",
+    updated_at: "2030-05-01T00:00:01Z",
+    started_at: "2030-05-01T00:00:00Z",
+    finished_at: "2030-05-01T00:00:01Z"
+  };
+
+  await page.route("**/rest/v1/content_sync_jobs*", async route => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({ id: job.id })
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(job)
+    });
+  });
+
+  await page.route("**/rest/v1/content_sync_runs*", async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "[]"
+    });
+  });
+
+  await page.route("**/rest/v1/organization_documents*", async route => {
+    const rows = filterEqRows(route.request().url(), documents);
+    await fulfillRows(route, rows);
+  });
+
+  await page.route("**/rest/v1/publications*", async route => {
+    const rows = filterEqRows(route.request().url(), documents);
+    await fulfillRows(route, rows);
+  });
+
+  await page.route("**/rest/v1/content_assets*", async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "[]"
+    });
+  });
+
+  await page.route(
+    "**/.netlify/functions/google-doc-sync-background*",
+    async route => {
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true })
+      });
+    }
+  );
+
+  await page.route("**/.netlify/functions/google-oauth*", async route => {
+    const action = new URL(route.request().url()).searchParams.get("action");
+    if (action === "picker") {
+      if (picker.available === false) {
+        await route.fulfill({
+          status: 409,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: picker.error ?? "folder-not-configured"
+          })
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          accessToken: "e2e-picker-token",
+          folderId: picker.folderId ?? "shared-folder-1",
+          appId: "1234567890",
+          developerKey: "e2e-public-picker-key"
+        })
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        connected: connection.connected,
+        googleEmail: connection.googleEmail ?? null,
+        consentStatus: connection.connected
+          ? "connected"
+          : "reconsent_required",
+        connectedAt: connection.connected ? "2030-05-01T00:00:00Z" : null
+      })
+    });
+  });
+
+  await page.route("**/api/content-check*", async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ updateAvailable: false })
+    });
+  });
+
+  await page.route("**/.netlify/functions/content-original*", async route => {
+    await route.fulfill({
+      status: 302,
+      headers: { location: "/fixtures/original.pdf" }
+    });
+  });
+}
+
+function filterEqRows(
+  url: string,
+  rows: readonly unknown[]
+): readonly unknown[] {
+  const params = new URL(url).searchParams;
+  const filters = [...params.entries()].filter(([, value]) =>
+    value.startsWith("eq.")
+  );
+  return rows.filter(row => {
+    if (typeof row !== "object" || row === null) return false;
+    return filters.every(([column, value]) => {
+      const cell = (row as Record<string, unknown>)[column];
+      return cell === undefined || cell === value.slice(3);
+    });
+  });
+}
+
+async function fulfillRows(
+  route: Route,
+  rows: readonly unknown[]
+): Promise<void> {
+  const wantsObject = (route.request().headers()["accept"] ?? "").includes(
+    "pgrst.object"
+  );
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(wantsObject ? (rows[0] ?? null) : rows)
   });
 }

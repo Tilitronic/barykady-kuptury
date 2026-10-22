@@ -34,12 +34,17 @@ export async function startGoogleSync(
   request: SyncJobRequest,
   dependencies: StartSyncDependencies = {}
 ): Promise<string> {
-  const jobId = await createSyncJob(client, request);
+  const session = await readSession(client, dependencies);
+  if (session === null) {
+    throw new Error("missing-admin-session");
+  }
+
+  const jobId = await createSyncJob(client, request, session.userId);
 
   const accessToken =
     dependencies.getAccessToken !== undefined
       ? await dependencies.getAccessToken()
-      : await readAccessToken(client);
+      : session.accessToken;
 
   if (accessToken === null || accessToken === "") {
     throw new Error("missing-admin-session");
@@ -64,11 +69,26 @@ export async function startGoogleSync(
   return jobId;
 }
 
-async function readAccessToken(
-  client: SupabaseClient<Database>
-): Promise<string | null> {
+interface AdminSession {
+  readonly accessToken: string;
+  readonly userId: string;
+}
+
+async function readSession(
+  client: SupabaseClient<Database>,
+  dependencies: StartSyncDependencies
+): Promise<AdminSession | null> {
   const { data } = await client.auth.getSession();
-  return data.session?.access_token ?? null;
+  const session = data.session;
+  if (session === null) return null;
+  const accessToken =
+    dependencies.getAccessToken !== undefined
+      ? await dependencies.getAccessToken()
+      : session.access_token;
+  if (accessToken === null || accessToken === "") return null;
+  const userId = session.user?.id ?? "";
+  if (userId === "") return null;
+  return { accessToken, userId };
 }
 
 export interface WaitForSyncOptions {

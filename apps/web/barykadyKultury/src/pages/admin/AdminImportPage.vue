@@ -3,6 +3,56 @@
     <h1 class="text-h5 q-mt-none q-mb-sm">{{ t("admin.import.heading") }}</h1>
     <p class="text-body2 text-grey-8 q-mb-lg">{{ t("admin.import.intro") }}</p>
 
+    <UiCard
+      flat
+      bordered
+      class="q-mb-lg"
+      data-testid="import-google-connection"
+    >
+      <UiCardSection>
+        <h2 class="text-subtitle1 q-mt-none q-mb-sm">
+          {{ t("admin.import.google.connectionHeading") }}
+        </h2>
+        <p
+          v-if="connection?.connected === true"
+          class="text-body2 q-mb-xs"
+          data-testid="import-google-connected"
+        >
+          {{
+            t("admin.import.google.connectedAs", {
+              email: connection.googleEmail ?? ""
+            })
+          }}
+        </p>
+        <p v-else class="text-body2 q-mb-xs">
+          {{ t("admin.import.google.connectionRequired") }}
+        </p>
+        <p class="text-caption text-grey-7 q-mb-sm">
+          {{ t("admin.import.google.folderHint") }}
+        </p>
+        <UiBtn
+          v-if="connection?.connected === true"
+          variant="flat"
+          :label="t('admin.import.google.disconnect')"
+          :disable="connectionPending"
+          data-testid="import-google-disconnect"
+          @click="disconnect"
+        />
+        <UiBtn
+          v-else
+          variant="secondary"
+          :label="
+            needsReconnect
+              ? t('admin.import.google.reconnect')
+              : t('admin.import.google.connect')
+          "
+          :loading="connectionPending"
+          data-testid="import-google-connect"
+          @click="connect"
+        />
+      </UiCardSection>
+    </UiCard>
+
     <UiForm class="q-gutter-md" greedy @submit="runGoogle('apply')">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-sm-6">
@@ -70,10 +120,25 @@
         </div>
 
         <div class="col-12">
+          <UiBtn
+            type="button"
+            variant="primary"
+            :label="t('admin.import.google.picker')"
+            :loading="pickerPending"
+            :disable="pickerPending"
+            data-testid="import-picker"
+            @click="pickDocument"
+          />
+          <p class="text-caption text-grey-7 q-mt-xs q-mb-none">
+            {{ t("admin.import.google.pickerHint") }}
+          </p>
+        </div>
+
+        <div class="col-12">
           <UiInput
             v-model="googleFileId"
-            :label="t('admin.import.google.label')"
-            :hint="t('admin.import.google.hint')"
+            :label="t('admin.import.google.manualLabel')"
+            :hint="t('admin.import.google.manualHint')"
             data-testid="import-google-id"
           />
         </div>
@@ -285,6 +350,17 @@ import {
   type SyncRun
 } from "@/features/import/contentSyncRuns";
 import {
+  disconnectGoogleConnection,
+  getGoogleConnectionStatus,
+  getGooglePickerSession,
+  startGoogleConnection,
+  type GoogleConnectionStatus
+} from "@/features/import/googleConnectionClient";
+import {
+  openGooglePicker,
+  type GooglePickerDocument
+} from "@/features/import/googlePicker";
+import {
   startGoogleSync,
   waitForSyncJob
 } from "@/features/import/googleSyncClient";
@@ -304,6 +380,13 @@ import type { Database } from "@/types/database.types";
 const props = defineProps<{
   startGoogle?: typeof startGoogleSync;
   waitForJob?: typeof waitForSyncJob;
+  getConnection?: typeof getGoogleConnectionStatus;
+  startConnection?: typeof startGoogleConnection;
+  disconnectConnection?: typeof disconnectGoogleConnection;
+  getPickerSession?: typeof getGooglePickerSession;
+  openPicker?: (
+    config: Parameters<typeof openGooglePicker>[0]
+  ) => Promise<GooglePickerDocument | null>;
   supabase?: SupabaseClient<Database> | null;
 }>();
 
@@ -337,9 +420,27 @@ const syncSummary = ref<SyncDiffSummary | null>(null);
 const importedEntityId = ref<string | null>(null);
 const latestRun = ref<SyncRun | null>(null);
 const lastSyncedAt = ref<string | null>(null);
+const connection = ref<GoogleConnectionStatus | null>(null);
+const connectionPending = ref(false);
+const pickerPending = ref(false);
+
+const needsReconnect = computed(
+  () => connection.value?.consentStatus === "reconsent_required"
+);
+
+async function loadConnection(): Promise<void> {
+  if (client.value === null) return;
+  const load = props.getConnection ?? getGoogleConnectionStatus;
+  try {
+    connection.value = await load(client.value);
+  } catch {
+    connection.value = null;
+  }
+}
 
 onMounted(() => {
   if (client.value === null) return;
+  void loadConnection();
   void fetchLatestSyncRun(client.value)
     .then(run => {
       latestRun.value = run;
@@ -411,6 +512,101 @@ function driveFileId(value: string): string {
   return match?.[1] ?? trimmed;
 }
 
+async function connect(): Promise<void> {
+  if (client.value === null) {
+    setMessage(t("admin.import.errors.noSupabase"), "error");
+    return;
+  }
+  connectionPending.value = true;
+  try {
+    const start = props.startConnection ?? startGoogleConnection;
+    const authUrl = await start(client.value);
+    if (authUrl === null) {
+      setMessage(t("admin.import.google.connectionUnavailable"), "error");
+      return;
+    }
+    window.location.assign(authUrl);
+  } catch {
+    setMessage(t("admin.import.google.connectionUnavailable"), "error");
+  } finally {
+    connectionPending.value = false;
+  }
+}
+
+async function pickDocument(): Promise<void> {
+  if (client.value === null) {
+    setMessage(t("admin.import.errors.noSupabase"), "error");
+    return;
+  }
+  pickerPending.value = true;
+  try {
+    const getSession = props.getPickerSession ?? getGooglePickerSession;
+    const session = await getSession(client.value);
+    if (session === null) {
+      setMessage(t("admin.import.google.pickerUnavailable"), "error");
+      return;
+    }
+    const open = props.openPicker ?? openGooglePicker;
+    const picked = await open({
+      accessToken: session.accessToken,
+      folderId: session.folderId,
+      appId: session.appId,
+      developerKey: session.developerKey
+    });
+    if (picked !== null) {
+      googleFileId.value = picked.id;
+      setMessage(
+        t("admin.import.google.pickerSelected", { name: picked.name }),
+        "success"
+      );
+    }
+  } catch {
+    setMessage(t("admin.import.google.pickerUnavailable"), "error");
+  } finally {
+    pickerPending.value = false;
+  }
+}
+
+async function disconnect(): Promise<void> {
+  if (client.value === null) return;
+  connectionPending.value = true;
+  try {
+    const stop = props.disconnectConnection ?? disconnectGoogleConnection;
+    await stop(client.value);
+    connection.value = null;
+  } catch {
+    setMessage(t("admin.import.google.connectionUnavailable"), "error");
+  } finally {
+    connectionPending.value = false;
+  }
+}
+
+/**
+ * Stable job error codes map to actionable localized copy. A timeout code is
+ * deliberately distinct per Google hop so support can tell a token refresh from
+ * a slow export without reading provider messages.
+ */
+function googleErrorMessage(code: string | null): string {
+  switch (code) {
+    case "out-of-folder":
+      return t("admin.import.errors.googleOutOfFolder");
+    case "folder-not-configured":
+      return t("admin.import.errors.googleFolderNotConfigured");
+    case "reconnect-required":
+      return t("admin.import.errors.googleReconnectRequired");
+    case "credentials-unavailable":
+      return t("admin.import.errors.googleConnectRequired");
+    case "token-timeout":
+      return t("admin.import.errors.googleTokenTimeout");
+    case "drive-metadata-timeout":
+      return t("admin.import.errors.googleMetadataTimeout");
+    case "drive-export-timeout":
+      return t("admin.import.errors.googleExportTimeout");
+    default:
+      return t("admin.import.errors.googleFailed");
+  }
+}
+
 async function runGoogle(mode: "preview" | "apply"): Promise<void> {
   if (client.value === null) {
     setMessage(t("admin.import.errors.noSupabase"), "error");
@@ -463,10 +659,15 @@ async function runGoogle(mode: "preview" | "apply"): Promise<void> {
       setMessage(t("admin.import.sync.jobSucceeded"), "success");
     } else if (finished?.status === "unchanged") {
       setMessage(t("admin.import.status.unchanged"), "success");
-    } else if (
-      finished?.status === "failed" ||
-      finished?.status === "blocked"
-    ) {
+    } else if (finished?.status === "failed") {
+      setMessage(googleErrorMessage(finished.errorCode), "error");
+      if (
+        finished.errorCode === "credentials-unavailable" ||
+        finished.errorCode === "reconnect-required"
+      ) {
+        await loadConnection();
+      }
+    } else if (finished?.status === "blocked") {
       setMessage(t("admin.import.errors.googleFailed"), "error");
     }
   } catch {

@@ -16,6 +16,7 @@ import {
   type OriginalKind,
   type OriginalDownloadTarget,
 } from "../../apps/web/barykadyKultury/src/features/import/originalDownloadHandler";
+import { readServerSupabaseConfig } from "../../apps/web/barykadyKultury/src/features/import/serverEnv";
 
 const TABLE_BY_KIND: Record<OriginalKind, string> = {
   document: "organization_documents",
@@ -28,10 +29,11 @@ interface SupabaseConfig {
 }
 
 function configFromEnv(): SupabaseConfig | null {
-  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  if (url.trim() === "" || serviceKey.trim() === "") return null;
-  return { url: url.replace(/\/+$/, ""), serviceKey };
+  // T-042 review fix: server-only names, fail closed. No `VITE_*` fallback.
+  const config = readServerSupabaseConfig(process.env);
+  return config === null
+    ? null
+    : { url: config.url.replace(/\/+$/, ""), serviceKey: config.serviceKey };
 }
 
 function errorResponse(status: number, error: string): Response {
