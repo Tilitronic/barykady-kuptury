@@ -34,6 +34,12 @@ export interface MountOptions {
   /** Initial route path for the memory-history router. Defaults to "/". */
   initialRoute?: string;
   /**
+   * Mount into a real document node so focus assertions are meaningful
+   * (`document.activeElement` only updates for attached elements). Omitted by
+   * default: most tests assert markup, not focus.
+   */
+  attachTo?: Element;
+  /**
    * Explicit route records for tests whose component reads named/typed route
    * params (e.g. the documents reader's `:slug`). Defaults to a single
    * catch-all that renders the component and exposes only `:locale`.
@@ -72,7 +78,8 @@ export async function mountWithPlugins(
     plugins = [],
     supabase = null,
     initialRoute = "/",
-    routes
+    routes,
+    attachTo
   } = options;
 
   const router = createRouter({
@@ -91,6 +98,7 @@ export async function mountWithPlugins(
 
   return mount(component, {
     props,
+    ...(attachTo ? { attachTo } : {}),
     // VTU types `slots` as a required object shape; only pass it when the
     // test actually provides slot content.
     ...(slots ? { slots } : {}),

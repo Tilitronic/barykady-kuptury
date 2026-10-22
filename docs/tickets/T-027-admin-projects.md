@@ -1,7 +1,7 @@
 # T-027 — Admin projects CRUD
 
-**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** todo
-**Reviewers:** @reviewer + @architector (data mutations)
+**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1: 1 Critical preview-parity + 1 Major i18n leak, both fixed test-first with mutation-check proof) + @architector (mutation paths sound; High preview-drift fixed, Medium/Low → T-045)
 **Depends on:** T-026, T-019 · **Blocks:** T-030, T-032
 
 ## Outcome
@@ -57,3 +57,11 @@ pnpm typecheck && pnpm lint:check
 
 ## Log
 - (author) start:
+- Session 15: implemented test-first (coder lane) — `features/admin/projects`
+  module (projectForm/publish/completeness/preview), admin list/new/edit/
+  preview routes, UiConfirmDialog, ProjectDetailBody shared renderer,
+  en/pl/uk, no migration (T-013 RLS + pgTAP already cover). Reviewer rev-1:
+  preview title-only heuristic → shared `selectProjectDetailTranslation`
+  parity; raw field keys → shared localized `formatCompletenessLabel`.
+  Verified: 1292 unit (125 files), admin-projects E2E 5/5, full E2E 170/171
+  (1 search focus flake, passes in isolation). Design gaps → T-045.

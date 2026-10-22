@@ -15,6 +15,7 @@ export { default as UiBtn } from "./UiBtn.vue";
 export { default as UiCard } from "./UiCard.vue";
 export { default as UiCardSection } from "./UiCardSection.vue";
 export { default as UiCheckbox } from "./UiCheckbox.vue";
+export { default as UiConfirmDialog } from "./UiConfirmDialog.vue";
 export { default as UiExpansionItem } from "./UiExpansionItem.vue";
 export { default as UiForm } from "./UiForm.vue";
 export { default as UiInput } from "./UiInput.vue";

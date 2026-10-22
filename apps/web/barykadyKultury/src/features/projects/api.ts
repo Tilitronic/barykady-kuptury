@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Locale } from "@/features/i18n/locales";
-import { selectTranslation } from "@/shared/content/selectTranslation";
+import {
+  selectTranslation,
+  type SelectedTranslation
+} from "@/shared/content/selectTranslation";
 import {
   fromRows,
   unavailable,
@@ -76,6 +79,46 @@ export const PROJECT_REQUIRED_FIELDS = [
   "body"
 ] as const satisfies readonly (keyof ProjectTranslationRow)[];
 
+/**
+ * The minimum a translation must expose to be resolved as a project DETAIL
+ * translation. `ProjectTranslationRow` (public read) and the admin editor's
+ * `AdminProjectTranslation` both satisfy it, so one policy serves both paths.
+ */
+export interface ProjectDetailTranslationLike {
+  readonly locale: string;
+  readonly title: string;
+  readonly summary: string | null;
+  readonly body: string | null;
+}
+
+/**
+ * The single translation-resolution policy for a project DETAIL view.
+ *
+ * Both the public detail page and the admin preview call this, so T-027's
+ * promise ("the preview renders the public detail component") holds by
+ * construction rather than by two copies of the same rule:
+ *   - `PROJECT_REQUIRED_FIELDS` (title + summary + body) defines completeness,
+ *     so a title-only translation is NOT presented (architecture §4);
+ *   - the English fallback applies only when it is itself complete, and
+ *     `isFallback` flags the substitution for the reader's note.
+ *
+ * `status` is optional on purpose: the public read passes the row's status so
+ * the shared selector rejects drafts (defence in depth beside RLS), while the
+ * admin preview passes `null` because previewing a draft is the point of that
+ * admin-guarded route. Passing `null` skips ONLY the published gate — never the
+ * completeness or fallback rules.
+ */
+export function selectProjectDetailTranslation<
+  T extends ProjectDetailTranslationLike
+>(
+  row: { readonly status?: string | null; readonly translations: readonly T[] },
+  locale: Locale
+): SelectedTranslation<T> | null {
+  return selectTranslation(row, locale, {
+    requiredFields: PROJECT_REQUIRED_FIELDS as readonly (keyof T)[]
+  });
+}
+
 const PROJECT_LIST_SELECT =
   "id, slug, status, featured_rank, cover_path, start_date, end_date, updated_at, project_translations(locale, title, summary)";
 
@@ -128,10 +171,9 @@ export function mapProjectDetail(
   row: ProjectRowWithTranslations,
   locale: Locale
 ): ProjectSummary | null {
-  const selected = selectTranslation(
+  const selected = selectProjectDetailTranslation(
     { status: row.status, translations: row.project_translations },
-    locale,
-    { requiredFields: PROJECT_REQUIRED_FIELDS }
+    locale
   );
 
   return selected

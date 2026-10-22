@@ -31,7 +31,20 @@ export interface FakeSupabaseOptions {
   /** Rows returned per table name; a missing table resolves to `[]`. */
   readonly tables?: Readonly<Record<string, readonly unknown[]>>;
   /** When set, every query resolves to this error and no rows. */
-  readonly error?: { readonly message: string } | null;
+  readonly error?: { readonly message: string; readonly code?: string } | null;
+  /**
+   * Result of a write chain (`insert`/`update`/`upsert`/`delete`), including
+   * an optional `.select(...).single()` tail (T-027 admin mutations). Reads
+   * keep using `tables`; a write never mutates the fixture — the test asserts
+   * the recorded payload instead of re-implementing Postgres.
+   */
+  readonly writes?: {
+    readonly data?: unknown;
+    readonly error?: {
+      readonly message: string;
+      readonly code?: string;
+    } | null;
+  };
   /**
    * The `{data, error}` envelope every `rpc()` call resolves with (T-039:
    * `search_published_content` and the publications-years query share this
@@ -60,6 +73,11 @@ interface FakeResult {
  * `await` resolves the configured fixture.
  */
 class FakeQueryBuilder implements PromiseLike<FakeResult> {
+  /** Set by a mutation verb so `result()` reads the configured write result. */
+  private isWrite = false;
+  /** Set by `single()`/`maybeSingle()` so the fixture unwraps to one row. */
+  private unwrapSingle = false;
+
   constructor(
     private readonly table: string,
     private readonly options: FakeSupabaseOptions,
@@ -69,6 +87,11 @@ class FakeQueryBuilder implements PromiseLike<FakeResult> {
   private record(method: string, args: unknown[]): this {
     this.calls.push({ table: this.table, method, args });
     return this;
+  }
+
+  private mutate(method: string, args: unknown[]): this {
+    this.isWrite = true;
+    return this.record(method, args);
   }
 
   select(...args: unknown[]): this {
@@ -89,6 +112,34 @@ class FakeQueryBuilder implements PromiseLike<FakeResult> {
 
   not(...args: unknown[]): this {
     return this.record("not", args);
+  }
+
+  insert(...args: unknown[]): this {
+    return this.mutate("insert", args);
+  }
+
+  update(...args: unknown[]): this {
+    return this.mutate("update", args);
+  }
+
+  upsert(...args: unknown[]): this {
+    return this.mutate("upsert", args);
+  }
+
+  delete(...args: unknown[]): this {
+    return this.mutate("delete", args);
+  }
+
+  /** PostgREST `.single()`: unwraps the fixture to one row (or null). */
+  single(): this {
+    this.unwrapSingle = true;
+    return this.record("single", []);
+  }
+
+  /** PostgREST `.maybeSingle()`: same contract as `single()` in the fake. */
+  maybeSingle(): this {
+    this.unwrapSingle = true;
+    return this.record("maybeSingle", []);
   }
 
   overrideTypes(...args: unknown[]): this {
@@ -112,12 +163,27 @@ class FakeQueryBuilder implements PromiseLike<FakeResult> {
       return { data: null, error: this.options.error };
     }
 
+    if (this.isWrite) {
+      const writeData = this.options.writes?.data ?? null;
+      return {
+        data:
+          this.unwrapSingle && Array.isArray(writeData)
+            ? (writeData[0] ?? null)
+            : writeData,
+        error: this.options.writes?.error ?? null
+      };
+    }
+
     const tableError = this.options.tableErrors?.[this.table];
     if (tableError) {
       return { data: null, error: { message: tableError } };
     }
 
-    return { data: this.options.tables?.[this.table] ?? [], error: null };
+    const rows = this.options.tables?.[this.table] ?? [];
+    return {
+      data: this.unwrapSingle ? (rows[0] ?? null) : rows,
+      error: null
+    };
   }
 }
 

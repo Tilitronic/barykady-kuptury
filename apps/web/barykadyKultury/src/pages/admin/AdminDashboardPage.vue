@@ -26,6 +26,15 @@
       </p>
       <p class="admin-dashboard__action">
         <RouterLink
+          :to="`/${currentLocale}/admin/projects`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-projects-link"
+        >
+          {{ t("admin.projects.title") }}
+        </RouterLink>
+      </p>
+      <p class="admin-dashboard__action">
+        <RouterLink
           :to="`/${currentLocale}/admin/import`"
           class="admin-dashboard__link focus-ring"
         >

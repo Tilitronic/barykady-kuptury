@@ -66,6 +66,21 @@
               {{ t("admin.dashboard") }}
             </RouterLink>
           </li>
+          <!--
+            T-027: only destinations that exist are linked. Project management
+            is the first feature surface reachable from the shell; the remaining
+            T-028…T-031 entries arrive with their own tickets.
+          -->
+          <li>
+            <RouterLink
+              :to="`/${currentLocale}/admin/projects`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isProjects ? 'page' : undefined"
+              data-testid="admin-nav-projects"
+            >
+              {{ t("admin.projects.title") }}
+            </RouterLink>
+          </li>
         </ul>
       </nav>
 
@@ -134,6 +149,11 @@ const currentLocale = computed<Locale>(() => {
 
 const isDashboard = computed(
   () => String(route.name ?? "") === ADMIN_DASHBOARD_NAME
+);
+
+/** True for the T-027 project list/editor/preview routes (nav highlight). */
+const isProjects = computed(() =>
+  String(route.name ?? "").startsWith("admin-project")
 );
 
 /** WCAG 2.4.1 bypass: focus the main landmark explicitly (see PublicLayout). */

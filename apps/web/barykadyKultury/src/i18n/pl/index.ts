@@ -375,6 +375,119 @@ const pl: MessageSchema = {
     dashboard: "Pulpit",
     backToSite: "Powrót do serwisu publicznego",
     signOut: "Wyloguj się",
+    /** T-027 — zarządzanie projektami: pola, zakładki językowe, cykl życia. */
+    projects: {
+      title: "Projekty",
+      description: "Twórz projekty organizacji i zarządzaj nimi.",
+      heading: "Projekty",
+      intro:
+        "Twórz, edytuj, przeglądaj i publikuj projekty. Szkice nigdy nie są widoczne publicznie.",
+      newProject: "Nowy projekt",
+      filterLabel: "Filtruj według statusu",
+      filterAll: "Wszystkie statusy",
+      statuses: {
+        draft: "Szkic",
+        published: "Opublikowany",
+        archived: "Zarchiwizowany"
+      },
+      empty: "Brak projektów.",
+      listFailed: "Nie udało się wczytać projektów.",
+      retry: "Spróbuj ponownie",
+      updated: "Zaktualizowano {date}",
+      updatedLabel: "Zaktualizowano",
+      completeness: {
+        label: "Kompletność tłumaczeń",
+        complete: "Kompletna",
+        incomplete: "Niekompletna",
+        notStarted: "Nierozpoczęta",
+        missing: "Brakuje: {fields}"
+      },
+      fields: {
+        slug: "Identyfikator URL",
+        slugHint:
+          "Wspólny dla wszystkich języków; małe litery, cyfry i myślniki. Nigdy nie zmienia się automatycznie razem z tytułem.",
+        status: "Status",
+        featured: "Wyróżnij na stronie głównej",
+        featuredHint: "Kolejność na stronie głównej ustala się osobno.",
+        startDate: "Data rozpoczęcia",
+        endDate: "Data zakończenia",
+        cover: "Obraz okładki",
+        coverHint: "PNG, JPEG lub WebP. Opcjonalny.",
+        coverChoose: "Wybierz obraz",
+        coverSelected: "Wybrano: {name}",
+        coverCurrent:
+          "Okładka jest już zapisana. Wybranie nowego obrazu zastąpi ją."
+      },
+      tabs: {
+        label: "Wersje językowe",
+        en: "Angielski",
+        pl: "Polski",
+        uk: "Ukraiński"
+      },
+      translation: {
+        title: "Tytuł",
+        summary: "Podsumowanie",
+        body: "Treść",
+        bodyHint: "Zwykły tekst lub Markdown. Surowy HTML nie jest renderowany."
+      },
+      actions: {
+        save: "Zapisz",
+        saving: "Zapisywanie…",
+        publish: "Opublikuj",
+        publishing: "Publikowanie…",
+        unpublish: "Wycofaj publikację",
+        unpublishing: "Wycofywanie…",
+        archive: "Zarchiwizuj",
+        archiving: "Archiwizowanie…",
+        delete: "Usuń",
+        deleting: "Usuwanie…",
+        preview: "Podgląd",
+        cancel: "Anuluj",
+        back: "Powrót do projektów"
+      },
+      messages: {
+        draftSaved: "Szkic zapisany.",
+        published: "Opublikowano. Projekt jest teraz publiczny.",
+        unpublished: "Wycofano publikację. Projekt nie jest już publiczny.",
+        archived: "Zarchiwizowano.",
+        deleted: "Projekt usunięty."
+      },
+      errors: {
+        slugRequired: "Wpisz identyfikator URL.",
+        slugFormat:
+          "Użyj małych liter, cyfr i myślników, na przykład spring-workshop.",
+        slugDuplicate:
+          "Ten identyfikator URL jest już używany przez inny projekt.",
+        startDateInvalid: "Wpisz prawidłową datę rozpoczęcia.",
+        endDateBeforeStart:
+          "Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.",
+        translationTitleRequired:
+          "Wpisz tytuł, zanim dodasz podsumowanie lub treść.",
+        publishFallbackIncomplete:
+          "Dodaj angielski tytuł i podsumowanie przed publikacją.",
+        saveFailed: "Nie udało się zapisać projektu. Spróbuj ponownie.",
+        loadFailed: "Nie udało się wczytać projektu.",
+        unavailable: "Usługa treści nie jest skonfigurowana.",
+        uploadFailed: "Nie udało się przesłać obrazu okładki.",
+        notAnImage: "Wybierz obraz PNG, JPEG lub WebP.",
+        deleteFailed: "Nie udało się usunąć projektu. Spróbuj ponownie.",
+        notFound: "Nie znaleziono projektu."
+      },
+      deleteDialog: {
+        title: "Usunąć ten projekt?",
+        message:
+          "Spowoduje to trwałe usunięcie projektu i jego tłumaczeń. Tej operacji nie można cofnąć.",
+        confirm: "Usuń projekt"
+      },
+      preview: {
+        title: "Podgląd szkicu",
+        description: "Podgląd projektu dla administratora.",
+        banner: "Podgląd szkicu — ten projekt nie jest widoczny publicznie.",
+        incomplete:
+          "Brak jeszcze kompletnego tłumaczenia. Dodaj tytuł, podsumowanie i treść, aby zobaczyć podgląd projektu.",
+        back: "Powrót do edytora"
+      }
+    },
     signIn: {
       title: "Logowanie",
       description:
@@ -406,7 +519,7 @@ const pl: MessageSchema = {
       welcome: "Zalogowano jako {email}.",
       placeholderHeading: "Co tutaj się pojawi",
       placeholder:
-        "Narzędzia zarządzania treścią — projektami, stronami, zespołem, publikacjami i wydarzeniami — pojawią się tutaj w miarę ich gotowości."
+        "Narzędzia zarządzania treścią — stronami, zespołem, publikacjami i wydarzeniami — pojawią się tutaj w miarę ich gotowości."
     },
     denied: {
       title: "Brak autoryzacji",

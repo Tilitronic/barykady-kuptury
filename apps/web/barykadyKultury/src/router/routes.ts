@@ -298,6 +298,59 @@ export const routes: RouteRecordRaw[] = [
             descriptionKey: "admin.import.description"
           }
         }
+      },
+      // ── T-027 project management ──────────────────────────────────────────
+      // `projects/new` precedes `projects/:id` so the static segment is
+      // unambiguous; `:id/preview` renders the public detail component behind
+      // the admin guard, so a draft can be reviewed without being reachable
+      // publicly (docs/PRODUCT_REQUIREMENTS.md §6).
+      {
+        path: "projects",
+        name: "admin-projects",
+        component: () => import("@/pages/admin/AdminProjectsPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.projects.title",
+            descriptionKey: "admin.projects.description"
+          }
+        }
+      },
+      {
+        path: "projects/new",
+        name: "admin-project-new",
+        component: () => import("@/pages/admin/AdminProjectEditPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.projects.title",
+            descriptionKey: "admin.projects.description"
+          }
+        }
+      },
+      {
+        path: "projects/:id",
+        name: "admin-project-edit",
+        component: () => import("@/pages/admin/AdminProjectEditPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.projects.title",
+            descriptionKey: "admin.projects.description"
+          }
+        }
+      },
+      {
+        path: "projects/:id/preview",
+        name: "admin-project-preview",
+        component: () => import("@/pages/admin/AdminProjectPreviewPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.projects.preview.title",
+            descriptionKey: "admin.projects.preview.description"
+          }
+        }
       }
     ]
   },

@@ -136,6 +136,27 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/AdminProjectEditPage': RouteRecordInfo<
+      '/admin/AdminProjectEditPage',
+      '/admin/AdminProjectEditPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminProjectPreviewPage': RouteRecordInfo<
+      '/admin/AdminProjectPreviewPage',
+      '/admin/AdminProjectPreviewPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminProjectsPage': RouteRecordInfo<
+      '/admin/AdminProjectsPage',
+      '/admin/AdminProjectsPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/admin/AdminSignInPage': RouteRecordInfo<
       '/admin/AdminSignInPage',
       '/admin/AdminSignInPage',
@@ -271,6 +292,30 @@ declare module 'vue-router/auto-routes' {
     'src/pages/admin/AdminImportPage.vue': {
       routes:
         | '/admin/AdminImportPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminProjectEditPage.vue': {
+      routes:
+        | '/admin/AdminProjectEditPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminProjectPreviewPage.vue': {
+      routes:
+        | '/admin/AdminProjectPreviewPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminProjectsPage.vue': {
+      routes:
+        | '/admin/AdminProjectsPage'
       views:
         | never
       pathParamNames:

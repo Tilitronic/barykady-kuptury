@@ -85,17 +85,22 @@ describe("landmarks and navigation", () => {
     expect(wrapper.get("main").attributes("id")).toBe("admin-main");
   });
 
-  it("links only the dashboard — no nav entries for unbuilt features", async () => {
+  it("links every built admin feature — no nav entries for unbuilt ones", async () => {
     configureAuth(fakeAuth(adminUser));
     await whenAuthReady();
 
     const wrapper = await mountLayout();
 
+    // T-026 shipped only the dashboard; T-027 added project management. The
+    // contract is "no dead nav entries", so each real destination is listed.
     const links = wrapper
       .findAll("nav a")
       .map(link => link.text())
       .filter(Boolean);
-    expect(links).toEqual(["Dashboard"]);
+    expect(links).toEqual(["Dashboard", "Projects"]);
+    expect(
+      wrapper.get("[data-testid='admin-nav-projects']").attributes("href")
+    ).toBe("/en/admin/projects");
   });
 
   it("hides the dashboard nav from sessions that cannot reach it", async () => {
@@ -144,11 +149,15 @@ describe("sign-out", () => {
     expect(button.text()).toBe("Sign out");
 
     await button.trigger("click");
-    // The handler is async; let the sign-out + navigation promises settle.
-    await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(signOutSpy).toHaveBeenCalled();
-    expect(wrapper.router.currentRoute.value.path).toBe("/en");
+    // The handler is async: sign-out resolves, then the public home route is
+    // navigated to, whose layout is a lazy import. Poll instead of a single
+    // microtask so the assertion waits for the dynamic import to resolve
+    // (a fixed `setTimeout(0)` raced the transform in isolation).
+    await vi.waitFor(() => {
+      expect(wrapper.router.currentRoute.value.path).toBe("/en");
+    });
   });
 
   it("is hidden for anonymous visitors (the sign-in page has no session to clear)", async () => {

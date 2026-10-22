@@ -469,6 +469,121 @@ const en = {
     dashboard: "Dashboard",
     backToSite: "Back to public site",
     signOut: "Sign out",
+    /**
+     * T-027 — project management. Fields, per-locale tabs, lifecycle actions
+     * and the draft preview. The form renders only these strings (no
+     * hard-coded copy) and every message is localized in en/pl/uk.
+     */
+    projects: {
+      title: "Projects",
+      description: "Create and manage the organization's projects.",
+      heading: "Projects",
+      intro:
+        "Create, edit, preview and publish projects. Drafts are never visible to the public.",
+      newProject: "New project",
+      filterLabel: "Filter by status",
+      filterAll: "All statuses",
+      statuses: {
+        draft: "Draft",
+        published: "Published",
+        archived: "Archived"
+      },
+      empty: "No projects yet.",
+      listFailed: "Projects could not be loaded.",
+      retry: "Try again",
+      updated: "Updated {date}",
+      updatedLabel: "Updated",
+      completeness: {
+        label: "Translation completeness",
+        complete: "Complete",
+        incomplete: "Incomplete",
+        notStarted: "Not started",
+        missing: "Missing: {fields}"
+      },
+      fields: {
+        slug: "URL slug",
+        slugHint:
+          "Shared by every language; lowercase letters, numbers and hyphens. It never changes automatically when the title changes.",
+        status: "Status",
+        featured: "Feature on the homepage",
+        featuredHint: "Homepage order is managed separately.",
+        startDate: "Start date",
+        endDate: "End date",
+        cover: "Cover image",
+        coverHint: "PNG, JPEG or WebP. Optional.",
+        coverChoose: "Choose an image",
+        coverSelected: "Selected: {name}",
+        coverCurrent:
+          "A cover is already stored. Choosing a new image replaces it."
+      },
+      tabs: {
+        label: "Language versions",
+        en: "English",
+        pl: "Polish",
+        uk: "Ukrainian"
+      },
+      translation: {
+        title: "Title",
+        summary: "Summary",
+        body: "Body",
+        bodyHint: "Plain text or Markdown. Raw HTML is not rendered."
+      },
+      actions: {
+        save: "Save",
+        saving: "Saving…",
+        publish: "Publish",
+        publishing: "Publishing…",
+        unpublish: "Unpublish",
+        unpublishing: "Unpublishing…",
+        archive: "Archive",
+        archiving: "Archiving…",
+        delete: "Delete",
+        deleting: "Deleting…",
+        preview: "Preview",
+        cancel: "Cancel",
+        back: "Back to projects"
+      },
+      messages: {
+        draftSaved: "Draft saved.",
+        published: "Published. The project is now public.",
+        unpublished: "Unpublished. The project is no longer public.",
+        archived: "Archived.",
+        deleted: "Project deleted."
+      },
+      errors: {
+        slugRequired: "Enter a URL slug.",
+        slugFormat:
+          "Use lowercase letters, numbers and hyphens, for example spring-workshop.",
+        slugDuplicate: "This URL slug is already used by another project.",
+        startDateInvalid: "Enter a valid start date.",
+        endDateBeforeStart: "The end date must not be before the start date.",
+        translationTitleRequired:
+          "Enter a title before adding summary or body text.",
+        publishFallbackIncomplete:
+          "Add an English title and summary before publishing.",
+        saveFailed: "The project could not be saved. Try again.",
+        loadFailed: "The project could not be loaded.",
+        unavailable: "The content service is not configured.",
+        uploadFailed: "The cover image could not be uploaded.",
+        notAnImage: "Choose a PNG, JPEG or WebP image.",
+        deleteFailed: "The project could not be deleted. Try again.",
+        notFound: "Project not found."
+      },
+      deleteDialog: {
+        title: "Delete this project?",
+        message:
+          "This permanently deletes the project and its translations. This cannot be undone.",
+        confirm: "Delete project"
+      },
+      preview: {
+        title: "Draft preview",
+        description: "Administrator preview of a project.",
+        banner: "Draft preview — this project is not visible to the public.",
+        incomplete:
+          "No complete translation is available yet. Add a title, summary and body to preview this project.",
+        back: "Back to editor"
+      }
+    },
     signIn: {
       title: "Sign in",
       description: "Administrator sign-in for the Barykady Kultury website.",
@@ -502,7 +617,7 @@ const en = {
       welcome: "Signed in as {email}.",
       placeholderHeading: "What will appear here",
       placeholder:
-        "Project, page, team, publication and event management tools are on the way — each will appear here as it is ready."
+        "Page, team, publication and event management tools are on the way — each will appear here as it is ready."
     },
     denied: {
       title: "Not authorized",
