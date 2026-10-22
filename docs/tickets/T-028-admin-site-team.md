@@ -1,7 +1,7 @@
 # T-028 — Admin site pages & team CRUD
 
-**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** todo
-**Reviewers:** @reviewer
+**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1 FIX + fixes verified) + @architector (approve-with-follow-ups)
 **Depends on:** T-026, T-016, T-018 · **Blocks:** T-031, T-032
 
 ## Outcome
@@ -50,3 +50,29 @@ pnpm test:e2e --grep "admin content"
 
 ## Log
 - (author) start:
+- (gate fix, 2026-10-23) Reviewer Major fixed: E2E `content-store` PostgREST
+  ordering now compares numeric columns numerically (regression: 2 before 10)
+  and applies `order=` to site-page reads too.
+- (gate fix, 2026-10-23) Reviewer Minor + architector FU1 fixed: completeness
+  formatter and `LocaleCompleteness` moved to neutral
+  `features/admin/shared/completeness`; added shared `TranslationStatus`
+  component; projects, site pages and team all render it. T-027 behavior is
+  unchanged (its formatter adapter keeps the same public function).
+- (gate fix, 2026-10-23) Architector FU3 bounded fix: team reorder documents
+  last-writer-wins and retries once on `23505`/`40P01` with the same desired
+  order. Unit test forces a first-attempt `23505`.
+- Deferred: retrofitting the T-027 project editor to `AdminLocaleTabs`. Reason:
+  T-027 is already shipped and locked by its own tests; the ticket requires no
+  behaviour change there, and the shared tab strip is used by both new T-028
+  editors. T-029 can adopt it without rework.
+- Deferred: a database/integration contention scenario for concurrent reorders.
+  Reason: FU3 is explicitly bounded to the caller-side retry; the DB proof for
+  ordering is the deferrable unique constraint plus the dense-order pgTAP
+  assertions, and a deterministic concurrent-commit test needs two sessions /
+  advisory orchestration outside this batch.
+- Deferred: wider retry rollout (backoff, other mutation paths, cross-feature
+  retry policy). Reason: only the team-reorder path has a proven transient
+  conflict class in V1; broadening before evidence would hide real failures.
+- Deferred: committing `knowledge/` analyzer artifacts. Reason: they are
+  pre-existing untracked research outputs; this ticket neither owns nor
+  validates them. Leave untracked and never stage them.

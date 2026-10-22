@@ -59,6 +59,10 @@ function resolveConcrete(
   if (String(route.path).includes(":id")) {
     params.id = "00000000-0000-4000-8000-000000000201";
   }
+  // T-028 site-page preview keys are dynamic.
+  if (String(route.path).includes(":pageKey")) {
+    params.pageKey = "about";
+  }
 
   // The generated typed-router names come from filename-based routing while this
   // table is explicit (known T-009 follow-up), so resolve by runtime name via a

@@ -151,9 +151,11 @@
             @click="activeLocale = locale"
           >
             {{ t(`admin.projects.tabs.${locale}`) }}
-            <span class="admin-project-edit__tab-state">
-              {{ completenessLabel(locale) }}
-            </span>
+            <TranslationStatus
+              class="admin-project-edit__tab-state"
+              :entry="completenessByLocale[locale]"
+              :labels="PROJECT_COMPLETENESS_LABELS"
+            />
           </button>
         </div>
 
@@ -303,6 +305,7 @@ import { computed, inject, nextTick, onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import TranslationStatus from "@/components/admin/TranslationStatus.vue";
 import {
   UiBanner,
   UiBtn,
@@ -321,7 +324,8 @@ import {
   uploadProjectCover,
   type AdminProject
 } from "@/features/admin/projects/api";
-import { formatCompletenessLabel } from "@/features/admin/projects/completeness";
+import { PROJECT_COMPLETENESS_LABELS } from "@/features/admin/projects/completeness";
+import type { LocaleCompleteness } from "@/features/admin/shared/completeness";
 import {
   emptyProjectForm,
   hasFormErrors,
@@ -399,6 +403,14 @@ const activeTranslation = computed(
 
 const completeness = computed(() => translationCompleteness(values.value));
 
+/** Shared presentation component expects a locale-keyed map. */
+const completenessByLocale = computed(
+  () =>
+    Object.fromEntries(
+      completeness.value.map(entry => [entry.locale, entry])
+    ) as Record<Locale, LocaleCompleteness>
+);
+
 const statusOptions = computed(() =>
   (["draft", "published", "archived"] as const).map(status => ({
     label: t(`admin.projects.statuses.${status}`),
@@ -447,13 +459,6 @@ function toFormValues(project: AdminProject): ProjectFormValues {
       ])
     ) as ProjectFormValues["translations"]
   };
-}
-
-function completenessLabel(locale: Locale): string {
-  const entry = completeness.value.find(item => item.locale === locale);
-  // Formatting (and the localized missing-field labels) lives in the shared
-  // formatter, so the list and the editor can never disagree (T-027 review #2).
-  return entry ? formatCompletenessLabel(entry, t) : "";
 }
 
 function translationError(field: "title"): boolean {

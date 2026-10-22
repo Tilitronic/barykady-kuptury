@@ -59,6 +59,19 @@ export interface FakeSupabaseOptions {
     } | null;
   };
   /**
+   * Per-call RPC envelopes, consumed in order (T-028 gate fix). The first
+   * entry answers the first call, the second the second, and so on; calls
+   * beyond the array fall back to `rpc`. This is the seam that proves a
+   * transient `23505`/`40P01` retry without re-implementing Postgres.
+   */
+  readonly rpcResults?: readonly {
+    readonly data?: unknown;
+    readonly error?: {
+      readonly message: string;
+      readonly code?: string;
+    } | null;
+  }[];
+  /**
    * Per-table failures (T-039): tables listed here resolve to an error while
    * others keep their `tables` fixture — the seam that proves one failing
    * page section does not blank its siblings.
@@ -201,6 +214,7 @@ export function createFakeSupabase(
 ): FakeSupabase {
   const calls: FakeQueryCall[] = [];
   const rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
+  let rpcIndex = 0;
   const from = (table: string) => new FakeQueryBuilder(table, options, calls);
 
   /**
@@ -209,10 +223,18 @@ export function createFakeSupabase(
    */
   const rpc = (name: string, args: Record<string, unknown>) => {
     rpcCalls.push({ name, args });
-    const result = {
-      data: options.rpc?.data ?? [],
-      error: options.rpc?.error ?? null
-    };
+
+    const queued = options.rpcResults?.[rpcIndex];
+    rpcIndex += 1;
+    const result = queued
+      ? {
+          data: "data" in queued ? queued.data : [],
+          error: queued.error ?? null
+        }
+      : {
+          data: options.rpc?.data ?? [],
+          error: options.rpc?.error ?? null
+        };
     const builder = {
       abortSignal: () => builder,
       // oxlint-disable-next-line unicorn/no-thenable

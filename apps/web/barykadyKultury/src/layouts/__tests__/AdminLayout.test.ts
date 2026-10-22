@@ -103,17 +103,29 @@ describe("landmarks and navigation", () => {
 
     const wrapper = await mountLayout();
 
-    // T-026 shipped the dashboard; T-027 added project management and T-041
-    // the import surface. Root carries every capability, so all real
-    // destinations are listed.
+    // T-026 shipped the dashboard; T-027 added project management, T-028
+    // site pages + team, and T-041 the import surface. Root carries every
+    // capability, so all real destinations are listed.
     const links = wrapper
       .findAll("nav a")
       .map(link => link.text())
       .filter(Boolean);
-    expect(links).toEqual(["Dashboard", "Projects", "Import content"]);
+    expect(links).toEqual([
+      "Dashboard",
+      "Site pages",
+      "Projects",
+      "Team",
+      "Import content"
+    ]);
+    expect(
+      wrapper.get("[data-testid='admin-nav-pages']").attributes("href")
+    ).toBe("/en/admin/pages");
     expect(
       wrapper.get("[data-testid='admin-nav-projects']").attributes("href")
     ).toBe("/en/admin/projects");
+    expect(
+      wrapper.get("[data-testid='admin-nav-team']").attributes("href")
+    ).toBe("/en/admin/team");
     expect(
       wrapper.get("[data-testid='admin-nav-import']").attributes("href")
     ).toBe("/en/admin/import");

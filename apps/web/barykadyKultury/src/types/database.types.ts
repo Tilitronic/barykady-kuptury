@@ -854,6 +854,10 @@ export type Database = {
         };
         Returns: string;
       };
+      consume_google_oauth_state_v1: {
+        Args: { p_state: string };
+        Returns: string;
+      };
       enqueue_content_sync_job_v1: {
         Args: {
           p_entity_id: string;
@@ -911,6 +915,10 @@ export type Database = {
         Args: { p_entity_id: string; p_kind: string; p_success: boolean };
         Returns: undefined;
       };
+      reorder_team_members_v1: {
+        Args: { p_ids: string[] };
+        Returns: undefined;
+      };
       save_project_v1: {
         Args: {
           p_cover_path: string;
@@ -920,6 +928,27 @@ export type Database = {
           p_published_at: string;
           p_slug: string;
           p_start_date: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+          p_translations: Json;
+        };
+        Returns: string;
+      };
+      save_site_page_v1: {
+        Args: {
+          p_id: string;
+          p_published_at: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+          p_translations: Json;
+        };
+        Returns: string;
+      };
+      save_team_member_v1: {
+        Args: {
+          p_id: string;
+          p_name: string;
+          p_portrait_path: string;
+          p_published_at: string;
+          p_sort_order: number;
           p_status: Database["public"]["Enums"]["content_status"];
           p_translations: Json;
         };
@@ -943,6 +972,22 @@ export type Database = {
         }[];
       };
       transition_project_v1: {
+        Args: {
+          p_id: string;
+          p_published_at?: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+        };
+        Returns: undefined;
+      };
+      transition_site_page_v1: {
+        Args: {
+          p_id: string;
+          p_published_at?: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+        };
+        Returns: undefined;
+      };
+      transition_team_member_v1: {
         Args: {
           p_id: string;
           p_published_at?: string;

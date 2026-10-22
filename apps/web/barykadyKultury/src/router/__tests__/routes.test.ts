@@ -72,6 +72,16 @@ describe("admin route table (T-026)", () => {
     expect(router.resolve("/en/admin/import").meta.requiresCapability).toBe(
       "importer"
     );
+    // T-028: site pages and team use their fixed D-42 scopes.
+    expect(router.resolve("/en/admin/pages").meta.requiresCapability).toBe(
+      "pages:write"
+    );
+    expect(
+      router.resolve("/en/admin/pages/about/preview").meta.requiresCapability
+    ).toBe("pages:write");
+    expect(router.resolve("/en/admin/team").meta.requiresCapability).toBe(
+      "team:write"
+    );
     // The dashboard is the shared landing surface: admin area only, no scope.
     expect(router.resolve("/en/admin").meta.requiresCapability).toBeUndefined();
   });

@@ -34,15 +34,6 @@
         <h1 class="about-page__title">{{ pageTitle }}</h1>
 
         <div class="about-page__content">
-          <!-- Body section: states belong to THIS section only. -->
-          <p v-if="page?.isFallback" class="about-page__fallback" role="note">
-            {{
-              t("content.fallbackNote", {
-                language: t("content.fallbackLanguage")
-              })
-            }}
-          </p>
-
           <div
             v-if="result.kind === 'loading'"
             class="about-page__state"
@@ -59,31 +50,17 @@
           >
             {{ t("content.unavailable") }}
           </div>
-          <template v-else-if="page">
-            <LocalizedRichText
-              v-if="intro.length > 0"
-              :blocks="intro"
-              :lang="bodyLang"
-              :new-tab-label="t('content.opensInNewTab')"
-              :label-lang="currentLocale"
-            />
-            <section
-              v-for="section in sections"
-              :id="section.id"
-              :key="section.id"
-              class="about-page__section"
-            >
-              <h2 class="about-page__section-title" tabindex="-1">
-                {{ section.title }}
-              </h2>
-              <LocalizedRichText
-                :blocks="section.blocks"
-                :lang="bodyLang"
-                :new-tab-label="t('content.opensInNewTab')"
-                :label-lang="currentLocale"
-              />
-            </section>
-          </template>
+          <!--
+            T-028: the same body component the admin preview renders. The page
+            keeps the title/TOC; the component owns the sanitized body and the
+            fallback note so preview and public can never drift.
+          -->
+          <SitePageBody
+            v-else-if="page"
+            :body="page.body ?? ''"
+            :locale="currentLocale"
+            :is-fallback="page.isFallback"
+          />
 
           <!-- Independent sections: a team/documents failure never blanks
              the body, and vice versa (T-039 page structure). -->
@@ -108,7 +85,7 @@ import PageToc from "@/components/navigation/PageToc.vue";
 import type { TocItem } from "@/components/navigation/PageToc.vue";
 import DocumentsSection from "@/components/documents/DocumentsSection.vue";
 import TeamSection from "@/components/team/TeamSection.vue";
-import LocalizedRichText from "@/components/content/LocalizedRichText.vue";
+import SitePageBody from "@/components/content/SitePageBody.vue";
 import { useSitePage } from "@/features/content/useSitePage";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 import { watchDeepLink } from "@/shared/content/deepLink";
@@ -136,15 +113,9 @@ const page = computed(() =>
 
 const pageTitle = computed(() => page.value?.title ?? t("about.title"));
 
-/** The body's language: the fallback note must not mislabel English text. */
-const bodyLang = computed(() =>
-  page.value?.isFallback ? "en" : currentLocale.value
-);
-
 /** Parsed once per body change; ids are positional (see the header comment). */
 const parsed = computed(() => splitRichTextSections(page.value?.body ?? ""));
 
-const intro = computed(() => parsed.value.intro);
 const sections = computed(() => parsed.value.sections);
 
 /**

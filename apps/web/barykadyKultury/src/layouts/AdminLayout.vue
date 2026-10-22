@@ -72,6 +72,16 @@
             (hiding, not disabling). Root carries every capability, so this
             renders all built destinations for a root admin.
           -->
+          <li v-if="can('pages:write')">
+            <RouterLink
+              :to="`/${currentLocale}/admin/pages`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isPages ? 'page' : undefined"
+              data-testid="admin-nav-pages"
+            >
+              {{ t("admin.content.title") }}
+            </RouterLink>
+          </li>
           <li v-if="can('projects:write')">
             <RouterLink
               :to="`/${currentLocale}/admin/projects`"
@@ -80,6 +90,16 @@
               data-testid="admin-nav-projects"
             >
               {{ t("admin.projects.title") }}
+            </RouterLink>
+          </li>
+          <li v-if="can('team:write')">
+            <RouterLink
+              :to="`/${currentLocale}/admin/team`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isTeam ? 'page' : undefined"
+              data-testid="admin-nav-team"
+            >
+              {{ t("admin.team.title") }}
             </RouterLink>
           </li>
           <li v-if="can('importer')">
@@ -162,10 +182,18 @@ const isDashboard = computed(
   () => String(route.name ?? "") === ADMIN_DASHBOARD_NAME
 );
 
+/** True for the T-028 site page editor/preview routes (nav highlight). */
+const isPages = computed(() =>
+  String(route.name ?? "").startsWith("admin-page")
+);
+
 /** True for the T-027 project list/editor/preview routes (nav highlight). */
 const isProjects = computed(() =>
   String(route.name ?? "").startsWith("admin-project")
 );
+
+/** True for the T-028 team editor (nav highlight). */
+const isTeam = computed(() => String(route.name ?? "") === "admin-team");
 
 /** True for the T-041 import surface (nav highlight). */
 const isImport = computed(() => String(route.name ?? "") === "admin-import");

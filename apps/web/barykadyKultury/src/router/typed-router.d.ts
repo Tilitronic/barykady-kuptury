@@ -164,6 +164,27 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/AdminSitePagePreviewPage': RouteRecordInfo<
+      '/admin/AdminSitePagePreviewPage',
+      '/admin/AdminSitePagePreviewPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminSitePagesPage': RouteRecordInfo<
+      '/admin/AdminSitePagesPage',
+      '/admin/AdminSitePagesPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminTeamPage': RouteRecordInfo<
+      '/admin/AdminTeamPage',
+      '/admin/AdminTeamPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -324,6 +345,30 @@ declare module 'vue-router/auto-routes' {
     'src/pages/admin/AdminSignInPage.vue': {
       routes:
         | '/admin/AdminSignInPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminSitePagePreviewPage.vue': {
+      routes:
+        | '/admin/AdminSitePagePreviewPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminSitePagesPage.vue': {
+      routes:
+        | '/admin/AdminSitePagesPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminTeamPage.vue': {
+      routes:
+        | '/admin/AdminTeamPage'
       views:
         | never
       pathParamNames:

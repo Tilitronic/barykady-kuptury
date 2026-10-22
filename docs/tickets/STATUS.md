@@ -33,7 +33,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-027 | Admin projects CRUD | 15 | done | @reviewer (rev-1) + @architector | — | — |
 | T-045 | Admin mutation hardening (transactional save + lifecycle invariant, from T-027 gates) | 15 | done | @reviewer (rev-1) + @architector (approve-with-follow-ups) | — | — |
 | T-046 | Capability-scoped admin roles (D-42, blocks T-028/T-029) | 15 | done | @reviewer (rev-1 security) + @architector (approve-with-follow-ups) | — | — |
-| T-028 | Admin site pages & team CRUD | 6 | todo | — | — | — |
+| T-028 | Admin site pages & team CRUD | 6 | done | @reviewer (rev-1) + @architector | — | — |
 | T-029 | Admin publications, documents, uploads | 6 | todo | — | — | — |
 | T-030 | Admin featured ordering | 6 | todo | — | — | — |
 | T-031 | Admin event mapping & translation coverage | 6 | todo | — | — | — |

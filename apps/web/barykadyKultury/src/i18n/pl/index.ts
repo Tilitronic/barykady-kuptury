@@ -672,6 +672,151 @@ const pl: MessageSchema = {
         none: "Nie zapisano jeszcze uruchomienia harmonogramu."
       }
     },
+    /** T-028 — edytor stron organizacji. */
+    content: {
+      title: "Strony",
+      description: "Edytuj treść stron organizacji i ich tłumaczenia.",
+      heading: "Strony",
+      intro:
+        "Wybierz stronę organizacji, edytuj każdą wersję językową i opublikuj ją, gdy angielska wersja zapasowa będzie kompletna.",
+      empty: "Nie istnieją jeszcze żadne edytowalne strony.",
+      fields: {
+        page: "Strona",
+        pageHint: "Można edytować tylko istniejące strony organizacji.",
+        status: "Status",
+        statusHint: "Nieopublikowane strony nie są widoczne publicznie."
+      },
+      statuses: {
+        draft: "Szkic",
+        published: "Opublikowana",
+        archived: "Zarchiwizowana"
+      },
+      tabs: {
+        label: "Wersje językowe",
+        en: "Angielski",
+        pl: "Polski",
+        uk: "Ukraiński"
+      },
+      translation: {
+        title: "Tytuł",
+        body: "Treść",
+        bodyHint: "Zwykły tekst lub Markdown. Surowy HTML nie jest renderowany."
+      },
+      completeness: {
+        complete: "Kompletna",
+        notStarted: "Nierozpoczęta",
+        missing: "Brakuje: {fields}"
+      },
+      actions: {
+        back: "Wróć do pulpitu",
+        save: "Zapisz",
+        saving: "Zapisywanie…",
+        publish: "Opublikuj",
+        publishing: "Publikowanie…",
+        unpublish: "Cofnij publikację",
+        unpublishing: "Cofanie publikacji…",
+        preview: "Podgląd"
+      },
+      messages: {
+        saved: "Strona zapisana.",
+        published: "Opublikowano. Strona jest teraz publiczna.",
+        unpublished: "Cofnięto publikację. Strona nie jest już publiczna."
+      },
+      errors: {
+        unavailable: "Usługa treści nie jest skonfigurowana.",
+        loadFailed: "Nie udało się wczytać strony.",
+        notFound: "Nie znaleziono strony.",
+        saveFailed: "Nie udało się zapisać strony. Spróbuj ponownie.",
+        titleRequired: "Wpisz tytuł przed dodaniem treści.",
+        bodyRequired: "Wpisz treść przed opublikowaniem.",
+        publishFallbackIncomplete:
+          "Dodaj angielski tytuł i treść przed opublikowaniem."
+      },
+      preview: {
+        title: "Podgląd strony",
+        description: "Podgląd strony organizacji dla administratora.",
+        banner:
+          "Podgląd — ta strona nie jest widoczna publicznie, dopóki nie zostanie opublikowana.",
+        back: "Wróć do stron",
+        incomplete:
+          "Żadne tłumaczenie nie jest jeszcze kompletne. Dodaj tytuł i treść, aby zobaczyć podgląd."
+      }
+    },
+    /** T-028 — zespół. Kolejność zmienia się przyciskami Góra/Dół. */
+    team: {
+      title: "Zespół",
+      description: "Twórz i zarządzaj członkami zespołu organizacji.",
+      heading: "Zespół",
+      intro:
+        "Dodawaj członków zespołu, edytuj rolę i biografię w każdym języku, ustal kolejność wyświetlania i publikuj każdego członka osobno.",
+      empty: "Nie ma jeszcze członków zespołu.",
+      statuses: {
+        draft: "Szkic",
+        published: "Opublikowany",
+        archived: "Zarchiwizowany"
+      },
+      fields: {
+        name: "Imię i nazwisko",
+        nameHint: "Wyświetlane w każdym języku; nie jest tłumaczone.",
+        portrait: "Portret",
+        portraitHint: "PNG, JPEG lub WebP. Opcjonalny.",
+        portraitSelected: "Wybrano: {name}",
+        portraitCurrent:
+          "Portret jest zapisany. Wybranie nowego obrazu go zastąpi."
+      },
+      tabs: {
+        label: "Wersje językowe",
+        en: "Angielski",
+        pl: "Polski",
+        uk: "Ukraiński"
+      },
+      translation: {
+        role: "Rola",
+        bio: "Krótka biografia"
+      },
+      completeness: {
+        complete: "Kompletna",
+        notStarted: "Nierozpoczęta",
+        missing: "Brakuje: {fields}"
+      },
+      actions: {
+        back: "Wróć do pulpitu",
+        newMember: "Nowy członek",
+        edit: "Edytuj",
+        editMember: "Edytuj członka",
+        moveUp: "W górę",
+        moveDown: "W dół",
+        publish: "Opublikuj",
+        unpublish: "Cofnij publikację",
+        save: "Zapisz",
+        saving: "Zapisywanie…",
+        cancel: "Anuluj",
+        delete: "Usuń",
+        removePortrait: "Usuń portret"
+      },
+      messages: {
+        saved: "Członek zespołu zapisany.",
+        published: "Opublikowano. Członek jest teraz publiczny.",
+        unpublished: "Cofnięto publikację. Członek nie jest już publiczny.",
+        reordered: "Kolejność wyświetlania zapisana.",
+        deleted: "Członek zespołu usunięty."
+      },
+      errors: {
+        nameRequired: "Wpisz imię i nazwisko członka.",
+        unavailable: "Usługa treści nie jest skonfigurowana.",
+        loadFailed: "Nie udało się wczytać zespołu.",
+        saveFailed: "Nie udało się zapisać członka. Spróbuj ponownie.",
+        uploadFailed: "Nie udało się przesłać portretu.",
+        notAnImage: "Wybierz obraz PNG, JPEG lub WebP.",
+        deleteFailed: "Nie udało się usunąć członka. Spróbuj ponownie."
+      },
+      deleteDialog: {
+        title: "Usunąć tego członka zespołu?",
+        message:
+          "Spowoduje to trwałe usunięcie członka, jego tłumaczeń i portretu. Tej operacji nie można cofnąć.",
+        confirm: "Usuń członka"
+      }
+    },
     scopes: {
       label: "Twoje uprawnienia",
       pages: "Strony",

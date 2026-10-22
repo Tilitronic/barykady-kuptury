@@ -24,6 +24,15 @@
       <p class="admin-dashboard__panel-text">
         {{ t("admin.dashboardPage.placeholder") }}
       </p>
+      <p v-if="can('pages:write')" class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/pages`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-pages-link"
+        >
+          {{ t("admin.content.title") }}
+        </RouterLink>
+      </p>
       <p v-if="can('projects:write')" class="admin-dashboard__action">
         <RouterLink
           :to="`/${currentLocale}/admin/projects`"
@@ -31,6 +40,15 @@
           data-testid="dashboard-projects-link"
         >
           {{ t("admin.projects.title") }}
+        </RouterLink>
+      </p>
+      <p v-if="can('team:write')" class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/team`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-team-link"
+        >
+          {{ t("admin.team.title") }}
         </RouterLink>
       </p>
       <p v-if="can('importer')" class="admin-dashboard__action">

@@ -764,6 +764,158 @@ const en = {
         none: "No scheduled run recorded yet."
       }
     },
+    /**
+     * T-028 — site page editor. Pick an existing organization page, edit
+     * title/body per locale, publish/unpublish and preview. No create action
+     * and no slug field: `page_key` is the stable identity (D-24).
+     */
+    content: {
+      title: "Site pages",
+      description: "Edit the organization's page content and translations.",
+      heading: "Site pages",
+      intro:
+        "Choose an organization page, edit each language version, and publish when the English fallback is complete.",
+      empty: "No editable site pages exist yet.",
+      fields: {
+        page: "Page",
+        pageHint: "Only existing organization pages can be edited.",
+        status: "Status",
+        statusHint: "Unpublished pages are not visible to the public."
+      },
+      statuses: {
+        draft: "Draft",
+        published: "Published",
+        archived: "Archived"
+      },
+      tabs: {
+        label: "Language versions",
+        en: "English",
+        pl: "Polish",
+        uk: "Ukrainian"
+      },
+      translation: {
+        title: "Title",
+        body: "Body",
+        bodyHint: "Plain text or Markdown. Raw HTML is not rendered."
+      },
+      completeness: {
+        complete: "Complete",
+        notStarted: "Not started",
+        missing: "Missing: {fields}"
+      },
+      actions: {
+        back: "Back to dashboard",
+        save: "Save",
+        saving: "Saving…",
+        publish: "Publish",
+        publishing: "Publishing…",
+        unpublish: "Unpublish",
+        unpublishing: "Unpublishing…",
+        preview: "Preview"
+      },
+      messages: {
+        saved: "Page saved.",
+        published: "Published. The page is now public.",
+        unpublished: "Unpublished. The page is no longer public."
+      },
+      errors: {
+        unavailable: "The content service is not configured.",
+        loadFailed: "The page could not be loaded.",
+        notFound: "Page not found.",
+        saveFailed: "The page could not be saved. Try again.",
+        titleRequired: "Enter a title before adding body text.",
+        bodyRequired: "Enter a body before publishing.",
+        publishFallbackIncomplete:
+          "Add an English title and body before publishing."
+      },
+      preview: {
+        title: "Page preview",
+        description: "Administrator preview of an organization page.",
+        banner:
+          "Preview — this page is not visible to the public unless it is published.",
+        back: "Back to site pages",
+        incomplete:
+          "No complete translation is available yet. Add a title and body to preview this page."
+      }
+    },
+    /**
+     * T-028 — team CRUD. Ordering uses explicit Up/Down buttons so it stays
+     * keyboard operable (never drag-only); role and bio are optional.
+     */
+    team: {
+      title: "Team",
+      description: "Create and manage the organization's team members.",
+      heading: "Team",
+      intro:
+        "Add team members, edit their role and biography per language, set the display order, and publish each member.",
+      empty: "No team members yet.",
+      statuses: {
+        draft: "Draft",
+        published: "Published",
+        archived: "Archived"
+      },
+      fields: {
+        name: "Name",
+        nameHint: "Shown in every language; it is not translated.",
+        portrait: "Portrait",
+        portraitHint: "PNG, JPEG or WebP. Optional.",
+        portraitSelected: "Selected: {name}",
+        portraitCurrent:
+          "A portrait is stored. Choosing a new image replaces it."
+      },
+      tabs: {
+        label: "Language versions",
+        en: "English",
+        pl: "Polish",
+        uk: "Ukrainian"
+      },
+      translation: {
+        role: "Role",
+        bio: "Short biography"
+      },
+      completeness: {
+        complete: "Complete",
+        notStarted: "Not started",
+        missing: "Missing: {fields}"
+      },
+      actions: {
+        back: "Back to dashboard",
+        newMember: "New member",
+        edit: "Edit",
+        editMember: "Edit member",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        publish: "Publish",
+        unpublish: "Unpublish",
+        save: "Save",
+        saving: "Saving…",
+        cancel: "Cancel",
+        delete: "Delete",
+        removePortrait: "Remove portrait"
+      },
+      messages: {
+        saved: "Team member saved.",
+        published: "Published. The member is now public.",
+        unpublished: "Unpublished. The member is no longer public.",
+        reordered: "Display order saved.",
+        deleted: "Team member deleted."
+      },
+      errors: {
+        nameRequired: "Enter the member's name.",
+        unavailable: "The content service is not configured.",
+        loadFailed: "The team could not be loaded.",
+        saveFailed: "The member could not be saved. Try again.",
+        uploadFailed: "The portrait could not be uploaded.",
+        notAnImage: "Choose a PNG, JPEG or WebP image.",
+        deleteFailed: "The member could not be deleted. Try again."
+      },
+      deleteDialog: {
+        title: "Delete this team member?",
+        message:
+          "This permanently deletes the member, their translations and their portrait. This cannot be undone.",
+        confirm: "Delete member"
+      }
+    },
     scopes: {
       label: "Your access",
       pages: "Pages",

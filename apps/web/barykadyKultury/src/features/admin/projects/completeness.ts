@@ -1,57 +1,35 @@
-import type { LocaleCompleteness } from "./projectForm";
+import {
+  formatCompletenessLabel as formatSharedCompletenessLabel,
+  type CompletenessLabelKeys,
+  type CompletenessTranslate,
+  type LocaleCompleteness
+} from "@/features/admin/shared/completeness";
 
 /**
- * T-027 review finding #2 — one shared formatter for the admin translation
- * completeness indicator.
+ * T-027 project-specific completeness seam.
  *
- * The indicator appeared in both the project list and the editor, each with its
- * own copy of the same three-way branch, and each interpolated the raw database
- * field keys (`title, summary, body`) into user-facing copy. That is both a
- * duplication defect and an i18n defect (AGENTS.md rule 9: no user-facing string
- * may be hard-coded or untranslated).
- *
- * This module owns the branch AND the field-label mapping, so:
- *   - the two pages can only render the same verdict (no drift);
- *   - a missing field is named with its localized label
- *     (`admin.projects.translation.*`), never with the storage key.
- *
- * It is pure apart from the injected `t`, so it is unit-tested across all three
- * catalogues without mounting a component.
+ * T-028 gate fix (FU1): the branch, the verdict type and the field-label
+ * mapping moved to the neutral `features/admin/shared/completeness` module.
+ * This file is now only the project catalogue adapter, so T-027 callers and
+ * tests keep their exact public behaviour without owning shared logic.
  */
+export type {
+  CompletenessLabelKeys,
+  CompletenessTranslate,
+  LocaleCompleteness
+};
 
-/**
- * The minimal translate seam the formatter needs. Typed structurally rather
- * than as vue-i18n's `ComposerTranslation` so the feature module stays free of
- * i18n implementation types and both the app's `t` and a test i18n instance
- * satisfy it without casts.
- */
-export type CompletenessTranslate = (
-  key: string,
-  named?: Record<string, unknown>
-) => string;
+export const PROJECT_COMPLETENESS_LABELS: CompletenessLabelKeys = {
+  complete: "admin.projects.completeness.complete",
+  notStarted: "admin.projects.completeness.notStarted",
+  missing: "admin.projects.completeness.missing",
+  field: field => `admin.projects.translation.${field}`
+};
 
-/**
- * Renders the localized completeness verdict for one locale entry.
- *
- * @param entry - the per-locale completeness report from `projectForm`.
- * @param t - the active translator.
- */
+/** Renders the project-namespace verdict (behaviour unchanged from T-027). */
 export function formatCompletenessLabel(
   entry: LocaleCompleteness,
   t: CompletenessTranslate
 ): string {
-  if (entry.complete) {
-    return t("admin.projects.completeness.complete");
-  }
-
-  if (!entry.hasContent) {
-    return t("admin.projects.completeness.notStarted");
-  }
-
-  // Localized labels, not the raw keys the report carries.
-  const fields = entry.missing
-    .map(field => t(`admin.projects.translation.${field}`))
-    .join(", ");
-
-  return t("admin.projects.completeness.missing", { fields });
+  return formatSharedCompletenessLabel(entry, t, PROJECT_COMPLETENESS_LABELS);
 }

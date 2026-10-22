@@ -1,8 +1,15 @@
+import type { LocaleCompleteness } from "@/features/admin/shared/completeness";
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   type Locale
 } from "@/features/i18n/locales";
+
+/**
+ * Re-exported for existing T-027 callers/tests. The type itself lives in the
+ * neutral `features/admin/shared` module (T-028 gate fix, FU1).
+ */
+export type { LocaleCompleteness };
 
 /**
  * T-027 — pure project form model.
@@ -48,13 +55,6 @@ export interface ProjectFormValues {
   /** Storage object path (never a URL), or null. */
   coverPath: string | null;
   translations: Record<Locale, TranslationDraft>;
-}
-
-export interface LocaleCompleteness {
-  readonly locale: Locale;
-  readonly complete: boolean;
-  readonly hasContent: boolean;
-  readonly missing: readonly TranslationField[];
 }
 
 export type SlugError = "required" | "format" | "duplicate";

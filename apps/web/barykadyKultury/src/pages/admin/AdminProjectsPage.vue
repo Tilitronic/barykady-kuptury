@@ -96,9 +96,11 @@
                 <span class="admin-projects__locale-code">
                   {{ entry.locale.toUpperCase() }}
                 </span>
-                <span class="admin-projects__locale-state">
-                  {{ formatCompletenessLabel(entry, t) }}
-                </span>
+                <TranslationStatus
+                  class="admin-projects__locale-state"
+                  :entry="entry"
+                  :labels="PROJECT_COMPLETENESS_LABELS"
+                />
               </li>
             </ul>
           </td>
@@ -119,13 +121,14 @@ import { computed, inject, onMounted, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import TranslationStatus from "@/components/admin/TranslationStatus.vue";
 import { UiBanner, UiBtn, UiSelect } from "@/components/ui";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import {
   fetchAdminProjects,
   type AdminProject
 } from "@/features/admin/projects/api";
-import { formatCompletenessLabel } from "@/features/admin/projects/completeness";
+import { PROJECT_COMPLETENESS_LABELS } from "@/features/admin/projects/completeness";
 import {
   translationCompleteness,
   type ProjectStatus

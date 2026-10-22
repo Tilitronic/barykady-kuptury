@@ -364,6 +364,49 @@ export const routes: RouteRecordRaw[] = [
             descriptionKey: "admin.projects.preview.description"
           }
         }
+      },
+      // ── T-028 site pages & team ──────────────────────────────────────────
+      // `pages:write` / `team:write` are the fixed D-42 scopes from
+      // docs/architecture.md §6.1. The preview route sits before the editor
+      // list so `pages/:pageKey/preview` can never be read as a page key.
+      {
+        path: "pages/:pageKey/preview",
+        name: "admin-page-preview",
+        component: () => import("@/pages/admin/AdminSitePagePreviewPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "pages:write",
+          pageMeta: {
+            titleKey: "admin.content.preview.title",
+            descriptionKey: "admin.content.preview.description"
+          }
+        }
+      },
+      {
+        path: "pages",
+        name: "admin-pages",
+        component: () => import("@/pages/admin/AdminSitePagesPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "pages:write",
+          pageMeta: {
+            titleKey: "admin.content.title",
+            descriptionKey: "admin.content.description"
+          }
+        }
+      },
+      {
+        path: "team",
+        name: "admin-team",
+        component: () => import("@/pages/admin/AdminTeamPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "team:write",
+          pageMeta: {
+            titleKey: "admin.team.title",
+            descriptionKey: "admin.team.description"
+          }
+        }
       }
     ]
   },
