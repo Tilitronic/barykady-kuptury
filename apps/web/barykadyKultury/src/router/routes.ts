@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from "vue-router";
 
+import type { AdminScope } from "@/features/auth/adminClaim";
 import { LOCALE_ROUTE_PATTERN } from "@/features/i18n/locales";
 import type { LocalePageMeta } from "@/features/i18n/pageMeta";
 import { resolveInitialLocale } from "@/features/i18n/resolveInitialLocale";
@@ -22,6 +23,13 @@ declare module "vue-router" {
      * (docs/PRODUCT_REQUIREMENTS.md §6 — RLS enforces independently).
      */
     requiresAdmin?: boolean;
+    /**
+     * T-046 — the exact capability required for this route (D-42). Read by
+     * `createAdminGuard`; a satisfied `requiresAdmin`/root session still fails
+     * this gate when the scope is absent. Root carries the whole vocabulary in
+     * the client mirror. UX gating only — RLS and RPC re-checks enforce.
+     */
+    requiresCapability?: AdminScope;
   }
 }
 
@@ -293,6 +301,7 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/admin/AdminImportPage.vue"),
         meta: {
           requiresAdmin: true,
+          requiresCapability: "importer",
           pageMeta: {
             titleKey: "admin.import.title",
             descriptionKey: "admin.import.description"
@@ -310,6 +319,7 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/admin/AdminProjectsPage.vue"),
         meta: {
           requiresAdmin: true,
+          requiresCapability: "projects:write",
           pageMeta: {
             titleKey: "admin.projects.title",
             descriptionKey: "admin.projects.description"
@@ -322,6 +332,7 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/admin/AdminProjectEditPage.vue"),
         meta: {
           requiresAdmin: true,
+          requiresCapability: "projects:write",
           pageMeta: {
             titleKey: "admin.projects.title",
             descriptionKey: "admin.projects.description"
@@ -334,6 +345,7 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/admin/AdminProjectEditPage.vue"),
         meta: {
           requiresAdmin: true,
+          requiresCapability: "projects:write",
           pageMeta: {
             titleKey: "admin.projects.title",
             descriptionKey: "admin.projects.description"
@@ -346,6 +358,7 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("@/pages/admin/AdminProjectPreviewPage.vue"),
         meta: {
           requiresAdmin: true,
+          requiresCapability: "projects:write",
           pageMeta: {
             titleKey: "admin.projects.preview.title",
             descriptionKey: "admin.projects.preview.description"

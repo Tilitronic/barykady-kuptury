@@ -163,6 +163,67 @@ V1 is read-only with respect to Google Calendar. Creating/editing Google events 
 - Disable open registration. Do not implement custom password storage.
 - Keep production credentials outside local fixtures and CI logs. Use isolated test project/local Supabase for tests.
 
+### 6.1 Capability-scoped administration (D-42, T-046)
+
+`app_metadata.role = 'admin'` remains the **root** claim and the only D-17
+expression. `public.is_admin()` is unchanged and still bypasses every scoped
+check. A non-root administrator instead carries
+`app_metadata.scopes: text[]`; the **single** second enforcement point is
+`public.has_capability(text)`, which reads only the verified JWT's
+`app_metadata.scopes` array. Policies never repeat the claim expression.
+
+Write policies on scoped content read
+`public.is_admin() OR public.has_capability('<feature>:write')`; the matching
+admin `SELECT` policy uses the same predicate so an editor can see the drafts
+they are allowed to edit. RPCs in the T-045 family re-check the predicate
+inside the function exactly as they re-check `is_admin()`. Grants are made
+only through the Supabase Admin API (service-role, server-side); no client,
+RPC or table grants a scope, so self-escalation is unrepresentable (D-17
+invariant). Unknown scope strings are inert: no policy references them, so a
+mis-typed grant fails closed.
+
+Fixed V1 vocabulary (delete is the same capability as write; `importer` is
+the one action-scope, matching the ana002 recommended-flow diagram):
+
+| Scope | Grants draft read + write on | Storage |
+|---|---|---|
+| `pages:write` | `site_pages`, `site_page_translations` | — |
+| `projects:write` | `projects`, `project_translations`; `save_project_v1`, `transition_project_v1` | cover upload needs `media:write` |
+| `publications:write` | `publications`, `publication_translations`, `publication_files`, publication-owned `content_assets` | `public-documents` |
+| `documents:write` | `organization_documents`, `organization_document_translations`, document-owned `content_assets` | `public-documents` |
+| `team:write` | `team_members`, `team_member_translations` | portrait upload needs `media:write` |
+| `events:write` | `calendar_event_links` | — |
+| `media:write` | image assets and covers/portraits | `public-media` |
+| `importer` | import/sync status: `content_sync_jobs`, `content_sync_runs` | `content-sources` (private originals) |
+
+The shared `public-media` bucket mixes features; per-feature folder prefixes
+are the honest follow-up before `media:write` can mean "only my feature's
+files". Until then the scope is intentionally bucket-wide. Zero scopes means
+today's non-admin behaviour (deny-by-default, D-21). The client mirror parses
+the same array in `src/features/auth/adminClaim.ts`; the route guard **hides**
+gated navigation and routes rather than disabling them, and remains a UX
+convenience — RLS is the authorization boundary.
+
+### 6.2 Google import credential vault (D-41 design; implementation owned by T-042)
+
+Production Google import uses **per-admin OAuth with `drive.file` only** and a
+Google Picker gesture per file. A refresh token is written to a
+service-role-only `google_connections` table, encrypted at rest with pgcrypto;
+the data-encryption key lives in Netlify environment configuration and the
+browser never sees it. Tokens are never placed in `VITE_*` variables, logs,
+fixtures or client-visible rows, and are revoked/deleted when an administrator
+leaves.
+
+The interactive import path uses the requesting administrator's own token and
+records `requested_by`. The background and nightly-schedule paths ride the
+**link owner's** stored token; if it is revoked or the person leaves, the last
+published copy keeps serving, the failure surfaces to admins, and another
+editor re-links the document. The shared `GOOGLE_OAUTH_*` environment token
+is demoted to a development/demo fixture, and the `service_account` mode stays
+behind the existing resolver toggle pending the Workspace/scope spike. This
+section defines the vault contract only; no vault table or OAuth UI ships in
+T-046.
+
 ## 7. Contact form and other external services
 
 A message form requires a server-side delivery path. The frontend must never receive email-provider credentials. Keep the form optional until an email provider, sending identity, and anti-spam measures are configured. A `mailto:` link is an acceptable fallback for the first release.

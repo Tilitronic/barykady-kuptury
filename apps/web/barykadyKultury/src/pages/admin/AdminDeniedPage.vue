@@ -13,8 +13,8 @@
     permissions fact, not an error the user caused.
   -->
   <div class="admin-denied">
-    <h1 class="admin-denied__heading">{{ t("admin.denied.heading") }}</h1>
-    <p class="admin-denied__message">{{ t("admin.denied.message") }}</p>
+    <h1 class="admin-denied__heading">{{ heading }}</h1>
+    <p class="admin-denied__message">{{ message }}</p>
 
     <div class="admin-denied__actions">
       <RouterLink
@@ -56,9 +56,30 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const { signOut } = useAuth();
+const { isAdmin, signOut } = useAuth();
 
 const signingOut = ref(false);
+
+/**
+ * T-046: a scoped editor bounced from an out-of-scope route arrives with
+ * `?missing=<scope>` from the guard. They ARE an administrator, just not for
+ * that area, so the copy must not claim they lack administrator access.
+ */
+const isScopedDenial = computed(
+  () => isAdmin.value && typeof route.query.missing === "string"
+);
+
+const heading = computed(() =>
+  isScopedDenial.value
+    ? t("admin.scopes.deniedTitle")
+    : t("admin.denied.heading")
+);
+
+const message = computed(() =>
+  isScopedDenial.value
+    ? t("admin.scopes.deniedMessage")
+    : t("admin.denied.message")
+);
 
 const currentLocale = computed<Locale>(() => {
   const { locale } = route.params as { locale?: unknown };

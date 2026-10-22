@@ -24,7 +24,7 @@
       <p class="admin-dashboard__panel-text">
         {{ t("admin.dashboardPage.placeholder") }}
       </p>
-      <p class="admin-dashboard__action">
+      <p v-if="can('projects:write')" class="admin-dashboard__action">
         <RouterLink
           :to="`/${currentLocale}/admin/projects`"
           class="admin-dashboard__link focus-ring"
@@ -33,14 +33,36 @@
           {{ t("admin.projects.title") }}
         </RouterLink>
       </p>
-      <p class="admin-dashboard__action">
+      <p v-if="can('importer')" class="admin-dashboard__action">
         <RouterLink
           :to="`/${currentLocale}/admin/import`"
           class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-import-link"
         >
           {{ t("admin.import.title") }}
         </RouterLink>
       </p>
+    </section>
+
+    <!--
+      T-046: a scoped editor sees exactly the areas granted in
+      app_metadata.scopes. Root is the SQL bypass and needs no list, so the
+      panel is hidden for root sessions.
+    -->
+    <section
+      v-if="!isRootAdmin && capabilities.length > 0"
+      class="admin-dashboard__panel admin-dashboard__access"
+      :aria-labelledby="accessHeadingId"
+      data-testid="dashboard-access"
+    >
+      <h2 :id="accessHeadingId" class="admin-dashboard__panel-title">
+        {{ t("admin.scopes.label") }}
+      </h2>
+      <ul class="admin-dashboard__scope-list">
+        <li v-for="scope in capabilities" :key="scope">
+          {{ t(SCOPE_LABEL_KEYS[scope]) }}
+        </li>
+      </ul>
     </section>
   </div>
 </template>
@@ -50,6 +72,7 @@ import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import type { AdminScope } from "@/features/auth/adminClaim";
 import { useAuth } from "@/features/auth/authStore";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
@@ -60,8 +83,23 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
  * placeholder as their tickets land.
  */
 const { t } = useI18n();
-const { user } = useAuth();
+const { user, capabilities, isRootAdmin, can } = useAuth();
 const route = useRoute();
+
+/**
+ * Scope → message key. Kept here (not in the parser) because it is display
+ * policy; the vocabulary itself stays in adminClaim.ts, shared with the guard.
+ */
+const SCOPE_LABEL_KEYS: Record<AdminScope, string> = {
+  "pages:write": "admin.scopes.pages",
+  "projects:write": "admin.scopes.projects",
+  "publications:write": "admin.scopes.publications",
+  "documents:write": "admin.scopes.documents",
+  "team:write": "admin.scopes.team",
+  "events:write": "admin.scopes.events",
+  "media:write": "admin.scopes.media",
+  importer: "admin.scopes.importer"
+};
 
 const userEmail = computed(() => user.value?.email ?? "");
 const currentLocale = computed<Locale>(() => {
@@ -69,8 +107,9 @@ const currentLocale = computed<Locale>(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-/** Stable id so the panel's accessible name relation never drifts. */
+/** Stable ids so the panels' accessible name relations never drift. */
 const panelHeadingId = "admin-dashboard-panel-heading";
+const accessHeadingId = "admin-dashboard-access-heading";
 </script>
 
 <style scoped>
@@ -119,5 +158,15 @@ const panelHeadingId = "admin-dashboard-panel-heading";
 .admin-dashboard__link {
   color: var(--color-link);
   font-weight: 600;
+}
+
+.admin-dashboard__access {
+  margin-top: 1rem;
+}
+
+.admin-dashboard__scope-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  line-height: 1.6;
 }
 </style>

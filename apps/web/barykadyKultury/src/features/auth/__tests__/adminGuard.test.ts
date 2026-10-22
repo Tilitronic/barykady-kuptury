@@ -5,10 +5,11 @@ import {
   ADMIN_DASHBOARD_NAME,
   ADMIN_DENIED_NAME,
   ADMIN_SIGN_IN_NAME,
+  CAPABILITY_QUERY_KEY,
   createAdminGuard,
   REDIRECT_QUERY_KEY
 } from "../adminGuard";
-import type { AuthStatus } from "../adminClaim";
+import { ADMIN_SCOPES, type AdminScope, type AuthStatus } from "../adminClaim";
 
 /**
  * T-026 — guard matrix (ticket TDD plan step 1).
@@ -25,6 +26,7 @@ interface ToOptions {
   path: string;
   locale?: string;
   requiresAdmin?: boolean;
+  requiresCapability?: AdminScope;
   query?: Record<string, string>;
 }
 
@@ -39,19 +41,34 @@ function makeTo(options: ToOptions): RouteLocationNormalized {
         : ""),
     query: options.query ?? {},
     params: options.locale === undefined ? {} : { locale: options.locale },
-    meta: options.requiresAdmin ? { requiresAdmin: true } : {}
+    meta: {
+      ...(options.requiresAdmin ? { requiresAdmin: true } : {}),
+      ...(options.requiresCapability
+        ? { requiresCapability: options.requiresCapability }
+        : {})
+    }
   } as unknown as RouteLocationNormalized;
 }
 
-function guardFor(status: AuthStatus) {
+function guardFor(
+  status: AuthStatus,
+  capabilities: readonly AdminScope[] = []
+) {
   return createAdminGuard({
-    getAuthState: async () => ({ status, user: null })
+    getAuthState: async () => ({ status, user: null, capabilities })
   });
 }
 
+/** Root carries the whole vocabulary in the client mirror. */
+const ROOT_CAPABILITIES = ADMIN_SCOPES;
+
 /** Runs the guard and returns its navigation decision. */
-async function decide(status: AuthStatus, to: RouteLocationNormalized) {
-  const guard = guardFor(status);
+async function decide(
+  status: AuthStatus,
+  to: RouteLocationNormalized,
+  capabilities: readonly AdminScope[] = []
+) {
+  const guard = guardFor(status, capabilities);
   // Vue Router still passes a third `next` callback; the guard returns its
   // decision directly, so this records that the legacy callback stays unused.
   const legacyNextCallback = vi.fn();
@@ -192,11 +209,109 @@ describe("admins", () => {
   });
 });
 
+describe("scoped administrators (T-046/D-42)", () => {
+  const publicationsOnly: readonly AdminScope[] = ["publications:write"];
+
+  it("pass a route whose capability they hold", async () => {
+    const decision = await decide(
+      "admin",
+      makeTo({
+        name: "admin-publications",
+        path: "/en/admin/publications",
+        locale: "en",
+        requiresAdmin: true,
+        requiresCapability: "publications:write"
+      }),
+      publicationsOnly
+    );
+    expect(decision).toBe(true);
+  });
+
+  it("are denied a route outside their scope with the missing capability recorded", async () => {
+    const decision = await decide(
+      "admin",
+      makeTo({
+        name: "admin-projects",
+        path: "/en/admin/projects",
+        locale: "en",
+        requiresAdmin: true,
+        requiresCapability: "projects:write"
+      }),
+      publicationsOnly
+    );
+    expect(decision).toEqual({
+      name: ADMIN_DENIED_NAME,
+      params: { locale: "en" },
+      query: { [CAPABILITY_QUERY_KEY]: "projects:write" }
+    });
+  });
+
+  it("stay on the scoped denial page (terminal, no dashboard bounce)", async () => {
+    const decision = await decide(
+      "admin",
+      makeTo({
+        name: ADMIN_DENIED_NAME,
+        path: "/en/admin/access-denied",
+        locale: "en",
+        query: { [CAPABILITY_QUERY_KEY]: "projects:write" }
+      }),
+      publicationsOnly
+    );
+    expect(decision).toBe(true);
+  });
+
+  it("are sent from a bare denial page to the dashboard", async () => {
+    const decision = await decide(
+      "admin",
+      makeTo({
+        name: ADMIN_DENIED_NAME,
+        path: "/en/admin/access-denied",
+        locale: "en"
+      }),
+      publicationsOnly
+    );
+    expect(decision).toEqual({
+      name: ADMIN_DASHBOARD_NAME,
+      params: { locale: "en" }
+    });
+  });
+
+  it("root (the whole vocabulary) passes every capability gate", async () => {
+    const decision = await decide(
+      "admin",
+      makeTo({
+        name: "admin-import",
+        path: "/en/admin/import",
+        locale: "en",
+        requiresAdmin: true,
+        requiresCapability: "importer"
+      }),
+      ROOT_CAPABILITIES
+    );
+    expect(decision).toBe(true);
+  });
+
+  it("a capability-only route still triggers the guard (protected without requiresAdmin)", async () => {
+    const decision = await decide(
+      "admin",
+      makeTo({
+        name: "admin-publications",
+        path: "/en/admin/publications",
+        locale: "en",
+        requiresCapability: "publications:write"
+      }),
+      publicationsOnly
+    );
+    expect(decision).toBe(true);
+  });
+});
+
 describe("non-admin routes and edge cases", () => {
   it("never touches public routes", async () => {
     const getAuthState = vi.fn(async () => ({
       status: "anonymous" as const,
-      user: null
+      user: null,
+      capabilities: []
     }));
     const guard = createAdminGuard({ getAuthState });
 

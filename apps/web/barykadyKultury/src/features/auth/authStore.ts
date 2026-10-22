@@ -17,7 +17,13 @@
 import { reactive, readonly, computed } from "vue";
 import type { Session, User } from "@supabase/supabase-js";
 
-import { deriveAuthStatus, type AuthStatus } from "./adminClaim";
+import {
+  deriveAuthStatus,
+  getAdminCapabilities,
+  isAdminUser,
+  type AdminScope,
+  type AuthStatus
+} from "./adminClaim";
 
 /**
  * Minimal error shape Supabase's `AuthError` satisfies. The explicit
@@ -62,9 +68,19 @@ export type SignInResult =
 export interface AuthSnapshot {
   status: AuthStatus;
   user: User | null;
+  /**
+   * T-046 — effective UI capabilities. Root gets the whole vocabulary (the SQL
+   * bypass expressed as data); a scoped editor gets exactly their parsed
+   * `app_metadata.scopes`. Always empty for anonymous/non-admin sessions.
+   */
+  capabilities: readonly AdminScope[];
 }
 
-const state = reactive<AuthSnapshot>({ status: "loading", user: null });
+const state = reactive<AuthSnapshot>({
+  status: "loading",
+  user: null,
+  capabilities: []
+});
 
 let api: AuthApi | null = null;
 let ready: Promise<void> = Promise.resolve();
@@ -75,6 +91,9 @@ let unsubscribe: (() => void) | null = null;
 function applyUser(user: User | null): void {
   state.user = user;
   state.status = deriveAuthStatus(user);
+  // Same parser as the guard and every component: no consumer re-reads the
+  // claim. Root expands to the full vocabulary in getAdminCapabilities().
+  state.capabilities = user ? getAdminCapabilities(user) : [];
 }
 
 /**
@@ -108,6 +127,7 @@ export function configureAuth(nextApi: AuthApi | null): void {
 
   state.status = "loading";
   state.user = null;
+  state.capabilities = [];
   ready = new Promise<void>(resolve => {
     resolveReady = resolve;
   });
@@ -141,7 +161,11 @@ export function configureAuth(nextApi: AuthApi | null): void {
 
 /** Current snapshot (only meaningful once `whenAuthReady` has resolved). */
 export function getAuthSnapshot(): AuthSnapshot {
-  return { status: state.status, user: state.user };
+  return {
+    status: state.status,
+    user: state.user,
+    capabilities: state.capabilities
+  };
 }
 
 /** Resolves after session restore finished — what the guard awaits. */
@@ -197,10 +221,16 @@ export function useAuth() {
   return {
     status: computed(() => state.status),
     user: computed(() => state.user),
+    capabilities: computed(() => state.capabilities),
     isAuthenticated: computed(
       () => state.status !== "loading" && state.status !== "anonymous"
     ),
+    /** May enter the admin area (root or at least one valid scope). */
     isAdmin: computed(() => state.status === "admin"),
+    /** The canonical root claim only — never used for authorization. */
+    isRootAdmin: computed(() => isAdminUser(state.user)),
+    /** Capability gate for UI affordances (RLS remains authoritative). */
+    can: (scope: AdminScope): boolean => state.capabilities.includes(scope),
     signIn,
     signOut,
     whenAuthReady

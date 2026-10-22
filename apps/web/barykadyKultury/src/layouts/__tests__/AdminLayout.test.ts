@@ -33,6 +33,18 @@ const adminUser = {
   app_metadata: { role: "admin" }
 } as unknown as User;
 
+const publicationsEditor = {
+  id: "22222222-2222-4222-8222-222222222222",
+  email: "publications@demo.local",
+  app_metadata: { role: "editor", scopes: ["publications:write"] }
+} as unknown as User;
+
+const importerEditor = {
+  id: "33333333-3333-4333-8333-333333333333",
+  email: "importer@demo.local",
+  app_metadata: { role: "editor", scopes: ["importer"] }
+} as unknown as User;
+
 function fakeAuth(sessionUser: User | null): AuthApi {
   return {
     getSession: async () => ({
@@ -91,16 +103,56 @@ describe("landmarks and navigation", () => {
 
     const wrapper = await mountLayout();
 
-    // T-026 shipped only the dashboard; T-027 added project management. The
-    // contract is "no dead nav entries", so each real destination is listed.
+    // T-026 shipped the dashboard; T-027 added project management and T-041
+    // the import surface. Root carries every capability, so all real
+    // destinations are listed.
     const links = wrapper
       .findAll("nav a")
       .map(link => link.text())
       .filter(Boolean);
-    expect(links).toEqual(["Dashboard", "Projects"]);
+    expect(links).toEqual(["Dashboard", "Projects", "Import content"]);
     expect(
       wrapper.get("[data-testid='admin-nav-projects']").attributes("href")
     ).toBe("/en/admin/projects");
+    expect(
+      wrapper.get("[data-testid='admin-nav-import']").attributes("href")
+    ).toBe("/en/admin/import");
+  });
+
+  it("hides every affordance outside a scoped editor's capabilities", async () => {
+    configureAuth(fakeAuth(publicationsEditor));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    // Publications-only: no project or import nav entry (T-046 hiding rule).
+    const links = wrapper
+      .findAll("nav a")
+      .map(link => link.text())
+      .filter(Boolean);
+    expect(links).toEqual(["Dashboard"]);
+    expect(wrapper.find("[data-testid='admin-nav-projects']").exists()).toBe(
+      false
+    );
+    expect(wrapper.find("[data-testid='admin-nav-import']").exists()).toBe(
+      false
+    );
+  });
+
+  it("shows only the in-scope import affordance to an importer", async () => {
+    configureAuth(fakeAuth(importerEditor));
+    await whenAuthReady();
+
+    const wrapper = await mountLayout();
+
+    const links = wrapper
+      .findAll("nav a")
+      .map(link => link.text())
+      .filter(Boolean);
+    expect(links).toEqual(["Dashboard", "Import content"]);
+    expect(wrapper.find("[data-testid='admin-nav-projects']").exists()).toBe(
+      false
+    );
   });
 
   it("hides the dashboard nav from sessions that cannot reach it", async () => {

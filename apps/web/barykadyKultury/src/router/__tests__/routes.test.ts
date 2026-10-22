@@ -60,7 +60,23 @@ describe("admin route table (T-026)", () => {
     expect(resolved.name).toBe(name);
   });
 
-  it("marks only the dashboard as requiring the admin claim", () => {
+  it("gates built admin features by their capability (T-046)", () => {
+    const router = createTestRouter();
+
+    expect(router.resolve("/en/admin/projects").meta.requiresCapability).toBe(
+      "projects:write"
+    );
+    expect(
+      router.resolve("/en/admin/projects/new").meta.requiresCapability
+    ).toBe("projects:write");
+    expect(router.resolve("/en/admin/import").meta.requiresCapability).toBe(
+      "importer"
+    );
+    // The dashboard is the shared landing surface: admin area only, no scope.
+    expect(router.resolve("/en/admin").meta.requiresCapability).toBeUndefined();
+  });
+
+  it("marks the dashboard as requiring the admin claim", () => {
     const router = createTestRouter();
 
     expect(router.resolve("/en/admin").meta.requiresAdmin).toBe(true);

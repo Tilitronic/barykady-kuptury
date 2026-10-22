@@ -67,11 +67,12 @@
             </RouterLink>
           </li>
           <!--
-            T-027: only destinations that exist are linked. Project management
-            is the first feature surface reachable from the shell; the remaining
-            T-028…T-031 entries arrive with their own tickets.
+            T-027/T-046: only destinations the session can use are linked.
+            A scoped editor must not see an affordance for a denied area
+            (hiding, not disabling). Root carries every capability, so this
+            renders all built destinations for a root admin.
           -->
-          <li>
+          <li v-if="can('projects:write')">
             <RouterLink
               :to="`/${currentLocale}/admin/projects`"
               class="admin-header__nav-link focus-ring"
@@ -79,6 +80,16 @@
               data-testid="admin-nav-projects"
             >
               {{ t("admin.projects.title") }}
+            </RouterLink>
+          </li>
+          <li v-if="can('importer')">
+            <RouterLink
+              :to="`/${currentLocale}/admin/import`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isImport ? 'page' : undefined"
+              data-testid="admin-nav-import"
+            >
+              {{ t("admin.import.title") }}
             </RouterLink>
           </li>
         </ul>
@@ -138,7 +149,7 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const { isAuthenticated, isAdmin, signOut } = useAuth();
+const { isAuthenticated, isAdmin, can, signOut } = useAuth();
 
 const signingOut = ref(false);
 
@@ -155,6 +166,9 @@ const isDashboard = computed(
 const isProjects = computed(() =>
   String(route.name ?? "").startsWith("admin-project")
 );
+
+/** True for the T-041 import surface (nav highlight). */
+const isImport = computed(() => String(route.name ?? "") === "admin-import");
 
 /** WCAG 2.4.1 bypass: focus the main landmark explicitly (see PublicLayout). */
 function skipToMain(): void {

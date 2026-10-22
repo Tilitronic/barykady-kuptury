@@ -114,6 +114,7 @@ describe("configureAuth + restore", () => {
     const snapshot = await whenAuthReady();
     expect(snapshot.status).toBe("anonymous");
     expect(snapshot.user).toBeNull();
+    expect(snapshot.capabilities).toEqual([]);
   });
 
   it("restores an admin session from getSession() on configuration", async () => {
@@ -123,6 +124,18 @@ describe("configureAuth + restore", () => {
     const snapshot = await whenAuthReady();
     expect(snapshot.status).toBe("admin");
     expect(snapshot.user?.email).toBe("admin@demo.local");
+  });
+
+  it("restores a scoped editor with exactly its capabilities", async () => {
+    const editor = makeUser("publications@demo.local", {
+      role: "editor",
+      scopes: ["publications:write", "importer", "not-a-scope"]
+    });
+    configureAuth(createFakeAuth({ restoreUser: editor }).api);
+
+    const snapshot = await whenAuthReady();
+    expect(snapshot.status).toBe("admin");
+    expect(snapshot.capabilities).toEqual(["publications:write", "importer"]);
   });
 
   it("restores a claimless user as authenticated-non-admin", async () => {

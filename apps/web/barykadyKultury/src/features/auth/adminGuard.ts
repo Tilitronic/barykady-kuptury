@@ -1,19 +1,23 @@
 /**
- * T-026 — the admin navigation guard, as a pure factory.
+ * T-026/T-046 — the admin navigation guard, as a pure factory.
  *
  * Mirrors `createLocaleGuard`: all decisions come from injected
  * dependencies, so the full matrix (anonymous → sign-in with the intended
- * destination preserved, authenticated non-admin → explicit denial page,
- * admin → allowed) is unit-testable without a router or network.
+ * destination preserved, authenticated non-admin → explicit denial page, root
+ * → allowed, scoped editor → allowed only in-scope, scoped editor out of scope
+ * → explicit denial) is unit-testable without a router or network.
  *
- * Security framing (docs/PRODUCT_REQUIREMENTS.md §6, docs/architecture.md §6):
- * this guard is a UX convenience only. Authorization is enforced by Supabase
- * RLS at the data boundary; the guard merely avoids rendering admin chrome
- * for users who cannot load data through it.
+ * Security framing (docs/PRODUCT_REQUIREMENTS.md §6, docs/architecture.md
+ * §6.1): this guard is a UX convenience only. Authorization is enforced by
+ * Supabase RLS and the capability helper at the data boundary; the guard merely
+ * avoids rendering admin chrome for users who cannot use it. It does not
+ * "hide by disabling": a route outside the editor's scope is not reachable.
  *
- * Termination: the denial page is a terminal state for non-admins and the
- * sign-in page is terminal for anonymous visitors, so no pair of redirects
- * can send each other around — the "no redirect loop" acceptance criterion.
+ * Termination: the denial page is a terminal state for non-admins and for
+ * scoped admins rejected from a specific route (the `missing` query marks that
+ * case); the sign-in page is terminal for anonymous visitors, so no pair of
+ * redirects can send each other around — the "no redirect loop" acceptance
+ * criterion.
  */
 
 import type {
@@ -24,6 +28,7 @@ import type {
 
 import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
 
+import type { AdminScope } from "./adminClaim";
 import type { AuthSnapshot } from "./authStore";
 
 /** Route names of the admin shell — one source of truth for the guard. */
@@ -33,6 +38,14 @@ export const ADMIN_DASHBOARD_NAME = "admin-dashboard";
 
 /** Query key preserving the originally requested admin destination. */
 export const REDIRECT_QUERY_KEY = "redirect";
+
+/**
+ * Query key recording which capability a scoped editor lacked. Its presence
+ * makes the denial page a terminal state for an admin-area session (otherwise
+ * the guard would bounce every admin off the denial page to the dashboard and
+ * the scoped explanation would never render).
+ */
+export const CAPABILITY_QUERY_KEY = "missing";
 
 /**
  * Builds a name-based navigation target inside the admin shell.
@@ -74,10 +87,18 @@ function guardLocale(to: RouteLocationNormalized): string {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 }
 
+/** Reads a possibly absent capability gate from route meta. */
+function requiredCapability(
+  to: RouteLocationNormalized
+): AdminScope | undefined {
+  return to.meta.requiresCapability;
+}
+
 /**
- * Builds the guard. Only three route names plus `meta.requiresAdmin` are
- * considered; every other route (the whole public site) short-circuits
- * without even reading auth state, so public navigation cost is unchanged.
+ * Builds the guard. Only three route names plus `meta.requiresAdmin` /
+ * `meta.requiresCapability` are considered; every other route (the whole
+ * public site) short-circuits without even reading auth state, so public
+ * navigation cost is unchanged.
  */
 export function createAdminGuard(
   dependencies: AdminGuardDependencies
@@ -89,20 +110,36 @@ export function createAdminGuard(
     const name = String(to.name ?? "");
     const isSignIn = name === ADMIN_SIGN_IN_NAME;
     const isDenied = name === ADMIN_DENIED_NAME;
-    const isProtected = to.meta.requiresAdmin === true;
+    const capability = requiredCapability(to);
+    const isProtected =
+      to.meta.requiresAdmin === true || capability !== undefined;
 
     if (!isSignIn && !isDenied && !isProtected) {
       return true;
     }
 
-    const { status } = await dependencies.getAuthState();
+    const { status, capabilities } = await dependencies.getAuthState();
     const locale = guardLocale(to);
 
     if (status === "admin") {
-      // Signed-in admins never see sign-in/denial chrome.
-      return isProtected
-        ? true
-        : adminRouteTarget(ADMIN_DASHBOARD_NAME, locale);
+      if (isProtected) {
+        // Root carries every scope in the store, so only a scoped editor can
+        // reach this branch. Deny with the missing capability recorded; the
+        // page explains the role boundary instead of showing a dead route.
+        if (capability !== undefined && !capabilities.includes(capability)) {
+          return adminRouteTarget(ADMIN_DENIED_NAME, locale, {
+            [CAPABILITY_QUERY_KEY]: capability
+          });
+        }
+        return true;
+      }
+
+      // Scoped denial is terminal; all other admin chrome pages (sign-in,
+      // bare denial) still send an admin-area session to the dashboard.
+      if (isDenied && typeof to.query[CAPABILITY_QUERY_KEY] === "string") {
+        return true;
+      }
+      return adminRouteTarget(ADMIN_DASHBOARD_NAME, locale);
     }
 
     if (status === "authenticated-non-admin") {
