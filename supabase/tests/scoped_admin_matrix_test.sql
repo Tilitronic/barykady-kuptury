@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(58);
+select plan(60);
 
 -- ---------------------------------------------------------------------------
 -- Fictional fixture: one draft project for the cross-scope read proof
@@ -29,6 +29,11 @@ select plan(58);
 
 insert into public.projects (id, slug, status) values
   ('b2000000-0000-4000-8000-0000000000f0', 'scope-fixture-draft-project', 'draft');
+-- T-031 FU2: the published counterpart proves the events:write assignable set
+-- keeps the public (published) read and does not widen to drafts.
+insert into public.projects (id, slug, status, published_at) values
+  ('b2000000-0000-4000-8000-0000000000f1', 'scope-fixture-published-project',
+   'published', now());
 insert into public.publications (id, slug, status) values
   ('b4000000-0000-4000-8000-0000000000f0', 'scope-fixture-publication', 'draft');
 insert into public.organization_documents
@@ -299,6 +304,23 @@ select throws_ok(
         values ('b1000000-0000-4000-8000-000000000602', 'scope-events-foreign-project', 'draft') $sql$,
   '42501', NULL,
   'events:write cannot create a project'
+);
+
+-- T-031 FU2 — the admin event selector reads the projects table. Keep the
+-- §6.1 least-privilege behaviour explicit: published projects are assignable,
+-- drafts are not visible to an events:write-only editor.
+select is(
+  (select count(*) from public.projects
+    where id = 'b2000000-0000-4000-8000-0000000000f1'),
+  1::bigint,
+  'events:write may read published projects in the assignable set'
+);
+
+select is(
+  (select count(*) from public.projects
+    where id = 'b2000000-0000-4000-8000-0000000000f0'),
+  0::bigint,
+  'events:write cannot read draft projects in the assignable set'
 );
 reset role;
 

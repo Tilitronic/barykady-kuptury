@@ -1182,6 +1182,84 @@ const en = {
         confirm: "Delete member"
       }
     },
+    /**
+     * T-031 — event mapping and translation coverage.
+     * Admin strings are localized in every catalogue (AGENTS.md §9).
+     */
+    events: {
+      title: "Events",
+      description: "Assign projects to calendar events.",
+      heading: "Event mapping",
+      intro:
+        "Review events from the calendar and assign an optional project to each one. Draft projects are allowed, but they never produce a public link.",
+      calendarUnavailable:
+        "The event calendar is temporarily unavailable. Project mappings still load below.",
+      retry: "Try again",
+      empty: "No events or mappings.",
+      notInFeed: "Not in the current calendar feed",
+      projectFor: "Project for {event}",
+      noProject: "No project",
+      columns: {
+        event: "Event",
+        when: "When",
+        status: "Status",
+        project: "Project",
+        publicLink: "Public link"
+      },
+      statuses: {
+        upcoming: "Upcoming",
+        past: "Past",
+        notInFeed: "Not in feed",
+        unknown: "Unknown"
+      },
+      publicLink: {
+        published: "Published",
+        draft: "No public link — draft project",
+        archived: "No public link — archived project",
+        missingTranslation: "No public link — no translation",
+        unlinked: "Not assigned",
+        projectUnavailable: "Project unavailable"
+      },
+      messages: {
+        assigned: "Project assigned.",
+        unassigned: "Project removed."
+      },
+      errors: {
+        links: "Event mappings could not be loaded.",
+        projects: "Projects could not be loaded; assigning is disabled.",
+        saveFailed: "The mapping could not be saved. Try again.",
+        projectMissing: "That project no longer exists. Reload the page."
+      }
+    },
+    coverage: {
+      title: "Translation coverage",
+      description: "See which locales have published content.",
+      heading: "Translation coverage",
+      intro:
+        "The matrix shows published content by locale. “Missing” means no complete translation; “Needs review” marks a translation awaiting approval.",
+      loadFailed: "Translation coverage could not be calculated.",
+      retry: "Try again",
+      summaryHeading: "Summary",
+      columns: {
+        entity: "Area",
+        content: "Content"
+      },
+      entities: {
+        pages: "Pages",
+        projects: "Projects",
+        team: "Team",
+        publications: "Publications",
+        documents: "Documents"
+      },
+      states: {
+        published: "Published",
+        missing: "Missing",
+        needsReview: "Needs review"
+      },
+      counts:
+        "{published} published · {missing} missing · {needsReview} needs review",
+      noPublishedContent: "No published content in this area."
+    },
     scopes: {
       label: "Your access",
       pages: "Pages",

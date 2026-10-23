@@ -15,7 +15,20 @@ export function eventProjectPath(
 ): string | null {
   if (!link) return null;
 
-  const owningLocale = link.isFallback ? DEFAULT_LOCALE : currentLocale;
+  return projectPath(link.slug, link.isFallback, currentLocale);
+}
 
-  return `/${owningLocale}/projects/${link.slug}`;
+/**
+ * The detail path for one project translation. Extracted for T-031 so the
+ * admin public-link policy uses the exact same fallback-prefix rule instead of
+ * re-deriving it (the two views must never disagree).
+ */
+export function projectPath(
+  slug: string,
+  isFallback: boolean,
+  currentLocale: Locale
+): string {
+  const owningLocale = isFallback ? DEFAULT_LOCALE : currentLocale;
+
+  return `/${owningLocale}/projects/${slug}`;
 }

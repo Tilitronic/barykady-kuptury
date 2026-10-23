@@ -78,6 +78,25 @@
           {{ t("admin.import.title") }}
         </RouterLink>
       </p>
+      <!-- T-031: event mapping needs `events:write`; coverage is read-only. -->
+      <p v-if="can('events:write')" class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/events`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-events-link"
+        >
+          {{ t("admin.events.title") }}
+        </RouterLink>
+      </p>
+      <p class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/coverage`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-coverage-link"
+        >
+          {{ t("admin.coverage.title") }}
+        </RouterLink>
+      </p>
     </section>
 
     <!--

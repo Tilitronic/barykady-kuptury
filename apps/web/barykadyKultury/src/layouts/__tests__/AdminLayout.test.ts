@@ -117,6 +117,10 @@ describe("landmarks and navigation", () => {
       "Team",
       "Publications",
       "Documents",
+      "Events",
+      // T-031: read-only coverage has no capability gate, so it is present for
+      // every admin-area session.
+      "Translation coverage",
       "Import content"
     ]);
     expect(
@@ -135,6 +139,12 @@ describe("landmarks and navigation", () => {
       wrapper.get("[data-testid='admin-nav-documents']").attributes("href")
     ).toBe("/en/admin/documents");
     expect(
+      wrapper.get("[data-testid='admin-nav-events']").attributes("href")
+    ).toBe("/en/admin/events");
+    expect(
+      wrapper.get("[data-testid='admin-nav-coverage']").attributes("href")
+    ).toBe("/en/admin/coverage");
+    expect(
       wrapper.get("[data-testid='admin-nav-import']").attributes("href")
     ).toBe("/en/admin/import");
   });
@@ -151,7 +161,12 @@ describe("landmarks and navigation", () => {
       .findAll("nav a")
       .map(link => link.text())
       .filter(Boolean);
-    expect(links).toEqual(["Dashboard", "Publications"]);
+    expect(links).toEqual([
+      "Dashboard",
+      "Publications",
+      // T-031 read-only report: no capability required.
+      "Translation coverage"
+    ]);
     expect(wrapper.find("[data-testid='admin-nav-projects']").exists()).toBe(
       false
     );
@@ -173,7 +188,12 @@ describe("landmarks and navigation", () => {
       .findAll("nav a")
       .map(link => link.text())
       .filter(Boolean);
-    expect(links).toEqual(["Dashboard", "Import content"]);
+    expect(links).toEqual([
+      "Dashboard",
+      // T-031 read-only report: no capability required.
+      "Translation coverage",
+      "Import content"
+    ]);
     expect(wrapper.find("[data-testid='admin-nav-projects']").exists()).toBe(
       false
     );

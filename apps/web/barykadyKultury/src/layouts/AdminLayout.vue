@@ -122,6 +122,31 @@
               {{ t("admin.documents.title") }}
             </RouterLink>
           </li>
+          <li v-if="can('events:write')">
+            <RouterLink
+              :to="`/${currentLocale}/admin/events`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isEvents ? 'page' : undefined"
+              data-testid="admin-nav-events"
+            >
+              {{ t("admin.events.title") }}
+            </RouterLink>
+          </li>
+          <!--
+            T-031: coverage is read-only, so every admin-area session can use
+            it — no capability required. It is hidden only for anonymous and
+            non-admin sessions, which the surrounding nav already excludes.
+          -->
+          <li>
+            <RouterLink
+              :to="`/${currentLocale}/admin/coverage`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isCoverage ? 'page' : undefined"
+              data-testid="admin-nav-coverage"
+            >
+              {{ t("admin.coverage.title") }}
+            </RouterLink>
+          </li>
           <li v-if="can('importer')">
             <RouterLink
               :to="`/${currentLocale}/admin/import`"
@@ -223,6 +248,14 @@ const isPublications = computed(() =>
 /** True for the T-029 document editor (nav highlight). */
 const isDocuments = computed(
   () => String(route.name ?? "") === "admin-documents"
+);
+
+/** True for the T-031 event-mapping surface (nav highlight). */
+const isEvents = computed(() => String(route.name ?? "") === "admin-events");
+
+/** True for the T-031 read-only coverage report (nav highlight). */
+const isCoverage = computed(
+  () => String(route.name ?? "") === "admin-coverage"
 );
 
 /** True for the T-041 import surface (nav highlight). */

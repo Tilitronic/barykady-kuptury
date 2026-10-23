@@ -1068,6 +1068,85 @@ const pl: MessageSchema = {
         confirm: "Usuń członka"
       }
     },
+    /**
+     * T-031 — przypisania wydarzeń i pokrycie tłumaczeń.
+     * Wszystkie teksty interfejsu są zlokalizowane (AGENTS.md §9).
+     */
+    events: {
+      title: "Wydarzenia",
+      description: "Przypisz projekty do wydarzeń z kalendarza.",
+      heading: "Przypisania wydarzeń",
+      intro:
+        "Wyświetl wydarzenia z kalendarza i przypisz do każdego opcjonalny projekt. Projekty robocze można przypisać, ale nigdy nie pojawią się publicznie jako link.",
+      calendarUnavailable:
+        "Kalendarz wydarzeń jest chwilowo niedostępny. Przypisania projektów nadal są wyświetlane poniżej.",
+      retry: "Spróbuj ponownie",
+      empty: "Brak wydarzeń i przypisań.",
+      notInFeed: "Brak w bieżącym kanale kalendarza",
+      projectFor: "Projekt dla wydarzenia {event}",
+      noProject: "Brak projektu",
+      columns: {
+        event: "Wydarzenie",
+        when: "Termin",
+        status: "Status",
+        project: "Projekt",
+        publicLink: "Link publiczny"
+      },
+      statuses: {
+        upcoming: "Nadchodzące",
+        past: "Minione",
+        notInFeed: "Poza kanałem",
+        unknown: "Nieznany"
+      },
+      publicLink: {
+        published: "Opublikowany",
+        draft: "Brak linku publicznego — projekt roboczy",
+        archived: "Brak linku publicznego — projekt zarchiwizowany",
+        missingTranslation: "Brak linku publicznego — brak tłumaczenia",
+        unlinked: "Nie przypisano",
+        projectUnavailable: "Projekt niedostępny"
+      },
+      messages: {
+        assigned: "Projekt przypisany.",
+        unassigned: "Projekt odłączony."
+      },
+      errors: {
+        links: "Przypisania wydarzeń nie mogły zostać wczytane.",
+        projects:
+          "Projekty nie mogły zostać wczytane; przypisywanie jest wyłączone.",
+        saveFailed: "Nie udało się zapisać przypisania. Spróbuj ponownie.",
+        projectMissing: "Ten projekt już nie istnieje. Odśwież stronę."
+      }
+    },
+    coverage: {
+      title: "Pokrycie tłumaczeń",
+      description: "Sprawdź, w których językach opublikowano treści.",
+      heading: "Pokrycie tłumaczeń",
+      intro:
+        "Macierz pokazuje opublikowane treści według języka. „Brak” oznacza brak kompletnego tłumaczenia, a „Do przeglądu” — tłumaczenie oznaczone do zatwierdzenia.",
+      loadFailed: "Nie udało się obliczyć pokrycia tłumaczeń.",
+      retry: "Spróbuj ponownie",
+      summaryHeading: "Podsumowanie",
+      columns: {
+        entity: "Obszar",
+        content: "Treść"
+      },
+      entities: {
+        pages: "Strony",
+        projects: "Projekty",
+        team: "Zespół",
+        publications: "Publikacje",
+        documents: "Dokumenty"
+      },
+      states: {
+        published: "Opublikowane",
+        missing: "Brak",
+        needsReview: "Do przeglądu"
+      },
+      counts:
+        "{published} opublikowanych · {missing} brakujących · {needsReview} do przeglądu",
+      noPublishedContent: "Brak opublikowanych treści w tym obszarze."
+    },
     scopes: {
       label: "Twoje uprawnienia",
       pages: "Strony",

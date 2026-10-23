@@ -480,6 +480,37 @@ export const routes: RouteRecordRaw[] = [
             descriptionKey: "admin.documents.description"
           }
         }
+      },
+      // ── T-031 event mapping & translation coverage ──────────────────────
+      // Mapping links events ↔ projects, so it carries the fixed D-42
+      // `events:write` scope (docs/architecture.md §6.1). Coverage is a
+      // read-only report over already-authorized reads; it intentionally has
+      // NO capability gate, so every admin-area session (root or scoped) can
+      // see missing translations without being granted write access.
+      {
+        path: "events",
+        name: "admin-events",
+        component: () => import("@/pages/admin/AdminEventsPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "events:write",
+          pageMeta: {
+            titleKey: "admin.events.title",
+            descriptionKey: "admin.events.description"
+          }
+        }
+      },
+      {
+        path: "coverage",
+        name: "admin-coverage",
+        component: () => import("@/pages/admin/AdminCoveragePage.vue"),
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.coverage.title",
+            descriptionKey: "admin.coverage.description"
+          }
+        }
       }
     ]
   },

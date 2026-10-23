@@ -1,7 +1,7 @@
 # T-031 — Admin event mapping & translation coverage
 
-**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** todo
-**Reviewers:** @reviewer + @architector (public-link rule)
+**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1 FIX + pins verified) + @architector (approve-with-follow-ups)
 **Depends on:** T-024, T-026, T-028, T-027 · **Blocks:** T-032
 
 ## Outcome
@@ -52,3 +52,13 @@ supabase test db
 
 ## Log
 - (author) start:
+- (gate fix · FU1 · architector) Clarified the project-selector scope to match
+  the implemented least-privilege reality: root administrators and
+  `projects:write` editors see **published and draft** projects in the selector
+  (drafts are assignable and never produce a public link); an `events:write`-only
+  editor sees **published projects only**, because §6.1 grants that scope
+  `calendar_event_links` and does not widen `projects` SELECT to drafts. This
+  narrows the original "published and drafts allowed to be assigned" line to the
+  roles that may read drafts; no RLS was weakened. Proof:
+  `supabase/tests/scoped_admin_matrix_test.sql` (events:write reads a published
+  project, not the draft fixture).

@@ -115,6 +115,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/AdminCoveragePage': RouteRecordInfo<
+      '/admin/AdminCoveragePage',
+      '/admin/AdminCoveragePage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/admin/AdminDashboardPage': RouteRecordInfo<
       '/admin/AdminDashboardPage',
       '/admin/AdminDashboardPage',
@@ -132,6 +139,13 @@ declare module 'vue-router/auto-routes' {
     '/admin/AdminDocumentsPage': RouteRecordInfo<
       '/admin/AdminDocumentsPage',
       '/admin/AdminDocumentsPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminEventsPage': RouteRecordInfo<
+      '/admin/AdminEventsPage',
+      '/admin/AdminEventsPage',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -322,6 +336,14 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
+    'src/pages/admin/AdminCoveragePage.vue': {
+      routes:
+        | '/admin/AdminCoveragePage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
     'src/pages/admin/AdminDashboardPage.vue': {
       routes:
         | '/admin/AdminDashboardPage'
@@ -341,6 +363,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/admin/AdminDocumentsPage.vue': {
       routes:
         | '/admin/AdminDocumentsPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminEventsPage.vue': {
+      routes:
+        | '/admin/AdminEventsPage'
       views:
         | never
       pathParamNames:
