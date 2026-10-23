@@ -923,6 +923,10 @@ export type Database = {
         Args: { p_entity_id: string; p_kind: string; p_success: boolean };
         Returns: undefined;
       };
+      reorder_featured_projects_v1: {
+        Args: { p_ids: string[] };
+        Returns: undefined;
+      };
       reorder_team_members_v1: {
         Args: { p_ids: string[] };
         Returns: undefined;
@@ -1010,6 +1014,10 @@ export type Database = {
           slug: string;
           title: string;
         }[];
+      };
+      set_project_featured_v1: {
+        Args: { p_featured: boolean; p_id: string };
+        Returns: undefined;
       };
       transition_document_v1: {
         Args: {

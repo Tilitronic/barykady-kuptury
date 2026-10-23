@@ -365,6 +365,23 @@ export const routes: RouteRecordRaw[] = [
           }
         }
       },
+      // T-030 — homepage featured ordering is part of project
+      // administration, so it shares the `projects:write` scope (D-42). It is
+      // a static sibling of `projects/:id` and therefore cannot be mistaken
+      // for a project id.
+      {
+        path: "featured",
+        name: "admin-featured",
+        component: () => import("@/pages/admin/AdminFeaturedPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "projects:write",
+          pageMeta: {
+            titleKey: "admin.featured.title",
+            descriptionKey: "admin.featured.description"
+          }
+        }
+      },
       // ── T-028 site pages & team ──────────────────────────────────────────
       // `pages:write` / `team:write` are the fixed D-42 scopes from
       // docs/architecture.md §6.1. The preview route sits before the editor

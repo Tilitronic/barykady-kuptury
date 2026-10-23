@@ -69,6 +69,11 @@ describe("admin route table (T-026)", () => {
     expect(
       router.resolve("/en/admin/projects/new").meta.requiresCapability
     ).toBe("projects:write");
+    // T-030: featured ordering is project administration, same D-42 scope.
+    expect(router.resolve("/en/admin/featured").name).toBe("admin-featured");
+    expect(router.resolve("/en/admin/featured").meta.requiresCapability).toBe(
+      "projects:write"
+    );
     expect(router.resolve("/en/admin/import").meta.requiresCapability).toBe(
       "importer"
     );

@@ -11,18 +11,26 @@
  *     drag-only interaction); this module owns the position maths so every
  *     caller writes the same gap-free 1..n sequence.
  *
+ * T-030 moved the position maths into `features/admin/shared/ordering` so the
+ * featured list reuses the exact same contract. These wrappers keep the
+ * T-028 names (and therefore every existing caller/test) stable.
+ *
  * Positions are 1-based because the existing index and seed data use 1..n.
  */
 
-export type TeamMoveDirection = "up" | "down";
+import {
+  moveItem,
+  moveItemTo,
+  nextPosition,
+  normalizeOrder,
+  type MoveDirection
+} from "../shared/ordering";
+
+export type TeamMoveDirection = MoveDirection;
 
 export interface TeamPosition {
   readonly id: string;
   readonly sortOrder: number;
-}
-
-function indexOf(ids: readonly string[], id: string): number {
-  return ids.indexOf(id);
 }
 
 /**
@@ -37,17 +45,7 @@ export function moveTeamMember(
   id: string,
   direction: TeamMoveDirection
 ): string[] {
-  const next = [...ids];
-  const index = indexOf(next, id);
-  if (index === -1) return next;
-
-  const target = direction === "up" ? index - 1 : index + 1;
-  if (target < 0 || target >= next.length) return next;
-
-  const [moved] = next.splice(index, 1);
-  if (moved === undefined) return next;
-  next.splice(target, 0, moved);
-  return next;
+  return moveItem(ids, id, direction);
 }
 
 /**
@@ -60,17 +58,7 @@ export function reorderTeamMembers(
   id: string,
   targetIndex: number
 ): string[] {
-  const next = [...ids];
-  const index = indexOf(next, id);
-  if (index === -1) return next;
-
-  const target = Math.max(0, Math.min(next.length - 1, targetIndex));
-  if (target === index) return next;
-
-  const [moved] = next.splice(index, 1);
-  if (moved === undefined) return next;
-  next.splice(target, 0, moved);
-  return next;
+  return moveItemTo(ids, id, targetIndex);
 }
 
 /**
@@ -81,10 +69,13 @@ export function reorderTeamMembers(
 export function normalizeTeamOrder(
   ids: readonly string[]
 ): readonly TeamPosition[] {
-  return ids.map((id, index) => ({ id, sortOrder: index + 1 }));
+  return normalizeOrder(ids).map(({ id, position }) => ({
+    id,
+    sortOrder: position
+  }));
 }
 
 /** Next free position for a new member (max + 1; empty team starts at 1). */
 export function nextSortOrder(existingOrders: readonly number[]): number {
-  return existingOrders.reduce((max, order) => Math.max(max, order), 0) + 1;
+  return nextPosition(existingOrders);
 }

@@ -17,6 +17,14 @@
       >
         {{ t("admin.projects.newProject") }}
       </RouterLink>
+      <!-- T-030: homepage order is part of project administration. -->
+      <RouterLink
+        :to="featuredPath"
+        class="admin-projects__featured focus-ring"
+        data-testid="projects-featured-link"
+      >
+        {{ t("admin.featured.title") }}
+      </RouterLink>
     </div>
 
     <p class="admin-projects__intro">{{ t("admin.projects.intro") }}</p>
@@ -180,6 +188,8 @@ const newProjectPath = computed(
   () => `/${currentLocale.value}/admin/projects/new`
 );
 
+const featuredPath = computed(() => `/${currentLocale.value}/admin/featured`);
+
 function editPath(id: string): string {
   return `/${currentLocale.value}/admin/projects/${id}`;
 }
@@ -236,6 +246,15 @@ onMounted(load);
   border-radius: 0.375rem;
   background: var(--color-accent);
   color: var(--color-accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-projects__featured {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 0.375rem;
+  color: var(--color-accent);
   font-weight: 600;
   text-decoration: none;
 }

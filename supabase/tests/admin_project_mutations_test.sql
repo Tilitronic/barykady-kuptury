@@ -252,10 +252,15 @@ select is(
   'save_project_v1 writes the requested lifecycle status'
 );
 
+-- T-030 changed this contract: the project editor's checkbox may request a
+-- feature, but the database owns the slot. A newly featured row appends
+-- max(rank)+1 (the seed already holds rank 1); an already-featured row keeps
+-- its rank. This keeps the homepage order collision-free without a second
+-- write path.
 select is(
   (select featured_rank from public.projects where id = 'c2000000-0000-4000-8000-000000000001'),
-  424242,
-  'save_project_v1 preserves the featured ordering slot it was given'
+  2,
+  'save_project_v1 appends the next dense featured slot (T-030)'
 );
 
 select is(

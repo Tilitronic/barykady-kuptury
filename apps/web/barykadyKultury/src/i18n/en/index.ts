@@ -588,6 +588,47 @@ const en = {
      * T-029 — shared upload stage text. The composable reports honest stages
      * (validate → transfer → persist), not a fabricated byte percentage.
      */
+    /**
+     * T-030 — homepage featured ordering. The list is the exact public order;
+     * only published projects are offered, and an empty list is an intentional
+     * state because the homepage then falls back to recent published projects.
+     */
+    featured: {
+      title: "Featured projects",
+      description: "Choose and order the projects featured on the homepage.",
+      heading: "Featured projects",
+      intro:
+        "Choose which published projects appear on the homepage and in what order. When the list is empty, the homepage shows the most recently updated published projects.",
+      featuredHeading: "Homepage order",
+      availableHeading: "Add a published project",
+      empty:
+        "No projects are featured. The homepage currently shows recent published projects.",
+      availableEmpty: "No more published projects to add.",
+      actions: {
+        backToProjects: "Back to projects",
+        moveUp: "Move up",
+        moveDown: "Move down",
+        moveUpProject: "Move {title} up",
+        moveDownProject: "Move {title} down",
+        remove: "Remove",
+        removeProject: "Remove {title} from the homepage",
+        add: "Add",
+        addProject: "Add {title} to the homepage"
+      },
+      messages: {
+        added: "Project added to the homepage order.",
+        removed: "Project removed from the homepage order.",
+        reordered: "Homepage order saved."
+      },
+      errors: {
+        loadFailed: "Featured projects could not be loaded.",
+        unavailable: "The content service is not configured.",
+        notPublished: "Only published projects can be featured.",
+        notFound: "Project not found.",
+        failed: "The change could not be saved. Try again.",
+        retry: "Try again"
+      }
+    },
     upload: {
       validating: "Checking the file…",
       uploading: "Uploading…",

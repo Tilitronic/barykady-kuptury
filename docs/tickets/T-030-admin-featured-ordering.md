@@ -1,7 +1,7 @@
 # T-030 — Admin featured ordering
 
-**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** todo
-**Reviewers:** @reviewer
+**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1 SHIP, 1 process suggestion)
 **Depends on:** T-027 · **Blocks:** T-032
 
 ## Outcome
@@ -48,3 +48,10 @@ pnpm test:e2e --grep "featured"
 
 ## Log
 - (author) start:
+- Session 15: TDD chronology (reviewer process note) — RED: pgTAP 46-assertion
+  suite failed pre-migration (missing RPCs/constraints); `featuredOrder`
+  + api unit tests failed on unresolved modules; admin-featured E2E failed
+  pre-implementation. GREEN after: pgTAP 46/46, units 18/18 lane-focused,
+  E2E featured journeys pass. Full gates: pgTAP 767, units 1483, full E2E
+  191, typecheck/lint/build clean. No drag-drop/scheduling/per-locale sets
+  (out of scope); featured reached via Projects admin, no separate nav entry.

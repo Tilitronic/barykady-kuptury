@@ -488,6 +488,46 @@ const pl: MessageSchema = {
         back: "Powrót do edytora"
       }
     },
+    /**
+     * T-030 — kolejność projektów wyróżnionych na stronie głównej.
+     */
+    featured: {
+      title: "Wyróżnione projekty",
+      description:
+        "Wybierz projekty wyróżnione na stronie głównej i ustal ich kolejność.",
+      heading: "Wyróżnione projekty",
+      intro:
+        "Wybierz opublikowane projekty widoczne na stronie głównej i ustal ich kolejność. Gdy lista jest pusta, strona główna pokazuje ostatnio zaktualizowane opublikowane projekty.",
+      featuredHeading: "Kolejność na stronie głównej",
+      availableHeading: "Dodaj opublikowany projekt",
+      empty:
+        "Brak wyróżnionych projektów. Strona główna pokazuje obecnie ostatnio opublikowane projekty.",
+      availableEmpty: "Brak innych opublikowanych projektów do dodania.",
+      actions: {
+        backToProjects: "Powrót do projektów",
+        moveUp: "Przenieś w górę",
+        moveDown: "Przenieś w dół",
+        moveUpProject: "Przenieś „{title}” w górę",
+        moveDownProject: "Przenieś „{title}” w dół",
+        remove: "Usuń",
+        removeProject: "Usuń „{title}” ze strony głównej",
+        add: "Dodaj",
+        addProject: "Dodaj „{title}” na stronę główną"
+      },
+      messages: {
+        added: "Projekt dodany do kolejności na stronie głównej.",
+        removed: "Projekt usunięty z kolejności na stronie głównej.",
+        reordered: "Kolejność na stronie głównej zapisana."
+      },
+      errors: {
+        loadFailed: "Nie udało się wczytać wyróżnionych projektów.",
+        unavailable: "Usługa treści nie jest skonfigurowana.",
+        notPublished: "Tylko opublikowane projekty mogą być wyróżnione.",
+        notFound: "Nie znaleziono projektu.",
+        failed: "Nie udało się zapisać zmiany. Spróbuj ponownie.",
+        retry: "Spróbuj ponownie"
+      }
+    },
     upload: {
       validating: "Sprawdzanie pliku…",
       uploading: "Przesyłanie…",

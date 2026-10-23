@@ -35,7 +35,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-046 | Capability-scoped admin roles (D-42, blocks T-028/T-029) | 15 | done | @reviewer (rev-1 security) + @architector (approve-with-follow-ups) | — | — |
 | T-028 | Admin site pages & team CRUD | 6 | done | @reviewer (rev-1) + @architector | — | — |
 | T-029 | Admin publications, documents, uploads | 6 | done | @reviewer (rev-1) + @architector | — | — |
-| T-030 | Admin featured ordering | 6 | todo | — | — | — |
+| T-030 | Admin featured ordering | 6 | done | @reviewer (rev-1 SHIP) | — | — |
 | T-031 | Admin event mapping & translation coverage | 6 | todo | — | — | — |
 | T-032 | Full E2E journey matrix | 7 | todo | — | — | — |
 | T-033 | Accessibility audit & fixes | 7 | todo | — | — | — |

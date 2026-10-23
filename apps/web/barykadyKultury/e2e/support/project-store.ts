@@ -123,6 +123,34 @@ function withTranslations(store: ProjectStore, row: ProjectStoreRow) {
   };
 }
 
+/**
+ * T-030 — dense 1..n featured ranks, mirroring the database trigger: only
+ * published rows keep a rank; order is the current rank, then created_at/id.
+ */
+function densifyFeaturedRanks(store: ProjectStore): void {
+  const ordered = store.projects
+    .filter(row => row.status === "published" && row.featured_rank !== null)
+    .sort(
+      (a, b) =>
+        (a.featured_rank ?? 0) - (b.featured_rank ?? 0) ||
+        a.created_at.localeCompare(b.created_at) ||
+        a.id.localeCompare(b.id)
+    );
+
+  ordered.forEach((row, index) => {
+    row.featured_rank = index + 1;
+  });
+}
+
+function nextFeaturedRank(store: ProjectStore): number {
+  return (
+    store.projects.reduce(
+      (max, row) => Math.max(max, row.featured_rank ?? 0),
+      0
+    ) + 1
+  );
+}
+
 /** Stringifies a cell for comparison/sorting without `[object Object]`. */
 function comparable(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -240,6 +268,7 @@ async function handleProjects(
     store.translations = store.translations.filter(
       translation => translation.project_id !== id
     );
+    densifyFeaturedRanks(store);
     await respond(route, []);
     return;
   }
@@ -369,10 +398,21 @@ function stageSaveProject(
     };
   }
 
+  const existingRow = next.projects.find(
+    candidate => candidate.id === args.p_id
+  );
+  // T-030 normalization: drafts cannot be featured; an already-featured row
+  // keeps its slot (order is owned by the reorder RPC); a newly featured row
+  // appends. Mirrors save_project_v1.
+  const featuredRank =
+    args.p_status !== "published" || args.p_featured_rank === null
+      ? null
+      : (existingRow?.featured_rank ?? nextFeaturedRank(next));
+
   const root = {
     slug: args.p_slug,
     status: args.p_status,
-    featured_rank: args.p_featured_rank ?? null,
+    featured_rank: featuredRank,
     cover_path: args.p_cover_path ?? null,
     start_date: args.p_start_date ?? null,
     end_date: args.p_end_date ?? null,
@@ -440,6 +480,8 @@ function stageSaveProject(
       });
     }
   }
+
+  densifyFeaturedRanks(next);
 
   return { ok: true, next, row };
 }
@@ -513,8 +555,115 @@ async function handleTransitionProjectRpc(
     args.p_status === "published"
       ? (args.p_published_at ?? FIXED_TIMESTAMP)
       : null;
+  // T-030: unpublishing removes the project from the featured set and the
+  // remaining ranks close up, exactly like the database trigger.
+  if (args.p_status !== "published") row.featured_rank = null;
   row.updated_at = FIXED_TIMESTAMP;
+  densifyFeaturedRanks(store);
 
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: "null"
+  });
+}
+
+/** T-030 add/remove RPC stand-in. */
+async function handleSetProjectFeaturedRpc(
+  route: Route,
+  store: ProjectStore
+): Promise<void> {
+  const args = route.request().postDataJSON() as {
+    p_id: string;
+    p_featured: boolean;
+  };
+  const row = store.projects.find(candidate => candidate.id === args.p_id);
+
+  if (!row) {
+    await route.fulfill({ status: 404, body: "" });
+    return;
+  }
+
+  if (args.p_featured && row.status !== "published") {
+    await respondRpcFailure(route, {
+      status: 400,
+      code: "23514",
+      message: "only published projects can be featured"
+    });
+    return;
+  }
+
+  if (args.p_featured) {
+    if (row.featured_rank === null) row.featured_rank = nextFeaturedRank(store);
+  } else {
+    row.featured_rank = null;
+  }
+
+  densifyFeaturedRanks(store);
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: "null"
+  });
+}
+
+/** T-030 complete-order RPC stand-in (dense 1..n, omitted rows appended). */
+async function handleReorderFeaturedRpc(
+  route: Route,
+  store: ProjectStore
+): Promise<void> {
+  const args = route.request().postDataJSON() as { p_ids: string[] };
+  const ids = args.p_ids ?? [];
+
+  if (new Set(ids).size !== ids.length) {
+    await respondRpcFailure(route, {
+      status: 400,
+      code: "22023",
+      message: "p_ids must not contain duplicate ids"
+    });
+    return;
+  }
+
+  const invalid = ids.find(id => {
+    const row = store.projects.find(candidate => candidate.id === id);
+    return (
+      row === undefined ||
+      row.status !== "published" ||
+      row.featured_rank === null
+    );
+  });
+  if (invalid !== undefined) {
+    await respondRpcFailure(route, {
+      status: 400,
+      code: "23514",
+      message: "every id must be a featured published project"
+    });
+    return;
+  }
+
+  ids.forEach((id, index) => {
+    const row = store.projects.find(candidate => candidate.id === id);
+    if (row) row.featured_rank = index + 1;
+  });
+
+  const unlisted = store.projects
+    .filter(
+      row =>
+        row.status === "published" &&
+        row.featured_rank !== null &&
+        !ids.includes(row.id)
+    )
+    .sort(
+      (a, b) =>
+        (a.featured_rank ?? 0) - (b.featured_rank ?? 0) ||
+        a.created_at.localeCompare(b.created_at) ||
+        a.id.localeCompare(b.id)
+    );
+  unlisted.forEach((row, index) => {
+    row.featured_rank = ids.length + index + 1;
+  });
+
+  densifyFeaturedRanks(store);
   await route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -536,6 +685,20 @@ export async function mockProjectApi(
   await page.route("**/rest/v1/rpc/save_project_v1", async (route: Route) => {
     await handleSaveProjectRpc(route, store);
   });
+
+  await page.route(
+    "**/rest/v1/rpc/set_project_featured_v1",
+    async (route: Route) => {
+      await handleSetProjectFeaturedRpc(route, store);
+    }
+  );
+
+  await page.route(
+    "**/rest/v1/rpc/reorder_featured_projects_v1",
+    async (route: Route) => {
+      await handleReorderFeaturedRpc(route, store);
+    }
+  );
 
   await page.route(
     "**/rest/v1/rpc/transition_project_v1",
