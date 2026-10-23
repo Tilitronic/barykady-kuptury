@@ -115,6 +115,8 @@ describe("landmarks and navigation", () => {
       "Site pages",
       "Projects",
       "Team",
+      "Publications",
+      "Documents",
       "Import content"
     ]);
     expect(
@@ -127,6 +129,12 @@ describe("landmarks and navigation", () => {
       wrapper.get("[data-testid='admin-nav-team']").attributes("href")
     ).toBe("/en/admin/team");
     expect(
+      wrapper.get("[data-testid='admin-nav-publications']").attributes("href")
+    ).toBe("/en/admin/publications");
+    expect(
+      wrapper.get("[data-testid='admin-nav-documents']").attributes("href")
+    ).toBe("/en/admin/documents");
+    expect(
       wrapper.get("[data-testid='admin-nav-import']").attributes("href")
     ).toBe("/en/admin/import");
   });
@@ -137,16 +145,20 @@ describe("landmarks and navigation", () => {
 
     const wrapper = await mountLayout();
 
-    // Publications-only: no project or import nav entry (T-046 hiding rule).
+    // Publications-only: only the dashboard + their own area (T-046 hiding
+    // rule). Projects, documents and import stay hidden.
     const links = wrapper
       .findAll("nav a")
       .map(link => link.text())
       .filter(Boolean);
-    expect(links).toEqual(["Dashboard"]);
+    expect(links).toEqual(["Dashboard", "Publications"]);
     expect(wrapper.find("[data-testid='admin-nav-projects']").exists()).toBe(
       false
     );
     expect(wrapper.find("[data-testid='admin-nav-import']").exists()).toBe(
+      false
+    );
+    expect(wrapper.find("[data-testid='admin-nav-documents']").exists()).toBe(
       false
     );
   });

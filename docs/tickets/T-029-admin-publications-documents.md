@@ -1,7 +1,7 @@
 # T-029 — Admin publications, documents, uploads
 
-**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** todo
-**Reviewers:** @reviewer + @architector (file boundary)
+**Session:** 6 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done
+**Reviewers:** @reviewer (rev-1 FIX + fixes verified) + @architector (approve-with-follow-ups → T-047)
 **Depends on:** T-026, T-020, T-017, T-014 · **Blocks:** T-032
 
 ## Outcome

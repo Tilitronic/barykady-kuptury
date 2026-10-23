@@ -51,6 +51,24 @@
           {{ t("admin.team.title") }}
         </RouterLink>
       </p>
+      <p v-if="can('publications:write')" class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/publications`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-publications-link"
+        >
+          {{ t("admin.publications.title") }}
+        </RouterLink>
+      </p>
+      <p v-if="can('documents:write')" class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/documents`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-documents-link"
+        >
+          {{ t("admin.documents.title") }}
+        </RouterLink>
+      </p>
       <p v-if="can('importer')" class="admin-dashboard__action">
         <RouterLink
           :to="`/${currentLocale}/admin/import`"

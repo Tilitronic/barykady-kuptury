@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { PublicBucket } from "@/features/files/buckets";
 import type { Database } from "@/types/database.types";
 
 /**
@@ -14,7 +15,7 @@ import type { Database } from "@/types/database.types";
  * call sites from inventing a third. A missing client or path yields `null`
  * so consumers omit media rather than fabricate it (DESIGN_SYSTEM.md §3).
  */
-export type PublicBucket = "public-documents" | "public-media";
+export type { PublicBucket };
 
 export function publicObjectUrl(
   supabase: SupabaseClient<Database> | null,

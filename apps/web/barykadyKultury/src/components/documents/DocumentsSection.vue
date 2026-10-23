@@ -44,6 +44,14 @@
           >
             {{ document.title }}
           </RouterLink>
+          <a
+            v-else-if="fileUrl(document)"
+            :href="fileUrl(document)!"
+            class="documents-list__link focus-ring"
+            data-testid="document-download"
+          >
+            {{ document.title }}
+          </a>
           <template v-else>{{ document.title }}</template>
         </h3>
 
@@ -68,11 +76,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, inject } from "vue";
 import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import { type OrganizationDocument } from "@/features/documents/api";
+import { documentFileUrl } from "@/features/documents/fileUrl";
 import { useDocuments } from "@/features/documents/useDocuments";
 import { formatDate } from "@/features/i18n/format";
 import type { Locale } from "@/features/i18n/locales";
@@ -87,6 +97,7 @@ const { t, te } = useI18n();
 
 const props = defineProps<{ locale: Locale }>();
 
+const supabase = inject(SUPABASE_CLIENT_KEY, null);
 const { result } = useDocuments(computed(() => props.locale));
 
 const documents = computed<readonly OrganizationDocument[]>(() =>
@@ -100,6 +111,15 @@ function isTextDocument(document: OrganizationDocument): boolean {
 
 function readerPath(document: OrganizationDocument): string {
   return `/${props.locale}/about/documents/${document.slug}`;
+}
+
+/**
+ * A file document gets an anonymous download link (T-029). The URL resolves
+ * through the shared public-object seam and carries the attachment policy;
+ * text documents keep their reader link instead.
+ */
+function fileUrl(document: OrganizationDocument): string | null {
+  return documentFileUrl(supabase, document.storagePath);
 }
 
 /**

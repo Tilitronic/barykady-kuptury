@@ -129,6 +129,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/AdminDocumentsPage': RouteRecordInfo<
+      '/admin/AdminDocumentsPage',
+      '/admin/AdminDocumentsPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/admin/AdminImportPage': RouteRecordInfo<
       '/admin/AdminImportPage',
       '/admin/AdminImportPage',
@@ -153,6 +160,20 @@ declare module 'vue-router/auto-routes' {
     '/admin/AdminProjectsPage': RouteRecordInfo<
       '/admin/AdminProjectsPage',
       '/admin/AdminProjectsPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminPublicationEditPage': RouteRecordInfo<
+      '/admin/AdminPublicationEditPage',
+      '/admin/AdminPublicationEditPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/AdminPublicationsPage': RouteRecordInfo<
+      '/admin/AdminPublicationsPage',
+      '/admin/AdminPublicationsPage',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -310,6 +331,14 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
+    'src/pages/admin/AdminDocumentsPage.vue': {
+      routes:
+        | '/admin/AdminDocumentsPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
     'src/pages/admin/AdminImportPage.vue': {
       routes:
         | '/admin/AdminImportPage'
@@ -337,6 +366,22 @@ declare module 'vue-router/auto-routes' {
     'src/pages/admin/AdminProjectsPage.vue': {
       routes:
         | '/admin/AdminProjectsPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminPublicationEditPage.vue': {
+      routes:
+        | '/admin/AdminPublicationEditPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminPublicationsPage.vue': {
+      routes:
+        | '/admin/AdminPublicationsPage'
       views:
         | never
       pathParamNames:

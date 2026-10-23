@@ -584,6 +584,231 @@ const en = {
         back: "Back to editor"
       }
     },
+    /**
+     * T-029 — shared upload stage text. The composable reports honest stages
+     * (validate → transfer → persist), not a fabricated byte percentage.
+     */
+    upload: {
+      validating: "Checking the file…",
+      uploading: "Uploading…",
+      persisting: "Saving…",
+      progressLabel: "Upload progress"
+    },
+    /**
+     * T-029 — publication management. URL xor file versions, per-locale
+     * metadata and one file version per language.
+     */
+    publications: {
+      title: "Publications",
+      description: "Manage the organization's publications and file versions.",
+      heading: "Publications",
+      intro:
+        "Create and edit publications, attach one file version per language or an external URL, then publish.",
+      newPublication: "New publication",
+      empty: "No publications yet.",
+      listFailed: "Publications could not be loaded.",
+      retry: "Try again",
+      updatedLabel: "Updated",
+      statuses: {
+        draft: "Draft",
+        published: "Published",
+        archived: "Archived"
+      },
+      completeness: {
+        label: "Translation completeness",
+        complete: "Complete",
+        notStarted: "Not started",
+        missing: "Missing: {fields}"
+      },
+      fields: {
+        slug: "URL slug",
+        slugHint:
+          "Shared by every language; lowercase letters, numbers and hyphens.",
+        status: "Status",
+        language: "Publication language",
+        languageNone: "Not specified",
+        publicationDate: "Publication date",
+        externalUrl: "External URL",
+        externalUrlHint:
+          "Use an external link OR file versions, never both. Leave blank when uploading files.",
+        sortOrder: "Sort order",
+        files: "File versions",
+        filesHint:
+          "One file per language. PDF or DOCX. Replacing a file removes the old stored version.",
+        label: "Version label",
+        labelHint: "Optional, for example “Full report (PDF)”.",
+        chooseFile: "Choose a file",
+        fileSelected: "Selected: {name}",
+        currentFile: "Stored file: {name}",
+        removeFile: "Remove this version",
+        noFile: "No file for this language.",
+        existing: "Stored"
+      },
+      tabs: {
+        label: "Language versions",
+        en: "English",
+        pl: "Polish",
+        uk: "Ukrainian"
+      },
+      translation: {
+        title: "Title",
+        abstract: "Abstract",
+        authors: "Authors or organization"
+      },
+      actions: {
+        save: "Save",
+        saving: "Saving…",
+        publish: "Publish",
+        publishing: "Publishing…",
+        unpublish: "Unpublish",
+        unpublishing: "Unpublishing…",
+        delete: "Delete",
+        deleting: "Deleting…",
+        cancel: "Cancel",
+        back: "Back to publications",
+        edit: "Edit"
+      },
+      messages: {
+        draftSaved: "Draft saved.",
+        published: "Published. The publication is now public.",
+        unpublished: "Unpublished. The publication is no longer public.",
+        deleted: "Publication deleted."
+      },
+      errors: {
+        slugRequired: "Enter a URL slug.",
+        slugFormat:
+          "Use lowercase letters, numbers and hyphens, for example annual-report.",
+        slugDuplicate: "This URL slug is already used by another publication.",
+        dateInvalid: "Enter a valid publication date.",
+        externalUrlInvalid: "Enter a valid http(s) external URL.",
+        actionBoth: "Use either an external URL or file versions — not both.",
+        actionMissing:
+          "Add an external URL or at least one file version before publishing.",
+        translationTitleRequired:
+          "Enter a title before adding an abstract or authors.",
+        publishFallbackIncomplete: "Add an English title before publishing.",
+        saveFailed: "The publication could not be saved. Try again.",
+        loadFailed: "The publication could not be loaded.",
+        unavailable: "The content service is not configured.",
+        uploadFailed: "The file could not be uploaded.",
+        invalidUpload: "The selected file is not allowed.",
+        activeContent: "SVG, HTML and JavaScript uploads are not permitted.",
+        unsupportedFile: "Choose a PDF or DOCX file.",
+        fileTooLarge: "The file is larger than the 50 MB limit.",
+        deleteFailed: "The publication could not be deleted. Try again.",
+        notFound: "Publication not found."
+      },
+      deleteDialog: {
+        title: "Delete this publication?",
+        message:
+          "This permanently deletes the publication, its translations and its file references. Stored files are removed best-effort. This cannot be undone.",
+        confirm: "Delete publication"
+      }
+    },
+    /**
+     * T-029 — organization documents. File upload, type/date/language, sort
+     * order and a per-document publish toggle.
+     */
+    documents: {
+      title: "Documents",
+      description: "Manage downloadable organization documents.",
+      heading: "Documents",
+      intro:
+        "Upload organizational documents such as statutes and reports, set their type and language, then publish.",
+      newDocument: "New document",
+      empty: "No documents yet.",
+      listFailed: "Documents could not be loaded.",
+      retry: "Try again",
+      statuses: {
+        draft: "Draft",
+        published: "Published",
+        archived: "Archived"
+      },
+      completeness: {
+        label: "Translation completeness",
+        complete: "Complete",
+        notStarted: "Not started",
+        missing: "Missing: {fields}"
+      },
+      types: {
+        regulations: "Regulations",
+        statute: "Statute",
+        report: "Report"
+      },
+      fields: {
+        slug: "URL slug",
+        slugHint:
+          "Shared by every language; lowercase letters, numbers and hyphens.",
+        status: "Status",
+        documentType: "Document type",
+        language: "File language",
+        publicationDate: "Publication date",
+        sortOrder: "Sort order",
+        sortOrderHint: "Lower numbers appear first on the About page.",
+        file: "Document file",
+        fileHint: "PDF or DOCX. Public downloads work without signing in.",
+        chooseFile: "Choose a file",
+        fileSelected: "Selected: {name}",
+        currentFile: "Stored file: {name}",
+        noFile: "No file stored (text document)."
+      },
+      tabs: {
+        label: "Language versions",
+        en: "English",
+        pl: "Polish",
+        uk: "Ukrainian"
+      },
+      translation: {
+        title: "Title",
+        description: "Description"
+      },
+      actions: {
+        save: "Save",
+        saving: "Saving…",
+        publish: "Publish",
+        publishing: "Publishing…",
+        unpublish: "Unpublish",
+        unpublishing: "Unpublishing…",
+        delete: "Delete",
+        deleting: "Deleting…",
+        cancel: "Cancel",
+        back: "Back to dashboard",
+        edit: "Edit",
+        newDocument: "New document"
+      },
+      messages: {
+        saved: "Document saved.",
+        published: "Published. The document is now public.",
+        unpublished: "Unpublished. The document is no longer public.",
+        deleted: "Document deleted."
+      },
+      errors: {
+        slugRequired: "Enter a URL slug.",
+        slugFormat:
+          "Use lowercase letters, numbers and hyphens, for example annual-report.",
+        slugDuplicate: "This URL slug is already used by another document.",
+        documentTypeRequired: "Choose a document type.",
+        fileRequired: "Choose a document file.",
+        dateInvalid: "Enter a valid publication date.",
+        translationTitleRequired: "Enter a title before adding a description.",
+        publishFallbackIncomplete: "Add an English title before publishing.",
+        saveFailed: "The document could not be saved. Try again.",
+        loadFailed: "The document could not be loaded.",
+        unavailable: "The content service is not configured.",
+        uploadFailed: "The file could not be uploaded.",
+        invalidUpload: "The selected file is not allowed.",
+        activeContent: "SVG, HTML and JavaScript uploads are not permitted.",
+        unsupportedFile: "Choose a PDF or DOCX file.",
+        fileTooLarge: "The file is larger than the 50 MB limit.",
+        deleteFailed: "The document could not be deleted. Try again."
+      },
+      deleteDialog: {
+        title: "Delete this document?",
+        message:
+          "This permanently deletes the document, its translations and its stored file reference. This cannot be undone.",
+        confirm: "Delete document"
+      }
+    },
     signIn: {
       title: "Sign in",
       description: "Administrator sign-in for the Barykady Kultury website.",

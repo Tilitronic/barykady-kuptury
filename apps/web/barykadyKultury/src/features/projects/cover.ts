@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { PUBLIC_MEDIA_BUCKET } from "@/features/files/buckets";
 import { publicObjectUrl } from "@/features/files/publicObjectUrl";
 import type { Database } from "@/types/database.types";
 
@@ -14,7 +15,7 @@ import type { Database } from "@/types/database.types";
  * yields `null`, and the card/detail simply omit the image: no broken
  * frames, no invented covers (docs/DESIGN_SYSTEM.md §3).
  */
-export const PROJECT_COVER_BUCKET = "public-media";
+export const PROJECT_COVER_BUCKET = PUBLIC_MEDIA_BUCKET;
 
 export function projectCoverUrl(
   supabase: SupabaseClient<Database> | null,

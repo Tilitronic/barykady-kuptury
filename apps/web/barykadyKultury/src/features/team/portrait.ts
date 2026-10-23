@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { PUBLIC_MEDIA_BUCKET } from "@/features/files/buckets";
 import { publicObjectUrl } from "@/features/files/publicObjectUrl";
 import type { Database } from "@/types/database.types";
 
@@ -12,7 +13,7 @@ import type { Database } from "@/types/database.types";
  * `null`, and the card falls back to the neutral monogram — never a
  * fabricated photo (DESIGN_SYSTEM.md §3).
  */
-export const TEAM_PORTRAIT_BUCKET = "public-media";
+export const TEAM_PORTRAIT_BUCKET = PUBLIC_MEDIA_BUCKET;
 
 export function teamPortraitUrl(
   supabase: SupabaseClient<Database> | null,

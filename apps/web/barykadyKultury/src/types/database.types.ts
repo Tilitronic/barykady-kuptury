@@ -817,6 +817,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      assert_jsonb_array_v1: {
+        Args: { p_name: string; p_value: Json };
+        Returns: undefined;
+      };
       assert_reader_ast_assets_v1: {
         Args: {
           asset_locale: Database["public"]["Enums"]["content_locale"];
@@ -825,6 +829,10 @@ export type Database = {
           target_publication_id: string;
         };
         Returns: undefined;
+      };
+      assert_storage_path_v1: {
+        Args: { p_path: string; p_required?: boolean };
+        Returns: string;
       };
       claim_content_check_v1: {
         Args: {
@@ -919,6 +927,23 @@ export type Database = {
         Args: { p_ids: string[] };
         Returns: undefined;
       };
+      save_document_v1: {
+        Args: {
+          p_document_type: string;
+          p_file_size_bytes: number;
+          p_id: string;
+          p_language: Database["public"]["Enums"]["content_locale"];
+          p_mime_type: string;
+          p_publication_date: string;
+          p_published_at: string;
+          p_slug: string;
+          p_sort_order: number;
+          p_status: Database["public"]["Enums"]["content_status"];
+          p_storage_path: string;
+          p_translations: Json;
+        };
+        Returns: string;
+      };
       save_project_v1: {
         Args: {
           p_cover_path: string;
@@ -928,6 +953,21 @@ export type Database = {
           p_published_at: string;
           p_slug: string;
           p_start_date: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+          p_translations: Json;
+        };
+        Returns: string;
+      };
+      save_publication_v1: {
+        Args: {
+          p_external_url: string;
+          p_files: Json;
+          p_id: string;
+          p_language: Database["public"]["Enums"]["content_locale"];
+          p_publication_date: string;
+          p_published_at: string;
+          p_slug: string;
+          p_sort_order: number;
           p_status: Database["public"]["Enums"]["content_status"];
           p_translations: Json;
         };
@@ -971,7 +1011,23 @@ export type Database = {
           title: string;
         }[];
       };
+      transition_document_v1: {
+        Args: {
+          p_id: string;
+          p_published_at?: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+        };
+        Returns: undefined;
+      };
       transition_project_v1: {
+        Args: {
+          p_id: string;
+          p_published_at?: string;
+          p_status: Database["public"]["Enums"]["content_status"];
+        };
+        Returns: undefined;
+      };
+      transition_publication_v1: {
         Args: {
           p_id: string;
           p_published_at?: string;

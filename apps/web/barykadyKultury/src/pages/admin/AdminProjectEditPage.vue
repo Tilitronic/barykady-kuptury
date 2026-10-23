@@ -321,7 +321,6 @@ import {
   publishProject,
   saveProject,
   unpublishProject,
-  uploadProjectCover,
   type AdminProject
 } from "@/features/admin/projects/api";
 import { PROJECT_COMPLETENESS_LABELS } from "@/features/admin/projects/completeness";
@@ -335,6 +334,8 @@ import {
   type ProjectFormValues
 } from "@/features/admin/projects/projectForm";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
+import { PUBLIC_MEDIA_BUCKET } from "@/features/files/buckets";
+import { useUpload } from "@/features/files/useUpload";
 import {
   DEFAULT_LOCALE,
   isLocale,
@@ -382,6 +383,19 @@ const existing = ref<AdminProject | null>(null);
 const activeLocale = ref<Locale>(currentLocale.value);
 const coverFile = ref<File | null>(null);
 const deleteOpen = ref(false);
+
+/**
+ * Shared T-029 upload seam. Cover uploads previously lived in
+ * `features/admin/projects/api`; the composable is now the single
+ * validate → upload → cleanup implementation for covers, portraits,
+ * publications and documents.
+ */
+const coverUpload = useUpload({
+  supabase: client,
+  bucket: PUBLIC_MEDIA_BUCKET,
+  folder: "projects",
+  accept: "image"
+});
 
 const loading = ref(true);
 const loadError = ref<"not-found" | "unavailable" | "failed" | null>(null);
@@ -595,17 +609,21 @@ async function submit(kind: "save" | "publish"): Promise<void> {
   pending.value = kind;
 
   try {
+    const previousCover = values.value.coverPath;
+    let uploadedCover: string | null = null;
+
     if (coverFile.value !== null) {
-      const upload = await uploadProjectCover(client.value, coverFile.value);
+      const upload = await coverUpload.upload(coverFile.value);
       if (!upload.ok) {
         setStatusMessage(
-          upload.message === "not-an-image"
+          upload.code === "not-an-image"
             ? t("admin.projects.errors.notAnImage")
             : t("admin.projects.errors.uploadFailed"),
           "error"
         );
         return;
       }
+      uploadedCover = upload.path;
       values.value.coverPath = upload.path;
     }
 
@@ -640,7 +658,14 @@ async function submit(kind: "save" | "publish"): Promise<void> {
         "error"
       );
       if (saved.code === "duplicate-slug") focusFirstError();
+      // Never leave a just-uploaded cover orphaned by a failed row write.
+      if (uploadedCover !== null) await coverUpload.remove(uploadedCover);
       return;
+    }
+
+    // A replaced cover is unreachable once the row points at the new object.
+    if (uploadedCover !== null && previousCover !== null) {
+      await coverUpload.remove(previousCover);
     }
 
     if (kind === "publish") {

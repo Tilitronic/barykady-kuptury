@@ -102,6 +102,26 @@
               {{ t("admin.team.title") }}
             </RouterLink>
           </li>
+          <li v-if="can('publications:write')">
+            <RouterLink
+              :to="`/${currentLocale}/admin/publications`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isPublications ? 'page' : undefined"
+              data-testid="admin-nav-publications"
+            >
+              {{ t("admin.publications.title") }}
+            </RouterLink>
+          </li>
+          <li v-if="can('documents:write')">
+            <RouterLink
+              :to="`/${currentLocale}/admin/documents`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isDocuments ? 'page' : undefined"
+              data-testid="admin-nav-documents"
+            >
+              {{ t("admin.documents.title") }}
+            </RouterLink>
+          </li>
           <li v-if="can('importer')">
             <RouterLink
               :to="`/${currentLocale}/admin/import`"
@@ -194,6 +214,16 @@ const isProjects = computed(() =>
 
 /** True for the T-028 team editor (nav highlight). */
 const isTeam = computed(() => String(route.name ?? "") === "admin-team");
+
+/** True for the T-029 publication list/editor routes (nav highlight). */
+const isPublications = computed(() =>
+  String(route.name ?? "").startsWith("admin-publication")
+);
+
+/** True for the T-029 document editor (nav highlight). */
+const isDocuments = computed(
+  () => String(route.name ?? "") === "admin-documents"
+);
 
 /** True for the T-041 import surface (nav highlight). */
 const isImport = computed(() => String(route.name ?? "") === "admin-import");

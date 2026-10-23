@@ -407,6 +407,62 @@ export const routes: RouteRecordRaw[] = [
             descriptionKey: "admin.team.description"
           }
         }
+      },
+      // ── T-029 publications & documents ───────────────────────────────────
+      // `publications/new` precedes `publications/:id` so the static segment
+      // is unambiguous. The URL xor file invariant and file uploads live in
+      // these pages; the RPC re-checks `publications:write` at the boundary.
+      {
+        path: "publications",
+        name: "admin-publications",
+        component: () => import("@/pages/admin/AdminPublicationsPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "publications:write",
+          pageMeta: {
+            titleKey: "admin.publications.title",
+            descriptionKey: "admin.publications.description"
+          }
+        }
+      },
+      {
+        path: "publications/new",
+        name: "admin-publication-new",
+        component: () => import("@/pages/admin/AdminPublicationEditPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "publications:write",
+          pageMeta: {
+            titleKey: "admin.publications.title",
+            descriptionKey: "admin.publications.description"
+          }
+        }
+      },
+      {
+        path: "publications/:id",
+        name: "admin-publication-edit",
+        component: () => import("@/pages/admin/AdminPublicationEditPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "publications:write",
+          pageMeta: {
+            titleKey: "admin.publications.title",
+            descriptionKey: "admin.publications.description"
+          }
+        }
+      },
+      {
+        path: "documents",
+        name: "admin-documents",
+        component: () => import("@/pages/admin/AdminDocumentsPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          requiresCapability: "documents:write",
+          pageMeta: {
+            titleKey: "admin.documents.title",
+            descriptionKey: "admin.documents.description"
+          }
+        }
       }
     ]
   },

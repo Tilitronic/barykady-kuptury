@@ -1,11 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import {
-  validateUpload,
-  type UploadFileLike
-} from "@/features/files/validateUpload";
 import { SUPPORTED_LOCALES, type Locale } from "@/features/i18n/locales";
-import { PROJECT_COVER_BUCKET } from "@/features/projects/cover";
 import type { Database, Json } from "@/types/database.types";
 
 import {
@@ -112,9 +107,6 @@ const UNIQUE_VIOLATION = "23505";
  */
 const SAVE_PROJECT_RPC = "save_project_v1" as const;
 const TRANSITION_PROJECT_RPC = "transition_project_v1" as const;
-
-/** Image MIME types accepted for a project cover (T-014 storage policy). */
-const COVER_MIME_PREFIX = "image/";
 
 function failure(code: AdminFailureCode, message?: string): AdminFailure {
   return message === undefined
@@ -430,37 +422,4 @@ export async function deleteProject(
   const { error } = await supabase.from("projects").delete().eq("id", id);
 
   return error ? failure("failed", error.message) : { ok: true };
-}
-
-/**
- * Validates and uploads a cover through the T-014 gate.
- *
- * The shared validator rejects active content (SVG/HTML/JS), oversize files and
- * name/MIME mismatches; this wrapper narrows it further to images because a
- * project cover is rendered as an `<img>`. The storage bucket's own limits and
- * policies remain the server-side authority (docs/architecture.md §6).
- */
-export async function uploadProjectCover(
-  supabase: SupabaseClient<Database> | null,
-  file: File & UploadFileLike,
-  existingNames: readonly string[] = []
-): Promise<{ readonly ok: true; readonly path: string } | AdminFailure> {
-  if (!supabase) return failure("unavailable");
-
-  const validation = validateUpload(file, { existingNames });
-  if (!validation.ok) {
-    return failure("invalid-upload", validation.code);
-  }
-  if (!validation.mimeType.startsWith(COVER_MIME_PREFIX)) {
-    return failure("invalid-upload", "not-an-image");
-  }
-
-  const path = `projects/${validation.fileName}`;
-  const { error } = await supabase.storage
-    .from(PROJECT_COVER_BUCKET)
-    .upload(path, file, { upsert: false, contentType: validation.mimeType });
-
-  if (error) return failure("failed", error.message);
-
-  return { ok: true, path };
 }

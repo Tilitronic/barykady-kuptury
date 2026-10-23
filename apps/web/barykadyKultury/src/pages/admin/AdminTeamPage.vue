@@ -282,7 +282,6 @@ import {
   removeTeamPortrait,
   saveTeamMember,
   unpublishTeamMember,
-  uploadTeamPortrait,
   type AdminTeamMember
 } from "@/features/admin/team/api";
 import {
@@ -301,6 +300,8 @@ import type {
   LocaleCompleteness
 } from "@/features/admin/shared/completeness";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
+import { PUBLIC_MEDIA_BUCKET } from "@/features/files/buckets";
+import { useUpload } from "@/features/files/useUpload";
 import {
   DEFAULT_LOCALE,
   isLocale,
@@ -345,6 +346,17 @@ const deleteOpen = ref(false);
 const memberToDelete = ref<AdminTeamMember | null>(null);
 const pending = ref<"save" | "move" | "toggle" | "delete" | null>(null);
 const statusMessage = ref("");
+
+/**
+ * Shared T-029 upload seam (retrofits the T-028 portrait path). The composable
+ * owns validation before transfer and orphan cleanup on a failed row write.
+ */
+const portraitUpload = useUpload({
+  supabase: client,
+  bucket: PUBLIC_MEDIA_BUCKET,
+  folder: "team",
+  accept: "image"
+});
 const statusKind = ref<"success" | "error" | null>(null);
 
 const loadErrorMessage = computed(() =>
@@ -505,18 +517,23 @@ async function save(): Promise<void> {
   }
 
   pending.value = "save";
+
+  const previousPortrait = editing.value.portraitPath;
+  let uploadedPortrait: string | null = null;
+
   try {
     if (portraitFile.value !== null) {
-      const upload = await uploadTeamPortrait(client.value, portraitFile.value);
+      const upload = await portraitUpload.upload(portraitFile.value);
       if (!upload.ok) {
         setStatusMessage(
-          upload.message === "not-an-image"
+          upload.code === "not-an-image"
             ? t("admin.team.errors.notAnImage")
             : t("admin.team.errors.uploadFailed"),
           "error"
         );
         return;
       }
+      uploadedPortrait = upload.path;
       editing.value = { ...editing.value, portraitPath: upload.path };
     }
 
@@ -534,8 +551,16 @@ async function save(): Promise<void> {
     });
 
     if (!saved.ok) {
+      if (uploadedPortrait !== null) {
+        await portraitUpload.remove(uploadedPortrait);
+      }
       setStatusMessage(t("admin.team.errors.saveFailed"), "error");
       return;
+    }
+
+    // The row now points at the new portrait; remove the replaced object.
+    if (uploadedPortrait !== null && previousPortrait !== null) {
+      await portraitUpload.remove(previousPortrait);
     }
 
     portraitFile.value = null;

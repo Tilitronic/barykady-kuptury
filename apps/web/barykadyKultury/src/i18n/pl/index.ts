@@ -488,6 +488,217 @@ const pl: MessageSchema = {
         back: "Powrót do edytora"
       }
     },
+    upload: {
+      validating: "Sprawdzanie pliku…",
+      uploading: "Przesyłanie…",
+      persisting: "Zapisywanie…",
+      progressLabel: "Postęp przesyłania"
+    },
+    publications: {
+      title: "Publikacje",
+      description: "Zarządzaj publikacjami organizacji i wersjami plików.",
+      heading: "Publikacje",
+      intro:
+        "Twórz i edytuj publikacje, dołącz jedną wersję pliku na język lub link zewnętrzny, a następnie opublikuj.",
+      newPublication: "Nowa publikacja",
+      empty: "Brak publikacji.",
+      listFailed: "Nie udało się wczytać publikacji.",
+      retry: "Spróbuj ponownie",
+      updatedLabel: "Zaktualizowano",
+      statuses: {
+        draft: "Szkic",
+        published: "Opublikowana",
+        archived: "Zarchiwizowana"
+      },
+      completeness: {
+        label: "Kompletność tłumaczeń",
+        complete: "Kompletna",
+        notStarted: "Nierozpoczęta",
+        missing: "Brakuje: {fields}"
+      },
+      fields: {
+        slug: "Adres URL (slug)",
+        slugHint:
+          "Wspólny dla wszystkich języków; małe litery, cyfry i myślniki.",
+        status: "Status",
+        language: "Język publikacji",
+        languageNone: "Nie określono",
+        publicationDate: "Data publikacji",
+        externalUrl: "Link zewnętrzny",
+        externalUrlHint:
+          "Użyj linku zewnętrznego LUB wersji plików, nigdy obu. Pozostaw puste przy przesyłaniu plików.",
+        sortOrder: "Kolejność",
+        files: "Wersje plików",
+        filesHint:
+          "Jeden plik na język. PDF lub DOCX. Zastąpienie pliku usuwa starą wersję.",
+        label: "Etykieta wersji",
+        labelHint: "Opcjonalnie, np. „Pełny raport (PDF)”.",
+        chooseFile: "Wybierz plik",
+        fileSelected: "Wybrano: {name}",
+        currentFile: "Zapisany plik: {name}",
+        removeFile: "Usuń tę wersję",
+        noFile: "Brak pliku dla tego języka.",
+        existing: "Zapisany"
+      },
+      tabs: {
+        label: "Wersje językowe",
+        en: "Angielski",
+        pl: "Polski",
+        uk: "Ukraiński"
+      },
+      translation: {
+        title: "Tytuł",
+        abstract: "Streszczenie",
+        authors: "Autorzy lub organizacja"
+      },
+      actions: {
+        save: "Zapisz",
+        saving: "Zapisywanie…",
+        publish: "Opublikuj",
+        publishing: "Publikowanie…",
+        unpublish: "Wycofaj",
+        unpublishing: "Wycofywanie…",
+        delete: "Usuń",
+        deleting: "Usuwanie…",
+        cancel: "Anuluj",
+        back: "Wróć do publikacji",
+        edit: "Edytuj"
+      },
+      messages: {
+        draftSaved: "Szkic zapisany.",
+        published: "Opublikowano. Publikacja jest teraz publiczna.",
+        unpublished: "Wycofano. Publikacja nie jest już publiczna.",
+        deleted: "Publikacja usunięta."
+      },
+      errors: {
+        slugRequired: "Wpisz adres URL (slug).",
+        slugFormat: "Użyj małych liter, cyfr i myślników, np. raport-roczny.",
+        slugDuplicate: "Ten adres URL jest już używany przez inną publikację.",
+        dateInvalid: "Wpisz poprawną datę publikacji.",
+        externalUrlInvalid: "Wpisz poprawny adres http(s).",
+        actionBoth: "Użyj linku zewnętrznego albo wersji plików — nie obu.",
+        actionMissing:
+          "Dodaj link zewnętrzny lub co najmniej jedną wersję pliku przed publikacją.",
+        translationTitleRequired:
+          "Wpisz tytuł przed dodaniem streszczenia lub autorów.",
+        publishFallbackIncomplete: "Dodaj angielski tytuł przed publikacją.",
+        saveFailed: "Nie udało się zapisać publikacji. Spróbuj ponownie.",
+        loadFailed: "Nie udało się wczytać publikacji.",
+        unavailable: "Usługa treści nie jest skonfigurowana.",
+        uploadFailed: "Nie udało się przesłać pliku.",
+        invalidUpload: "Wybrany plik jest niedozwolony.",
+        activeContent: "Przesyłanie SVG, HTML i JavaScript jest niedozwolone.",
+        unsupportedFile: "Wybierz plik PDF lub DOCX.",
+        fileTooLarge: "Plik przekracza limit 50 MB.",
+        deleteFailed: "Nie udało się usunąć publikacji. Spróbuj ponownie.",
+        notFound: "Nie znaleziono publikacji."
+      },
+      deleteDialog: {
+        title: "Usunąć tę publikację?",
+        message:
+          "Spowoduje to trwałe usunięcie publikacji, jej tłumaczeń i odwołań do plików. Zapisane pliki są usuwane w miarę możliwości. Tej operacji nie można cofnąć.",
+        confirm: "Usuń publikację"
+      }
+    },
+    documents: {
+      title: "Dokumenty",
+      description: "Zarządzaj dokumentami organizacji do pobrania.",
+      heading: "Dokumenty",
+      intro:
+        "Przesyłaj dokumenty organizacji, takie jak statut i raporty, ustaw ich typ i język, a następnie opublikuj.",
+      newDocument: "Nowy dokument",
+      empty: "Brak dokumentów.",
+      listFailed: "Nie udało się wczytać dokumentów.",
+      retry: "Spróbuj ponownie",
+      statuses: {
+        draft: "Szkic",
+        published: "Opublikowany",
+        archived: "Zarchiwizowany"
+      },
+      completeness: {
+        label: "Kompletność tłumaczeń",
+        complete: "Kompletna",
+        notStarted: "Nierozpoczęta",
+        missing: "Brakuje: {fields}"
+      },
+      types: {
+        regulations: "Regulamin",
+        statute: "Statut",
+        report: "Raport"
+      },
+      fields: {
+        slug: "Adres URL (slug)",
+        slugHint:
+          "Wspólny dla wszystkich języków; małe litery, cyfry i myślniki.",
+        status: "Status",
+        documentType: "Typ dokumentu",
+        language: "Język pliku",
+        publicationDate: "Data publikacji",
+        sortOrder: "Kolejność",
+        sortOrderHint: "Niższe liczby pojawiają się pierwsze na stronie O nas.",
+        file: "Plik dokumentu",
+        fileHint: "PDF lub DOCX. Publiczne pobieranie działa bez logowania.",
+        chooseFile: "Wybierz plik",
+        fileSelected: "Wybrano: {name}",
+        currentFile: "Zapisany plik: {name}",
+        noFile: "Brak pliku (dokument tekstowy)."
+      },
+      tabs: {
+        label: "Wersje językowe",
+        en: "Angielski",
+        pl: "Polski",
+        uk: "Ukraiński"
+      },
+      translation: {
+        title: "Tytuł",
+        description: "Opis"
+      },
+      actions: {
+        save: "Zapisz",
+        saving: "Zapisywanie…",
+        publish: "Opublikuj",
+        publishing: "Publikowanie…",
+        unpublish: "Wycofaj",
+        unpublishing: "Wycofywanie…",
+        delete: "Usuń",
+        deleting: "Usuwanie…",
+        cancel: "Anuluj",
+        back: "Wróć do panelu",
+        edit: "Edytuj",
+        newDocument: "Nowy dokument"
+      },
+      messages: {
+        saved: "Dokument zapisany.",
+        published: "Opublikowano. Dokument jest teraz publiczny.",
+        unpublished: "Wycofano. Dokument nie jest już publiczny.",
+        deleted: "Dokument usunięty."
+      },
+      errors: {
+        slugRequired: "Wpisz adres URL (slug).",
+        slugFormat: "Użyj małych liter, cyfr i myślników, np. raport-roczny.",
+        slugDuplicate: "Ten adres URL jest już używany przez inny dokument.",
+        documentTypeRequired: "Wybierz typ dokumentu.",
+        fileRequired: "Wybierz plik dokumentu.",
+        dateInvalid: "Wpisz poprawną datę publikacji.",
+        translationTitleRequired: "Wpisz tytuł przed dodaniem opisu.",
+        publishFallbackIncomplete: "Dodaj angielski tytuł przed publikacją.",
+        saveFailed: "Nie udało się zapisać dokumentu. Spróbuj ponownie.",
+        loadFailed: "Nie udało się wczytać dokumentu.",
+        unavailable: "Usługa treści nie jest skonfigurowana.",
+        uploadFailed: "Nie udało się przesłać pliku.",
+        invalidUpload: "Wybrany plik jest niedozwolony.",
+        activeContent: "Przesyłanie SVG, HTML i JavaScript jest niedozwolone.",
+        unsupportedFile: "Wybierz plik PDF lub DOCX.",
+        fileTooLarge: "Plik przekracza limit 50 MB.",
+        deleteFailed: "Nie udało się usunąć dokumentu. Spróbuj ponownie."
+      },
+      deleteDialog: {
+        title: "Usunąć ten dokument?",
+        message:
+          "Spowoduje to trwałe usunięcie dokumentu, jego tłumaczeń i odwołania do pliku. Tej operacji nie można cofnąć.",
+        confirm: "Usuń dokument"
+      }
+    },
     signIn: {
       title: "Logowanie",
       description:

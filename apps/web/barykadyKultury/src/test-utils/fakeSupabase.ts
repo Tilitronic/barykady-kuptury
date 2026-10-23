@@ -18,6 +18,13 @@ export interface FakeQueryCall {
   readonly args: readonly unknown[];
 }
 
+export interface FakeStorageCall {
+  readonly op: "upload" | "remove";
+  readonly bucket: string;
+  readonly path: string;
+  readonly contentType?: string;
+}
+
 export interface FakeSupabase {
   /** The value passed to the data-access function under test. */
   readonly client: SupabaseClient<Database>;
@@ -25,6 +32,8 @@ export interface FakeSupabase {
   readonly calls: FakeQueryCall[];
   /** Every `rpc()` call in order (T-039 search seam). */
   readonly rpcCalls: { name: string; args: Record<string, unknown> }[];
+  /** Every Storage upload/remove in order (T-029 upload seam). */
+  readonly storageCalls: FakeStorageCall[];
 }
 
 export interface FakeSupabaseOptions {
@@ -214,6 +223,7 @@ export function createFakeSupabase(
 ): FakeSupabase {
   const calls: FakeQueryCall[] = [];
   const rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
+  const storageCalls: FakeStorageCall[] = [];
   let rpcIndex = 0;
   const from = (table: string) => new FakeQueryBuilder(table, options, calls);
 
@@ -248,18 +258,41 @@ export function createFakeSupabase(
 
   // Read-side storage surface used by T-018: `getPublicUrl` is synchronous URL
   // derivation in the real client, so the fake only mirrors its shape with a
-  // fixed fake origin — no I/O, never a real bucket.
+  // fixed fake origin — no I/O, never a real bucket. T-029 adds the write
+  // surface (upload/remove) and records every call so ordering (validate →
+  // upload → persist → cleanup) is assertable without a network.
   const storage = {
     from: (bucket: string) => ({
       getPublicUrl: (path: string) => ({
         data: {
           publicUrl: `https://fake.supabase.test/storage/v1/object/public/${bucket}/${path}`
         }
-      })
+      }),
+      upload: async (
+        path: string,
+        _file: unknown,
+        options?: { contentType?: string }
+      ) => {
+        storageCalls.push({
+          op: "upload",
+          bucket,
+          path,
+          ...(options?.contentType === undefined
+            ? {}
+            : { contentType: options.contentType })
+        });
+        return { data: { path }, error: null };
+      },
+      remove: async (paths: readonly string[]) => {
+        for (const path of paths) {
+          storageCalls.push({ op: "remove", bucket, path });
+        }
+        return { data: null, error: null };
+      }
     })
   };
 
   const client = { from, storage, rpc } as unknown as SupabaseClient<Database>;
 
-  return { client, calls, rpcCalls };
+  return { client, calls, rpcCalls, storageCalls };
 }

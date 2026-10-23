@@ -1,9 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import {
-  validateUpload,
-  type UploadFileLike
-} from "@/features/files/validateUpload";
 import { SUPPORTED_LOCALES, type Locale } from "@/features/i18n/locales";
 import { TEAM_PORTRAIT_BUCKET } from "@/features/team/portrait";
 import type { Database, Json } from "@/types/database.types";
@@ -95,9 +91,6 @@ const ADMIN_TEAM_SELECT =
 const SAVE_TEAM_MEMBER_RPC = "save_team_member_v1" as const;
 const TRANSITION_TEAM_MEMBER_RPC = "transition_team_member_v1" as const;
 const REORDER_TEAM_MEMBERS_RPC = "reorder_team_members_v1" as const;
-
-/** Image MIME types accepted for a portrait (T-014 storage policy). */
-const PORTRAIT_MIME_PREFIX = "image/";
 
 function failure(
   code: AdminTeamFailureCode,
@@ -323,38 +316,6 @@ export async function deleteTeamMember(
   const { error } = await supabase.from("team_members").delete().eq("id", id);
 
   return error ? failure("failed", error.message) : { ok: true };
-}
-
-/**
- * Validates and uploads a portrait through the T-014 gate.
- *
- * The shared validator rejects active content (SVG/HTML/JS), oversize files and
- * name/MIME mismatches; this wrapper narrows it to images because portraits are
- * rendered as `<img>`. The bucket policy remains the server-side authority.
- */
-export async function uploadTeamPortrait(
-  supabase: SupabaseClient<Database> | null,
-  file: File & UploadFileLike,
-  existingNames: readonly string[] = []
-): Promise<{ readonly ok: true; readonly path: string } | AdminTeamFailure> {
-  if (!supabase) return failure("unavailable");
-
-  const validation = validateUpload(file, { existingNames });
-  if (!validation.ok) {
-    return failure("failed", validation.code);
-  }
-  if (!validation.mimeType.startsWith(PORTRAIT_MIME_PREFIX)) {
-    return failure("failed", "not-an-image");
-  }
-
-  const path = `team/${validation.fileName}`;
-  const { error } = await supabase.storage
-    .from(TEAM_PORTRAIT_BUCKET)
-    .upload(path, file, { upsert: false, contentType: validation.mimeType });
-
-  if (error) return failure("failed", error.message);
-
-  return { ok: true, path };
 }
 
 /**

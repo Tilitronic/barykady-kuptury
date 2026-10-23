@@ -109,13 +109,17 @@ describe("DocumentsSection", () => {
     expect(link.attributes("href")).toBe("/pl/about/documents/regulations");
   });
 
-  it("renders file documents as metadata without a reader link", async () => {
+  it("links file documents to an anonymous attachment download (T-029)", async () => {
     const fake = createFakeSupabase({
       tables: { organization_documents: [fileRow()] }
     });
     const wrapper = await mountSection(fake.client);
 
-    expect(wrapper.find(".documents-list__link").exists()).toBe(false);
+    const link = wrapper.get(".documents-list__link");
+    expect(link.text()).toBe("Annual report (file)");
+    expect(link.attributes("href")).toBe(
+      "https://fake.supabase.test/storage/v1/object/public/public-documents/documents/annual-report.pdf?download=annual-report.pdf"
+    );
     expect(wrapper.text()).toContain("Annual report (file)");
     expect(wrapper.get(".documents-list__type").text()).toBe("Regulations");
   });
