@@ -22,7 +22,14 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: APP_ORIGIN,
-    trace: "on-first-retry"
+    // T-032 acceptance criterion: every failing journey must leave a
+    // screenshot and a trace artifact under `test-results/`, even locally
+    // with retries disabled. `retain-on-failure` keeps the trace only when a
+    // test fails (no artifact noise on green runs); `only-on-failure` does the
+    // same for screenshots. CI retries still produce a trace for the first
+    // failing attempt.
+    screenshot: "only-on-failure",
+    trace: "retain-on-failure"
   },
   projects: [
     {
@@ -49,7 +56,11 @@ export default defineConfig({
     // fixtures and never talk to a real project (docs/TESTING.md §2).
     env: {
       VITE_SUPABASE_URL: APP_ORIGIN,
-      VITE_SUPABASE_PUBLISHABLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e2e"
+      VITE_SUPABASE_PUBLISHABLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e2e",
+      // T-032 J7: enable the contact fixture seam only in the Playwright build.
+      // Tests seed clearly fictional channels through localStorage; the
+      // shipped configuration stays empty (D-04, AGENTS.md rule 6).
+      VITE_E2E_CONTACT_FIXTURE: "1"
     }
   }
 });

@@ -7,6 +7,8 @@ import {
   VIEWER_AUTH_USER,
   mockSupabaseAuth
 } from "./support/mocks";
+import { createProjectStore, mockProjectApi } from "./support/project-store";
+import { readSupabaseAccessToken } from "./support/publication-store";
 
 /**
  * T-026 — admin auth journeys (ticket TDD plan step 3).
@@ -192,6 +194,92 @@ test.describe("admin auth", () => {
     // Private UI is gone: the admin URL bounces to sign-in again.
     await page.goto("/en/admin");
     await expect(page).toHaveURL(/\/en\/admin\/sign-in/);
+  });
+
+  /**
+   * T-032 J8 gate fix — the guard's redirect is not authorization by itself
+   * (AGENTS.md rule 4: UI guards are not authorization). The mocked project
+   * mutation boundary mirrors the RLS/RPC policy: no admin bearer token means
+   * 42501 and no write; the same request with the mocked admin token succeeds.
+   */
+  test("an anonymous project mutation is rejected and writes nothing", async ({
+    page,
+    browser
+  }) => {
+    const authorize = (token: string) =>
+      token === `e2e-access-token-${ADMIN_AUTH_USER.email}`;
+    const store = createProjectStore();
+    const saveBody = {
+      p_id: null,
+      p_slug: "anon-must-not-write",
+      p_status: "draft",
+      p_featured_rank: null,
+      p_cover_path: null,
+      p_start_date: null,
+      p_end_date: null,
+      p_published_at: null,
+      p_translations: [
+        {
+          locale: "en",
+          title: "Anonymous write must fail",
+          summary: "summary",
+          body: "body"
+        }
+      ]
+    };
+
+    // Anonymous context: no session, no bearer token.
+    const anonContext = await browser.newContext();
+    const anonPage = await anonContext.newPage();
+    await mockProjectApi(anonPage, store, { authorize });
+    await anonPage.goto("/en");
+
+    const anonymous = await anonPage.evaluate(async body => {
+      const response = await fetch("/rest/v1/rpc/save_project_v1", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      return { status: response.status, payload: await response.json() };
+    }, saveBody);
+
+    expect(anonymous.status).toBe(403);
+    expect(anonymous.payload.code).toBe("42501");
+    expect(store.projects).toHaveLength(0);
+
+    // The UI route is only a guard: it redirects, it does not authorize.
+    await anonPage.goto("/en/admin/projects/new");
+    await expect(anonPage).toHaveURL(/\/en\/admin\/sign-in/);
+
+    // The same write with the mocked admin token is allowed.
+    await mockSupabaseAuth(page, { user: ADMIN_AUTH_USER });
+    await mockProjectApi(page, store, { authorize });
+    await page.goto("/en/admin/sign-in");
+    await signInViaForm(page, "admin@demo.local", "any-password");
+    await expect(page).toHaveURL(/\/en\/admin$/);
+
+    const token = await readSupabaseAccessToken(page);
+    expect(token).not.toBe("");
+    const admin = await page.evaluate(
+      async ({ body, bearer }) => {
+        const response = await fetch("/rest/v1/rpc/save_project_v1", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${bearer}`
+          },
+          body: JSON.stringify(body)
+        });
+        return { status: response.status, payload: await response.json() };
+      },
+      { body: saveBody, bearer: token }
+    );
+
+    expect(admin.status).toBe(200);
+    expect(store.projects).toHaveLength(1);
+    expect(store.projects[0]?.slug).toBe("anon-must-not-write");
+
+    await anonContext.close();
   });
 
   test("the Polish locale serves the localized admin shell", async ({

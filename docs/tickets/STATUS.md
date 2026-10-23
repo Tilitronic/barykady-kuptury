@@ -37,7 +37,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-029 | Admin publications, documents, uploads | 6 | done | @reviewer (rev-1) + @architector | — | — |
 | T-030 | Admin featured ordering | 6 | done | @reviewer (rev-1 SHIP) | — | — |
 | T-031 | Admin event mapping & translation coverage | 6 | done | @reviewer (rev-1) + @architector | — | — |
-| T-032 | Full E2E journey matrix | 7 | todo | — | — | — |
+| T-032 | Full E2E journey matrix | 7 | done | @reviewer (rev-1) | — | — |
 | T-033 | Accessibility audit & fixes | 7 | todo | — | — | — |
 | T-034 | SEO, metadata, deploy configuration (favicon delivered early; manifest/OG remain) | 7 | todo | — | — | — |
 | T-035 | Release readiness & handoff | 7 | todo | — | — | — |

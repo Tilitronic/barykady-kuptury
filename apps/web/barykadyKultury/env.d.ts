@@ -23,6 +23,12 @@ interface ImportMetaEnv {
 }
 
 /**
+ * T-032: build-time flag injected by `build.define` in quasar.config.ts.
+ * True only in the Playwright build; every shipped build sets it to false.
+ */
+declare const __BK_E2E_CONTACT_FIXTURE__: boolean;
+
+/**
  * T-008: Vite resolves static SVG imports as URL strings.
  * Declaring this module type prevents TypeScript from rejecting
  * `import src from '@/assets/brand/logo_red.svg'`.

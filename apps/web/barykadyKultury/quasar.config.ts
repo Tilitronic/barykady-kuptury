@@ -15,7 +15,7 @@ export default defineConfig(ctx => {
     // mechanisms and wires the live system-preference listener.
     // `supabase` (T-015) initializes the single browser client and surfaces a
     // development misconfiguration as a loud startup error.
-    boot: ["i18n", "theme", "supabase"],
+    boot: ["i18n", "theme", "supabase", "icons"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: ["app.scss"],
@@ -64,7 +64,15 @@ export default defineConfig(ctx => {
       },
 
       // publicPath: '/',
-      // define: {},
+      // T-032 J7: the Playwright webServer sets VITE_E2E_CONTACT_FIXTURE=1.
+      // Quasar's dotenv pipeline did not surface that var to the client bundle
+      // in this configuration, so the flag is injected explicitly. Production
+      // builds (no env var) receive `false` and the seam is dead code.
+      define: {
+        __BK_E2E_CONTACT_FIXTURE__: JSON.stringify(
+          process.env.VITE_E2E_CONTACT_FIXTURE === "1"
+        )
+      },
       // defineEnv: {}
       // ignorePublicFolder: true,
       // minify: false,

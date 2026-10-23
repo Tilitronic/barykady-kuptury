@@ -672,62 +672,131 @@ async function handleReorderFeaturedRpc(
 }
 
 /**
+ * Optional capability gate for the T-032 J8 mutation-rejection journey.
+ *
+ * Real authorization lives in RLS / the SECURITY DEFINER RPCs. This mock can
+ * mirror the observable contract when a journey explicitly opts in: mutating
+ * requests without an accepted bearer token get PostgREST's 42501 and the
+ * in-memory store is not touched. Default: no gate, so every existing journey
+ * keeps its current behaviour.
+ */
+export interface MockProjectApiOptions {
+  /** Returns true when the bearer token (may be "") is an allowed admin. */
+  authorize?: (token: string) => boolean;
+}
+
+function bearerToken(route: Route): string {
+  return (route.request().headers()["authorization"] ?? "").replace(
+    /^Bearer\s+/i,
+    ""
+  );
+}
+
+function isMutation(route: Route): boolean {
+  const method = route.request().method();
+  return method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
+}
+
+async function denyMutation(route: Route): Promise<void> {
+  await route.fulfill({
+    status: 403,
+    contentType: "application/json",
+    body: JSON.stringify({
+      code: "42501",
+      message: "admin role or projects:write capability required",
+      details: null,
+      hint: null
+    })
+  });
+}
+
+/**
  * Installs the project/translation/storage handlers on `page`. The same `store`
  * may be installed on several pages (for example an admin page and an anonymous
  * context) so a write is visible to the public read.
  */
 export async function mockProjectApi(
   page: Page,
-  store: ProjectStore
+  store: ProjectStore,
+  options: MockProjectApiOptions = {}
 ): Promise<void> {
+  /**
+   * Applies the optional policy gate only to mutating requests. Reads stay
+   * public, exactly like the RLS select policies.
+   */
+  const guarded =
+    (handler: (route: Route) => Promise<void>) => async (route: Route) => {
+      if (
+        options.authorize !== undefined &&
+        isMutation(route) &&
+        !options.authorize(bearerToken(route))
+      ) {
+        await denyMutation(route);
+        return;
+      }
+      await handler(route);
+    };
+
   // Register the more specific RPC handlers first; Playwright consults the
   // most recently registered matching route first.
-  await page.route("**/rest/v1/rpc/save_project_v1", async (route: Route) => {
-    await handleSaveProjectRpc(route, store);
-  });
+  await page.route(
+    "**/rest/v1/rpc/save_project_v1",
+    guarded(async (route: Route) => {
+      await handleSaveProjectRpc(route, store);
+    })
+  );
 
   await page.route(
     "**/rest/v1/rpc/set_project_featured_v1",
-    async (route: Route) => {
+    guarded(async (route: Route) => {
       await handleSetProjectFeaturedRpc(route, store);
-    }
+    })
   );
 
   await page.route(
     "**/rest/v1/rpc/reorder_featured_projects_v1",
-    async (route: Route) => {
+    guarded(async (route: Route) => {
       await handleReorderFeaturedRpc(route, store);
-    }
+    })
   );
 
   await page.route(
     "**/rest/v1/rpc/transition_project_v1",
-    async (route: Route) => {
+    guarded(async (route: Route) => {
       await handleTransitionProjectRpc(route, store);
-    }
+    })
   );
 
-  await page.route("**/rest/v1/projects*", async (route: Route) => {
-    const url = new URL(route.request().url());
-    await handleProjects(route, store, url.searchParams);
-  });
+  await page.route(
+    "**/rest/v1/projects*",
+    guarded(async (route: Route) => {
+      const url = new URL(route.request().url());
+      await handleProjects(route, store, url.searchParams);
+    })
+  );
 
-  await page.route("**/rest/v1/project_translations*", async (route: Route) => {
-    const url = new URL(route.request().url());
-    await handleTranslations(route, store, url.searchParams);
-  });
+  await page.route(
+    "**/rest/v1/project_translations*",
+    guarded(async (route: Route) => {
+      const url = new URL(route.request().url());
+      await handleTranslations(route, store, url.searchParams);
+    })
+  );
 
   // Cover uploads: accept the object and return the storage envelope. The
   // journey does not assert the stored bytes, only that the write succeeded.
-  await page.route("**/storage/v1/object/**", async (route: Route) => {
-    if (route.request().method() === "POST") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ Key: "public-media/projects/e2e-cover.png" })
-      });
-      return;
-    }
-    await route.fulfill({ status: 404, body: "" });
-  });
+  await page.route(
+    "**/storage/v1/object/**",
+    guarded(async (route: Route) => {
+      if (route.request().method() === "POST") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ Key: "public-media/projects/e2e-cover.png" })
+        });
+        return;
+      }
+      await route.fulfill({ status: 404, body: "" });
+    })
+  );
 }

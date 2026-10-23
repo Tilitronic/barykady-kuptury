@@ -61,6 +61,7 @@ import ContactChannels from "@/components/contact/ContactChannels.vue";
 import SocialLinks from "@/components/navigation/SocialLinks.vue";
 import { hasActiveSocialLinks, organization } from "@/config/organization";
 import { hasContactDetails } from "@/features/contact/contactDetails";
+import { readContactFixture } from "@/features/contact/contactFixture";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
@@ -80,7 +81,12 @@ const currentLocale = computed<Locale>(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-const details = organization.contact;
+/**
+ * The shipped config is empty while D-04 is open. The E2E build may supply a
+ * clearly fictional fixture through the guarded seam; production builds get
+ * `null` and therefore the real empty state (AGENTS.md rule 6).
+ */
+const details = readContactFixture() ?? organization.contact;
 const hasChannels = hasContactDetails(details);
 
 /** Guard on the shared D-05 predicate (same rule SocialLinks applies) so

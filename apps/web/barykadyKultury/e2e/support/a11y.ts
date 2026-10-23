@@ -50,3 +50,37 @@ export async function checkA11y(page: Page, selector?: string) {
 
   return results;
 }
+
+/**
+ * T-032 journey gate: assert zero *critical and serious* violations.
+ *
+ * The ticket acceptance criterion names the five key surfaces; serious
+ * findings (for example a missing form label or an invalid ARIA relationship)
+ * are release-blocking under DESIGN_SYSTEM.md §6 even though axe ranks them
+ * below "critical". Keeping this helper beside `checkA11y` means a journey
+ * cannot accidentally assert only the weaker threshold.
+ */
+export async function expectNoBlockingViolations(
+  page: Page,
+  selector?: string
+) {
+  const results = await checkA11y(page, selector);
+  const blocking = results.violations.filter(
+    violation =>
+      violation.impact === "critical" || violation.impact === "serious"
+  );
+
+  expect(
+    blocking,
+    `axe found ${blocking.length} critical/serious violation(s):\n` +
+      blocking
+        .map(
+          violation =>
+            `- ${violation.id} (${violation.impact}): ${violation.help} — ` +
+            `${violation.nodes.length} node(s)`
+        )
+        .join("\n")
+  ).toHaveLength(0);
+
+  return results;
+}

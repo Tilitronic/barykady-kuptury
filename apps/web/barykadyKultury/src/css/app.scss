@@ -43,3 +43,19 @@
 html:has(.about-page, .long-form-reader) {
   overflow-x: clip;
 }
+
+/*
+ * Quasar's default field hint/helper text is rgba(0, 0, 0, 0.6), which
+ * resolves to ~#6d6d6d on GRAY93 (#ededed) — 4.41:1, just under the WCAG AA
+ * 4.5:1 threshold (DESIGN_SYSTEM.md §6, T-032 admin-form axe gate). Reuse the
+ * measured text-muted token instead (#6c6a6a on GRAY93 = 4.59:1, and 5.15:1
+ * on the raised surface); error feedback keeps the danger token so status is
+ * never communicated by colour alone.
+ */
+.q-field__messages {
+  color: var(--color-text-muted);
+}
+
+.q-field--error .q-field__messages {
+  color: var(--color-danger);
+}
