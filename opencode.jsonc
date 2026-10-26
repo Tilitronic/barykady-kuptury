@@ -1,0 +1,21 @@
+{
+  // Section-10 change 2026-10-26 (owner-approved): orchestrator git push —
+  // THIS repo only. Global deny (~/.config/opencode/opencode.jsonc L14)
+  // is unchanged; push stays denied in every other repo and agent.
+  // Restart OpenCode after creating this file (config is boot-time).
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "orchestrator": {
+      "permission": {
+        "bash": {
+          "git push": "allow",
+          "git push *": "allow",
+          // Hardening (last-match-wins): never force-push, even here.
+          "git push --force *": "deny",
+          "git push -f *": "deny",
+          "git push * --force*": "deny"
+        }
+      }
+    }
+  }
+}
