@@ -23,7 +23,7 @@
     <div class="reader-controls__section" data-testid="control-text-size">
       <p class="reader-controls__label">{{ t("reader.controls.textSize") }}</p>
       <div class="reader-controls__stepper">
-        <UiSlider
+        <BkSlider
           class="reader-controls__slider"
           :aria-label="t('reader.controls.textSize')"
           :aria-valuetext="textSizeWord"
@@ -70,7 +70,7 @@
     <div class="reader-controls__section" data-testid="control-measure">
       <p class="reader-controls__label">{{ t("reader.controls.measure") }}</p>
       <div class="reader-controls__stepper">
-        <UiSlider
+        <BkSlider
           class="reader-controls__slider"
           :aria-label="t('reader.controls.measure')"
           :aria-valuetext="measureWord"
@@ -117,7 +117,7 @@
         t("reader.controls.lineSpacing")
       }}</p>
       <div class="reader-controls__stepper">
-        <UiSlider
+        <BkSlider
           class="reader-controls__slider"
           :aria-label="t('reader.controls.lineSpacing')"
           :aria-valuetext="lineSpacingWord"
@@ -184,7 +184,7 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, ref, type PropType } from "vue";
-import { UiSlider } from "@/components/ui";
+import { BkSlider } from "@/components/bk";
 import { useI18n } from "vue-i18n";
 
 import {

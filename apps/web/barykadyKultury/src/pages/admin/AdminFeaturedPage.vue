@@ -29,7 +29,7 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-featured__banner"
       rounded
@@ -38,13 +38,13 @@
       data-testid="featured-error"
     >
       <p class="admin-featured__banner-text">{{ loadErrorMessage }}</p>
-      <UiBtn
+      <BkButton
         variant="flat"
         :label="t('admin.featured.errors.retry')"
         data-testid="featured-retry"
         @click="load"
       />
-    </UiBanner>
+    </BkBanner>
 
     <template v-else>
       <section
@@ -82,7 +82,7 @@
 
             <div class="admin-featured__actions">
               <!-- Explicit Up/Down controls: the only ordering path. -->
-              <UiBtn
+              <BkButton
                 variant="flat"
                 :label="t('admin.featured.actions.moveUp')"
                 :aria-label="
@@ -94,7 +94,7 @@
                 :data-testid="`featured-up-${project.id}`"
                 @click="move(project, 'up')"
               />
-              <UiBtn
+              <BkButton
                 variant="flat"
                 :label="t('admin.featured.actions.moveDown')"
                 :aria-label="
@@ -106,7 +106,7 @@
                 :data-testid="`featured-down-${project.id}`"
                 @click="move(project, 'down')"
               />
-              <UiBtn
+              <BkButton
                 variant="outline"
                 :label="t('admin.featured.actions.remove')"
                 :aria-label="
@@ -157,7 +157,7 @@
               </div>
             </div>
 
-            <UiBtn
+            <BkButton
               variant="flat"
               :label="t('admin.featured.actions.add')"
               :aria-label="
@@ -195,7 +195,7 @@ import { computed, inject, onMounted, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
-import { UiBanner, UiBtn } from "@/components/ui";
+import { BkBanner, BkButton } from "@/components/bk";
 import {
   addFeaturedProject,
   fetchFeaturedAdminData,

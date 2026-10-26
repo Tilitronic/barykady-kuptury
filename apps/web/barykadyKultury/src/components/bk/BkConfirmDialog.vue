@@ -1,12 +1,12 @@
 <template>
   <!--
-    UiConfirmDialog — the ui/ seam for destructive confirmations (T-027).
+    BkConfirmDialog — the bk/ seam for destructive confirmations (T-027).
 
     WHY a bespoke primitive instead of QDialog: the confirm contract is small
     (two actions, Escape, focus return) and is fully expressible with native
     semantics, which keeps it unit-testable in happy-dom and free of teleport
-    timing. It lives in ui/ because no application file may render raw Quasar
-    or bespoke modal chrome directly (src/components/ui/__tests__/ui.test.ts).
+    timing. It lives in bk/ because no application file may render raw Quasar
+    or bespoke modal chrome directly (src/components/bk/__tests__/bk.test.ts).
 
     Accessibility contract (DESIGN_SYSTEM.md §6):
       - role="dialog" + aria-modal + aria-labelledby/aria-describedby;
@@ -14,28 +14,28 @@
       - Escape cancels; Tab wraps inside the dialog (no keyboard trap escape);
       - focus returns to the element that opened the dialog on close.
   -->
-  <div v-if="modelValue" class="ui-confirm" @keydown="onKeydown">
-    <div class="ui-confirm__backdrop" aria-hidden="true"></div>
+  <div v-if="modelValue" class="bk-confirm" @keydown="onKeydown">
+    <div class="bk-confirm__backdrop" aria-hidden="true"></div>
     <div
       ref="dialogRef"
-      class="ui-confirm__dialog"
+      class="bk-confirm__dialog"
       role="dialog"
       aria-modal="true"
       :aria-labelledby="titleId"
       :aria-describedby="messageId"
       tabindex="-1"
     >
-      <h2 :id="titleId" class="ui-confirm__title">{{ title }}</h2>
-      <p :id="messageId" class="ui-confirm__message">{{ message }}</p>
-      <div class="ui-confirm__actions">
-        <UiBtn
+      <h2 :id="titleId" class="bk-confirm__title">{{ title }}</h2>
+      <p :id="messageId" class="bk-confirm__message">{{ message }}</p>
+      <div class="bk-confirm__actions">
+        <BkButton
           ref="cancelRef"
           variant="flat"
           :label="cancelLabel"
           data-testid="confirm-cancel"
           @click="cancel"
         />
-        <UiBtn
+        <BkButton
           variant="primary"
           :color="danger ? 'negative' : undefined"
           :label="confirmLabel"
@@ -50,8 +50,22 @@
 <script setup lang="ts">
 import { nextTick, ref, useId, watch, type ComponentPublicInstance } from "vue";
 
-import UiBtn from "./UiBtn.vue";
+import BkButton from "./BkButton.vue";
 
+/**
+ * BkConfirmDialog — the destructive-action seam used by admin pages.
+ *
+ * WHY native dialog semantics instead of QDialog: the contract is deliberately
+ * tiny (two actions, Escape, focus return) and happy-dom can exercise the
+ * whole thing without teleport timing. That makes the focus guarantees
+ * testable, which matters more here than reusing a framework primitive.
+ *
+ * The accessibility contract above is not decorative: focus enters on Cancel
+ * (the safe action), Tab is trapped between the two buttons, Escape cancels,
+ * and focus returns to whichever control opened the dialog. Every admin
+ * delete flow relies on this, so a refactor must keep both the dialog
+ * semantics (role/aria) and the focus behaviours above.
+ */
 const props = withDefaults(
   defineProps<{
     modelValue: boolean;
@@ -147,7 +161,7 @@ watch(
 </script>
 
 <style scoped>
-.ui-confirm {
+.bk-confirm {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -157,13 +171,13 @@ watch(
   padding: 1rem;
 }
 
-.ui-confirm__backdrop {
+.bk-confirm__backdrop {
   position: absolute;
   inset: 0;
   background: rgb(0 0 0 / 45%);
 }
 
-.ui-confirm__dialog {
+.bk-confirm__dialog {
   position: relative;
   width: 100%;
   max-width: 28rem;
@@ -174,18 +188,18 @@ watch(
   box-shadow: var(--shadow-md);
 }
 
-.ui-confirm__title {
+.bk-confirm__title {
   margin: 0 0 0.5rem;
   font-size: 1.125rem;
   font-weight: 700;
 }
 
-.ui-confirm__message {
+.bk-confirm__message {
   margin: 0 0 1.5rem;
   line-height: 1.6;
 }
 
-.ui-confirm__actions {
+.bk-confirm__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;

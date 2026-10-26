@@ -28,11 +28,11 @@
           :key="n"
           class="events-page__skeleton-card"
         >
-          <UiSkeleton height="1.75rem" width="min(24rem, 80%)" />
-          <UiSkeleton height="1.25rem" width="min(16rem, 60%)" />
-          <UiSkeleton height="1rem" width="min(12rem, 50%)" />
-          <UiSkeleton height="5rem" width="min(36rem, 100%)" />
-          <UiSkeleton height="2.75rem" width="10rem" />
+          <BkSkeleton height="1.75rem" width="min(24rem, 80%)" />
+          <BkSkeleton height="1.25rem" width="min(16rem, 60%)" />
+          <BkSkeleton height="1rem" width="min(12rem, 50%)" />
+          <BkSkeleton height="5rem" width="min(36rem, 100%)" />
+          <BkSkeleton height="2.75rem" width="10rem" />
         </li>
       </ul>
     </div>
@@ -154,7 +154,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
-import { UiSkeleton } from "@/components/ui";
+import { BkSkeleton } from "@/components/bk";
 import { useI18n } from "vue-i18n";
 
 import EventCard from "@/components/events/EventCard.vue";

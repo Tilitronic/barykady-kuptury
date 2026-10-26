@@ -30,7 +30,7 @@
     <p class="admin-projects__intro">{{ t("admin.projects.intro") }}</p>
 
     <div class="admin-projects__filter">
-      <UiSelect
+      <BkSelect
         v-model="statusFilter"
         :options="filterOptions"
         emit-value
@@ -41,7 +41,7 @@
       />
     </div>
 
-    <UiBanner
+    <BkBanner
       v-if="loadError !== null"
       class="admin-projects__banner"
       rounded
@@ -50,13 +50,13 @@
       data-testid="projects-error"
     >
       <p class="admin-projects__banner-text">{{ errorMessage }}</p>
-      <UiBtn
+      <BkButton
         variant="flat"
         :label="t('admin.projects.retry')"
         data-testid="projects-retry"
         @click="load"
       />
-    </UiBanner>
+    </BkBanner>
 
     <p v-else-if="loading" class="admin-projects__state" role="status">
       {{ t("content.loading") }}
@@ -130,7 +130,7 @@ import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import TranslationStatus from "@/components/admin/TranslationStatus.vue";
-import { UiBanner, UiBtn, UiSelect } from "@/components/ui";
+import { BkBanner, BkButton, BkSelect } from "@/components/bk";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import {
   fetchAdminProjects,

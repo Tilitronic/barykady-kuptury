@@ -60,7 +60,7 @@
       where the pointer/caret is; the button keeps the FULL sentence as its
       accessible name (aria-label beats title).
     -->
-    <UiTooltip>{{ t("search.triggerTooltip") }}</UiTooltip>
+    <BkTooltip>{{ t("search.triggerTooltip") }}</BkTooltip>
   </button>
 
   <Teleport to="body">
@@ -286,7 +286,7 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { UiTooltip } from "@/components/ui";
+import { BkTooltip } from "@/components/bk";
 
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import { fetchPublishedPublicationYears } from "@/features/search/api";

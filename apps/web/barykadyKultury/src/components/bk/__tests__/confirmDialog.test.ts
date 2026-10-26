@@ -3,7 +3,7 @@ import { defineComponent, nextTick, ref } from "vue";
 
 import { mountWithPlugins } from "@/test-utils/mount";
 
-import UiConfirmDialog from "../UiConfirmDialog.vue";
+import BkConfirmDialog from "../BkConfirmDialog.vue";
 
 /**
  * Spec axis: docs/tickets/T-027-admin-projects.md — "delete requires
@@ -16,7 +16,7 @@ import UiConfirmDialog from "../UiConfirmDialog.vue";
  * user is never stranded.
  */
 const Harness = defineComponent({
-  components: { UiConfirmDialog },
+  components: { BkConfirmDialog },
   setup() {
     const open = ref(false);
     const confirmations = ref(0);
@@ -27,7 +27,7 @@ const Harness = defineComponent({
       <button id="delete-trigger" type="button" @click="open = true">
         Delete project
       </button>
-      <UiConfirmDialog
+      <BkConfirmDialog
         v-model="open"
         title="Delete this project?"
         message="This cannot be undone."
@@ -63,7 +63,7 @@ async function openDialog(
   await flush();
 }
 
-describe("UiConfirmDialog", () => {
+describe("BkConfirmDialog", () => {
   it("is absent until opened, then exposes a modal dialog", async () => {
     const wrapper = await mountHarness();
 

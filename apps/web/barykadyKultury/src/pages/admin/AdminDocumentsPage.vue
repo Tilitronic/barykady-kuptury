@@ -25,7 +25,7 @@
       <h1 class="admin-documents__heading">{{
         t("admin.documents.heading")
       }}</h1>
-      <UiBtn
+      <BkButton
         :label="t('admin.documents.actions.newDocument')"
         data-testid="documents-new"
         @click="startNew"
@@ -38,7 +38,7 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-documents__banner"
       rounded
@@ -47,7 +47,7 @@
       data-testid="documents-error"
     >
       {{ loadErrorMessage }}
-    </UiBanner>
+    </BkBanner>
 
     <template v-else>
       <p
@@ -83,13 +83,13 @@
               document.language ? LOCALE_LABELS[document.language] : "—"
             }}</td>
             <td class="admin-documents__row-actions">
-              <UiBtn
+              <BkButton
                 variant="flat"
                 :label="t('admin.documents.actions.edit')"
                 :data-testid="`documents-edit-${document.slug}`"
                 @click="startEdit(document)"
               />
-              <UiBtn
+              <BkButton
                 variant="outline"
                 :label="
                   document.status === 'published'
@@ -100,7 +100,7 @@
                 :data-testid="`documents-toggle-${document.slug}`"
                 @click="togglePublished(document)"
               />
-              <UiBtn
+              <BkButton
                 variant="flat"
                 :label="t('admin.documents.actions.delete')"
                 :disable="pending !== null"
@@ -127,7 +127,7 @@
         </h2>
 
         <div class="admin-documents__grid">
-          <UiInput
+          <BkInput
             v-model="editing.slug"
             :label="t('admin.documents.fields.slug')"
             :hint="t('admin.documents.fields.slugHint')"
@@ -136,7 +136,7 @@
             data-testid="document-slug"
           />
 
-          <UiSelect
+          <BkSelect
             v-model="editing.documentType"
             :options="typeOptions"
             emit-value
@@ -147,7 +147,7 @@
             data-testid="document-type"
           />
 
-          <UiSelect
+          <BkSelect
             v-model="editing.language"
             :options="languageOptions"
             emit-value
@@ -156,7 +156,7 @@
             data-testid="document-language"
           />
 
-          <UiSelect
+          <BkSelect
             v-model="editing.status"
             :options="statusOptions"
             emit-value
@@ -165,7 +165,7 @@
             data-testid="document-status"
           />
 
-          <UiInput
+          <BkInput
             v-model="editing.publicationDate"
             type="date"
             :label="t('admin.documents.fields.publicationDate')"
@@ -174,7 +174,7 @@
             data-testid="document-date"
           />
 
-          <UiInput
+          <BkInput
             v-model="sortOrderText"
             type="number"
             :label="t('admin.documents.fields.sortOrder')"
@@ -247,7 +247,7 @@
             tabindex="0"
             class="admin-documents__panel"
           >
-            <UiInput
+            <BkInput
               v-model="activeTranslation.title"
               :label="t('admin.documents.translation.title')"
               :error="translationError()"
@@ -256,7 +256,7 @@
               "
               data-testid="document-title"
             />
-            <UiInput
+            <BkInput
               v-model="activeTranslation.description"
               type="textarea"
               autogrow
@@ -281,7 +281,7 @@
         </div>
 
         <div class="admin-documents__actions">
-          <UiBtn
+          <BkButton
             type="submit"
             :label="
               pending === 'save'
@@ -292,7 +292,7 @@
             :disable="pending !== null"
             data-testid="document-save"
           />
-          <UiBtn
+          <BkButton
             variant="flat"
             :label="t('admin.documents.actions.cancel')"
             :disable="pending !== null"
@@ -316,7 +316,7 @@
       </form>
     </template>
 
-    <UiConfirmDialog
+    <BkConfirmDialog
       v-model="deleteOpen"
       :title="t('admin.documents.deleteDialog.title')"
       :message="t('admin.documents.deleteDialog.message')"
@@ -336,12 +336,12 @@ import { useI18n } from "vue-i18n";
 
 import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs.vue";
 import {
-  UiBanner,
-  UiBtn,
-  UiConfirmDialog,
-  UiInput,
-  UiSelect
-} from "@/components/ui";
+  BkBanner,
+  BkButton,
+  BkConfirmDialog,
+  BkInput,
+  BkSelect
+} from "@/components/bk";
 import {
   deleteDocument,
   fetchAdminDocuments,

@@ -29,7 +29,7 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-publications__banner"
       rounded
@@ -38,13 +38,13 @@
       data-testid="publications-error"
     >
       <p class="admin-publications__banner-text">{{ errorMessage }}</p>
-      <UiBtn
+      <BkButton
         variant="flat"
         :label="t('admin.publications.retry')"
         data-testid="publications-retry"
         @click="load"
       />
-    </UiBanner>
+    </BkBanner>
 
     <p
       v-else-if="publications.length === 0"
@@ -113,7 +113,7 @@ import { computed, inject, onMounted, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
-import { UiBanner, UiBtn } from "@/components/ui";
+import { BkBanner, BkButton } from "@/components/bk";
 import {
   fetchAdminPublications,
   type AdminPublication

@@ -27,7 +27,7 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-site-pages__banner"
       rounded
@@ -36,7 +36,7 @@
       data-testid="site-page-error"
     >
       {{ loadErrorMessage }}
-    </UiBanner>
+    </BkBanner>
 
     <p
       v-else-if="pages.length === 0"
@@ -48,7 +48,7 @@
 
     <template v-else>
       <div class="admin-site-pages__picker">
-        <UiSelect
+        <BkSelect
           v-model="selectedKey"
           :options="pageOptions"
           emit-value
@@ -100,7 +100,7 @@
             tabindex="0"
             class="admin-site-pages__panel"
           >
-            <UiInput
+            <BkInput
               v-model="activeTitle"
               :label="t('admin.content.translation.title')"
               :error="translationError('title')"
@@ -108,7 +108,7 @@
               data-testid="site-page-title"
             />
 
-            <UiInput
+            <BkInput
               v-model="activeBody"
               type="textarea"
               autogrow
@@ -122,7 +122,7 @@
         </div>
 
         <div class="admin-site-pages__actions">
-          <UiBtn
+          <BkButton
             type="submit"
             :label="
               pending === 'save'
@@ -134,7 +134,7 @@
             data-testid="site-page-save"
           />
 
-          <UiBtn
+          <BkButton
             v-if="page.status !== 'published'"
             variant="outline"
             :label="
@@ -146,7 +146,7 @@
             data-testid="site-page-publish"
             @click="submit('publish')"
           />
-          <UiBtn
+          <BkButton
             v-else
             variant="outline"
             :label="
@@ -159,7 +159,7 @@
             @click="unpublish"
           />
 
-          <UiBtn
+          <BkButton
             variant="flat"
             :label="t('admin.content.actions.preview')"
             :disable="pending !== null"
@@ -193,7 +193,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs.vue";
-import { UiBanner, UiBtn, UiInput, UiSelect } from "@/components/ui";
+import { BkBanner, BkButton, BkInput, BkSelect } from "@/components/bk";
 import {
   fetchAdminSitePage,
   fetchAdminSitePages,

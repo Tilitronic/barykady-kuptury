@@ -139,7 +139,7 @@
           v-if="status === 'ready' && originalDownloadUrl"
           class="long-form-reader__original"
         >
-          <UiBtn
+          <BkButton
             tag="a"
             :href="originalDownloadUrl"
             variant="secondary"
@@ -170,7 +170,7 @@ import { computed, inject, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 import LocalizedRichText from "@/components/content/LocalizedRichText.vue";
-import { UiBtn } from "@/components/ui";
+import { BkButton } from "@/components/bk";
 import ReaderToc from "./ReaderToc.vue";
 import ReaderControls from "./ReaderControls.vue";
 import AstBody from "./AstBody.vue";

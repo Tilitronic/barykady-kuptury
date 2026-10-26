@@ -19,15 +19,19 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       rounded
       role="alert"
       data-testid="settings-load-error"
     >
       <p class="org-settings-form__banner-text">{{ loadError }}</p>
-      <UiBtn variant="flat" :label="t('admin.settings.retry')" @click="load" />
-    </UiBanner>
+      <BkButton
+        variant="flat"
+        :label="t('admin.settings.retry')"
+        @click="load"
+      />
+    </BkBanner>
 
     <form v-else novalidate @submit.prevent="submit">
       <div class="org-settings-form__grid">
@@ -36,7 +40,7 @@
           :key="definition.key"
           class="org-settings-form__field"
         >
-          <UiInput
+          <BkInput
             :model-value="draftValue(definition.key)"
             :label="t(definition.labelKey)"
             :error="errors[definition.key] !== undefined"
@@ -45,7 +49,7 @@
             @update:model-value="setDraftValue(definition.key, $event)"
           />
           <div :data-testid="`setting-visible-${definition.key}`">
-            <UiCheckbox
+            <BkCheckbox
               :model-value="draftVisible(definition.key)"
               :label="t('admin.settings.visible')"
               @update:model-value="setVisible(definition.key, $event)"
@@ -87,7 +91,7 @@
             :key="definition.key"
             class="org-settings-form__field"
           >
-            <UiInput
+            <BkInput
               :model-value="draftValue(definition.key, activeLocale)"
               type="textarea"
               autogrow
@@ -100,7 +104,7 @@
               "
             />
             <div :data-testid="`setting-visible-${definition.key}`">
-              <UiCheckbox
+              <BkCheckbox
                 :model-value="draftVisible(definition.key)"
                 :label="t('admin.settings.visible')"
                 @update:model-value="setVisible(definition.key, $event)"
@@ -131,7 +135,7 @@
             :key="definition.key"
             class="org-settings-form__field"
           >
-            <UiInput
+            <BkInput
               :model-value="draftValue(definition.key)"
               type="url"
               :label="t(definition.labelKey)"
@@ -141,7 +145,7 @@
               @update:model-value="setDraftValue(definition.key, $event)"
             />
             <div :data-testid="`setting-visible-${definition.key}`">
-              <UiCheckbox
+              <BkCheckbox
                 :model-value="draftVisible(definition.key)"
                 :label="t('admin.settings.visible')"
                 @update:model-value="setVisible(definition.key, $event)"
@@ -168,17 +172,17 @@
         {{ statusMessage }}
       </p>
 
-      <UiBanner
+      <BkBanner
         v-if="saveError !== null"
         rounded
         role="alert"
         data-testid="settings-save-error"
       >
         {{ saveError }}
-      </UiBanner>
+      </BkBanner>
 
       <div class="org-settings-form__actions">
-        <UiBtn
+        <BkButton
           type="submit"
           :label="
             saving ? t('admin.settings.saving') : t('admin.settings.save')
@@ -199,7 +203,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 
 import AdminTabs, { type AdminTab } from "@/components/admin/AdminTabs.vue";
-import { UiBanner, UiBtn, UiCheckbox, UiInput } from "@/components/ui";
+import { BkBanner, BkButton, BkCheckbox, BkInput } from "@/components/bk";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import {
   fetchAdminOrganizationSettings,

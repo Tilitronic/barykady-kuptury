@@ -17,7 +17,7 @@
     <h1 class="admin-events__heading">{{ t("admin.events.heading") }}</h1>
     <p class="admin-events__intro">{{ t("admin.events.intro") }}</p>
 
-    <UiBanner
+    <BkBanner
       v-if="calendarUnavailable"
       class="admin-events__banner"
       rounded
@@ -27,15 +27,15 @@
       <p class="admin-events__banner-text">
         {{ t("admin.events.calendarUnavailable") }}
       </p>
-      <UiBtn
+      <BkButton
         variant="flat"
         :label="t('admin.events.retry')"
         data-testid="events-retry"
         @click="load"
       />
-    </UiBanner>
+    </BkBanner>
 
-    <UiBanner
+    <BkBanner
       v-if="loadError !== null"
       class="admin-events__banner"
       rounded
@@ -43,13 +43,13 @@
       data-testid="events-error"
     >
       <p class="admin-events__banner-text">{{ errorMessage }}</p>
-      <UiBtn
+      <BkButton
         variant="flat"
         :label="t('admin.events.retry')"
         data-testid="events-error-retry"
         @click="load"
       />
-    </UiBanner>
+    </BkBanner>
 
     <p v-if="loading" class="admin-events__state" role="status">
       {{ t("content.loading") }}
@@ -96,7 +96,7 @@
               </td>
               <td>{{ t(statusKey(row)) }}</td>
               <td>
-                <UiSelect
+                <BkSelect
                   :model-value="row.projectId ?? ''"
                   :options="projectOptions"
                   emit-value
@@ -142,7 +142,7 @@
       {{ statusMessage }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-if="actionError !== null"
       class="admin-events__banner"
       rounded
@@ -150,7 +150,7 @@
       data-testid="events-action-error"
     >
       <p class="admin-events__banner-text">{{ actionError }}</p>
-    </UiBanner>
+    </BkBanner>
   </AdminSubmitShell>
 </template>
 
@@ -161,7 +161,7 @@ import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import AdminSubmitShell from "@/components/admin/AdminSubmitShell.vue";
-import { UiBanner, UiBtn, UiSelect } from "@/components/ui";
+import { BkBanner, BkButton, BkSelect } from "@/components/bk";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import {
   assignEventProject,

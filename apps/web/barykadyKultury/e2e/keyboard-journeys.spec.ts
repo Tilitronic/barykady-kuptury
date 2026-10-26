@@ -243,7 +243,7 @@ test.describe("T-033 a11y keyboard — confirm dialog round-trip (admin)", () =>
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
 
-    // Safe action first: focus lands on Cancel (UiConfirmDialog contract).
+    // Safe action first: focus lands on Cancel (BkConfirmDialog contract).
     await expect(page.getByTestId("confirm-cancel")).toBeFocused();
     await expectVisibleFocus(page, "confirm cancel");
 

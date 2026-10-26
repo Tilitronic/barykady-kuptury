@@ -23,7 +23,7 @@
 
     <div class="admin-team__header">
       <h1 class="admin-team__heading">{{ t("admin.team.heading") }}</h1>
-      <UiBtn
+      <BkButton
         :label="t('admin.team.actions.newMember')"
         data-testid="team-new"
         @click="startNew"
@@ -36,7 +36,7 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-team__banner"
       rounded
@@ -45,7 +45,7 @@
       data-testid="team-error"
     >
       {{ loadErrorMessage }}
-    </UiBanner>
+    </BkBanner>
 
     <template v-else>
       <p
@@ -79,28 +79,28 @@
           </div>
 
           <div class="admin-team__row-actions">
-            <UiBtn
+            <BkButton
               variant="flat"
               :label="t('admin.team.actions.edit')"
               :data-testid="`team-edit-${member.id}`"
               @click="startEdit(member)"
             />
             <!-- Explicit, keyboard-operable ordering: no drag-only access. -->
-            <UiBtn
+            <BkButton
               variant="flat"
               :label="t('admin.team.actions.moveUp')"
               :disable="index === 0 || pending !== null"
               :data-testid="`team-up-${member.id}`"
               @click="move(member, 'up')"
             />
-            <UiBtn
+            <BkButton
               variant="flat"
               :label="t('admin.team.actions.moveDown')"
               :disable="index === members.length - 1 || pending !== null"
               :data-testid="`team-down-${member.id}`"
               @click="move(member, 'down')"
             />
-            <UiBtn
+            <BkButton
               variant="outline"
               :label="
                 member.status === 'published'
@@ -129,7 +129,7 @@
           }}
         </h2>
 
-        <UiInput
+        <BkInput
           v-model="editingName"
           :label="t('admin.team.fields.name')"
           :hint="t('admin.team.fields.nameHint')"
@@ -161,7 +161,7 @@
           <p v-else-if="editing.portraitPath !== null" class="admin-team__hint">
             {{ t("admin.team.fields.portraitCurrent") }}
           </p>
-          <UiBtn
+          <BkButton
             v-if="editing.portraitPath !== null"
             variant="flat"
             :label="t('admin.team.actions.removePortrait')"
@@ -194,12 +194,12 @@
             tabindex="0"
             class="admin-team__panel"
           >
-            <UiInput
+            <BkInput
               v-model="activeRole"
               :label="t('admin.team.translation.role')"
               data-testid="team-role"
             />
-            <UiInput
+            <BkInput
               v-model="activeBio"
               type="textarea"
               autogrow
@@ -210,7 +210,7 @@
         </div>
 
         <div class="admin-team__actions">
-          <UiBtn
+          <BkButton
             type="submit"
             :label="
               pending === 'save'
@@ -221,14 +221,14 @@
             :disable="pending !== null"
             data-testid="team-save"
           />
-          <UiBtn
+          <BkButton
             variant="flat"
             :label="t('admin.team.actions.cancel')"
             :disable="pending !== null"
             data-testid="team-cancel"
             @click="cancelEdit"
           />
-          <UiBtn
+          <BkButton
             v-if="editing.id !== null"
             variant="flat"
             :label="t('admin.team.actions.delete')"
@@ -253,7 +253,7 @@
       </form>
     </template>
 
-    <UiConfirmDialog
+    <BkConfirmDialog
       v-model="deleteOpen"
       :title="t('admin.team.deleteDialog.title')"
       :message="t('admin.team.deleteDialog.message')"
@@ -273,7 +273,7 @@ import { useI18n } from "vue-i18n";
 
 import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs.vue";
 import TranslationStatus from "@/components/admin/TranslationStatus.vue";
-import { UiBanner, UiBtn, UiConfirmDialog, UiInput } from "@/components/ui";
+import { BkBanner, BkButton, BkConfirmDialog, BkInput } from "@/components/bk";
 import {
   deleteTeamMember,
   fetchAdminTeamMembers,

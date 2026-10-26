@@ -22,20 +22,20 @@
       {{ t("admin.projects.preview.title") }}
     </h1>
 
-    <UiBanner
+    <BkBanner
       class="admin-project-preview__banner"
       rounded
       role="note"
       data-testid="preview-banner"
     >
       {{ t("admin.projects.preview.banner") }}
-    </UiBanner>
+    </BkBanner>
 
     <p v-if="loading" class="admin-project-preview__state" role="status">
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-project-preview__banner"
       rounded
@@ -44,7 +44,7 @@
       data-testid="preview-error"
     >
       {{ loadErrorMessage }}
-    </UiBanner>
+    </BkBanner>
 
     <ProjectDetailBody
       v-else-if="view !== null"
@@ -76,7 +76,7 @@ import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import ProjectDetailBody from "@/components/projects/ProjectDetailBody.vue";
-import { UiBanner } from "@/components/ui";
+import { BkBanner } from "@/components/bk";
 import {
   fetchAdminProject,
   type AdminProject

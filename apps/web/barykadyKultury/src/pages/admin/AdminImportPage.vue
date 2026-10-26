@@ -1,21 +1,21 @@
 <template>
-  <div class="q-pa-md">
-    <h1 class="text-h5 q-mt-none q-mb-sm">{{ t("admin.import.heading") }}</h1>
-    <p class="text-body2 text-grey-8 q-mb-lg">{{ t("admin.import.intro") }}</p>
+  <div class="admin-import">
+    <h1 class="admin-import__heading">{{ t("admin.import.heading") }}</h1>
+    <p class="admin-import__intro">{{ t("admin.import.intro") }}</p>
 
-    <UiCard
+    <BkCard
       flat
       bordered
-      class="q-mb-lg"
+      class="admin-import__card admin-import__card--lead"
       data-testid="import-google-connection"
     >
-      <UiCardSection>
-        <h2 class="text-subtitle1 q-mt-none q-mb-sm">
+      <BkCardSection>
+        <h2 class="admin-import__section-title">
           {{ t("admin.import.google.connectionHeading") }}
         </h2>
         <p
           v-if="connection?.connected === true"
-          class="text-body2 q-mb-xs"
+          class="admin-import__body admin-import__body--tight"
           data-testid="import-google-connected"
         >
           {{
@@ -24,13 +24,13 @@
             })
           }}
         </p>
-        <p v-else class="text-body2 q-mb-xs">
+        <p v-else class="admin-import__body admin-import__body--tight">
           {{ t("admin.import.google.connectionRequired") }}
         </p>
-        <p class="text-caption text-grey-7 q-mb-sm">
+        <p class="admin-import__hint">
           {{ t("admin.import.google.folderHint") }}
         </p>
-        <UiBtn
+        <BkButton
           v-if="connection?.connected === true"
           variant="flat"
           :label="t('admin.import.google.disconnect')"
@@ -38,7 +38,7 @@
           data-testid="import-google-disconnect"
           @click="disconnect"
         />
-        <UiBtn
+        <BkButton
           v-else
           variant="secondary"
           :label="
@@ -50,13 +50,13 @@
           data-testid="import-google-connect"
           @click="connect"
         />
-      </UiCardSection>
-    </UiCard>
+      </BkCardSection>
+    </BkCard>
 
-    <UiForm class="q-gutter-md" greedy @submit="runGoogle('apply')">
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-sm-6">
-          <UiSelect
+    <BkForm class="admin-import__form" greedy @submit="runGoogle('apply')">
+      <div class="admin-import__grid">
+        <div class="admin-import__field admin-import__field--half">
+          <BkSelect
             v-model="kind"
             :options="kindOptions"
             emit-value
@@ -66,8 +66,8 @@
           />
         </div>
 
-        <div class="col-12 col-sm-6">
-          <UiSelect
+        <div class="admin-import__field admin-import__field--half">
+          <BkSelect
             v-model="locale"
             :options="localeOptions"
             emit-value
@@ -77,8 +77,8 @@
           />
         </div>
 
-        <div class="col-12">
-          <UiInput
+        <div class="admin-import__field">
+          <BkInput
             v-model="title"
             :label="t('admin.import.fields.title')"
             :hint="t('admin.import.fields.titleHint')"
@@ -89,8 +89,8 @@
           />
         </div>
 
-        <div class="col-12">
-          <UiInput
+        <div class="admin-import__field">
+          <BkInput
             v-model="description"
             type="textarea"
             autogrow
@@ -99,16 +99,19 @@
           />
         </div>
 
-        <div v-if="kind === 'document'" class="col-12 col-sm-6">
-          <UiInput
+        <div
+          v-if="kind === 'document'"
+          class="admin-import__field admin-import__field--half"
+        >
+          <BkInput
             v-model="documentType"
             :label="t('admin.import.fields.documentType')"
             data-testid="import-document-type"
           />
         </div>
 
-        <div class="col-12 col-sm-6">
-          <UiInput
+        <div class="admin-import__field admin-import__field--half">
+          <BkInput
             v-model="slug"
             :label="t('admin.import.fields.slug')"
             :hint="t('admin.import.fields.slugHint')"
@@ -119,8 +122,8 @@
           />
         </div>
 
-        <div class="col-12">
-          <UiBtn
+        <div class="admin-import__field">
+          <BkButton
             type="button"
             variant="primary"
             :label="t('admin.import.google.picker')"
@@ -129,13 +132,13 @@
             data-testid="import-picker"
             @click="pickDocument"
           />
-          <p class="text-caption text-grey-7 q-mt-xs q-mb-none">
+          <p class="admin-import__hint admin-import__hint--tight">
             {{ t("admin.import.google.pickerHint") }}
           </p>
         </div>
 
-        <div class="col-12">
-          <UiInput
+        <div class="admin-import__field">
+          <BkInput
             v-model="googleFileId"
             :label="t('admin.import.google.manualLabel')"
             :hint="t('admin.import.google.manualHint')"
@@ -143,41 +146,41 @@
           />
         </div>
 
-        <div class="col-12">
-          <UiCheckbox
+        <div class="admin-import__field">
+          <BkCheckbox
             v-model="allowOriginalDownload"
             :label="t('admin.import.fields.allowOriginalDownload')"
           />
-          <p class="text-caption text-grey-7 q-mt-xs q-mb-none">
+          <p class="admin-import__hint admin-import__hint--tight">
             {{ t("admin.import.fields.allowOriginalDownloadHint") }}
           </p>
         </div>
       </div>
 
-      <div class="row q-gutter-sm">
-        <UiBtn
+      <div class="admin-import__actions">
+        <BkButton
           variant="flat"
           :label="t('admin.import.google.check')"
           :disable="googlePending"
           data-testid="import-check"
           @click="runGoogle('preview')"
         />
-        <UiBtn
+        <BkButton
           type="submit"
           :label="googleApplyLabel"
           :loading="googlePending"
           data-testid="import-apply"
         />
       </div>
-    </UiForm>
+    </BkForm>
 
-    <UiBanner
+    <BkBanner
       v-if="message !== ''"
-      class="q-mt-md"
+      class="admin-import__status"
       :class="
         messageKind === 'error'
-          ? 'bg-negative text-white'
-          : 'bg-positive text-white'
+          ? 'admin-import__status--error'
+          : 'admin-import__status--success'
       "
       rounded
       role="status"
@@ -185,24 +188,24 @@
       data-testid="import-status"
     >
       {{ message }}
-    </UiBanner>
+    </BkBanner>
 
-    <UiCard
+    <BkCard
       v-if="job !== null || syncSummary !== null"
       flat
       bordered
-      class="q-mt-lg"
+      class="admin-import__card admin-import__card--follow"
     >
-      <UiCardSection>
-        <h2 class="text-h6 q-mt-none q-mb-sm">
+      <BkCardSection>
+        <h2 class="admin-import__card-title">
           {{ t("admin.import.sync.heading") }}
         </h2>
-        <p v-if="job !== null" class="text-body2 q-mb-sm">
+        <p v-if="job !== null" class="admin-import__body">
           {{ jobStatusLabel }}
         </p>
         <p
           v-if="job !== null && job.entityId !== null"
-          class="text-body2 q-mb-sm"
+          class="admin-import__body"
         >
           {{
             t("admin.import.sync.lastSynced", {
@@ -210,136 +213,136 @@
             })
           }}
         </p>
-      </UiCardSection>
+      </BkCardSection>
 
-      <UiCardSection v-if="syncSummary !== null">
-        <h3 class="text-subtitle1 q-mt-none q-mb-sm">
+      <BkCardSection v-if="syncSummary !== null">
+        <h3 class="admin-import__section-title">
           {{ t("admin.import.sync.diffHeading") }}
         </h3>
-        <UiList dense>
-          <UiItem>
-            <UiItemSection>
+        <BkList dense>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.sync.blocks", {
                   previous: syncSummary.previousBlocks,
                   next: syncSummary.nextBlocks
                 })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem>
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.sync.headings", {
                   count: syncSummary.nextHeadings.length
                 })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem>
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.sync.images", { count: syncSummary.imageCount })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem>
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.sync.tables", { count: syncSummary.tableCount })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem v-if="syncSummary.addedHeadings.length > 0">
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem v-if="syncSummary.addedHeadings.length > 0">
+            <BkItemSection>
               {{
                 t("admin.import.sync.added", {
                   items: syncSummary.addedHeadings.join(", ")
                 })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem v-if="syncSummary.removedHeadings.length > 0">
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem v-if="syncSummary.removedHeadings.length > 0">
+            <BkItemSection>
               {{
                 t("admin.import.sync.removed", {
                   items: syncSummary.removedHeadings.join(", ")
                 })
               }}
-            </UiItemSection>
-          </UiItem>
-        </UiList>
-      </UiCardSection>
-    </UiCard>
+            </BkItemSection>
+          </BkItem>
+        </BkList>
+      </BkCardSection>
+    </BkCard>
 
-    <UiCard
+    <BkCard
       v-if="latestRun !== null"
       flat
       bordered
-      class="q-mt-lg"
+      class="admin-import__card admin-import__card--follow"
       data-testid="schedule-run"
     >
-      <UiCardSection>
-        <h2 class="text-h6 q-mt-none q-mb-sm">
+      <BkCardSection>
+        <h2 class="admin-import__card-title">
           {{ t("admin.import.schedule.heading") }}
         </h2>
-        <p class="text-body2 q-mb-sm">
+        <p class="admin-import__body">
           {{ t("admin.import.schedule.description") }}
         </p>
-        <p class="text-body2 q-mb-sm">
+        <p class="admin-import__body">
           {{ t("admin.import.schedule.lastRun") }}:
           {{ new Date(latestRun.startedAt).toLocaleString() }}
         </p>
-        <UiList dense>
-          <UiItem>
-            <UiItemSection>
+        <BkList dense>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.schedule.checked", { count: latestRun.checked })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem>
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.schedule.updated", { count: latestRun.updated })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem>
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.schedule.failed", { count: latestRun.failed })
               }}
-            </UiItemSection>
-          </UiItem>
-          <UiItem>
-            <UiItemSection>
+            </BkItemSection>
+          </BkItem>
+          <BkItem>
+            <BkItemSection>
               {{
                 t("admin.import.schedule.skipped", { count: latestRun.skipped })
               }}
-            </UiItemSection>
-          </UiItem>
-        </UiList>
-      </UiCardSection>
-    </UiCard>
+            </BkItemSection>
+          </BkItem>
+        </BkList>
+      </BkCardSection>
+    </BkCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  UiBanner,
-  UiBtn,
-  UiCard,
-  UiCardSection,
-  UiCheckbox,
-  UiForm,
-  UiInput,
-  UiItem,
-  UiItemSection,
-  UiList,
-  UiSelect
-} from "@/components/ui";
+  BkBanner,
+  BkButton,
+  BkCard,
+  BkCardSection,
+  BkCheckbox,
+  BkForm,
+  BkInput,
+  BkItem,
+  BkItemSection,
+  BkList,
+  BkSelect
+} from "@/components/bk";
 import { computed, inject, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -372,7 +375,10 @@ import type { Database } from "@/types/database.types";
 /**
  * T-041 S5 (v1 scope) — Google Docs import/sync admin route.
  *
- * Functionality-first: bare Quasar controls, no bespoke admin CSS. The route is
+ * Styling lives in the scoped SCSS block below as BEM rules over the bk/ seam.
+ * The previous "no bespoke admin CSS" shortcut produced 66 Quasar utility
+ * tokens; T-049 forbids class-to-style syntax, so spacing/typography are now
+ * expressed with our tokens instead of utilities. The route is
  * lazy-split, so none of this (or the import stack) enters the public entry
  * chunk. Manual file upload is deliberately absent in v1; the Google export
  * path runs the same server-side DOCX converter.
@@ -677,3 +683,147 @@ async function runGoogle(mode: "preview" | "apply"): Promise<void> {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+/*
+ * WHY BEM + SCSS instead of Quasar class-to-style helpers (T-049 §2): visual
+ * decisions must live in the component beside the markup they describe and
+ * use our tokens, so removing a utility from the bundle can never silently
+ * change this page. Where a utility encoded a Quasar default, its compiled
+ * value is reproduced exactly (verified against Quasar 2.35):
+ *   1rem  = q-pa-md / q-mt-md / q-gutter-md / q-col-gutter-md
+ *   1.5rem = q-mb-lg / q-mt-lg, 0.5rem = q-mb-sm / q-gutter-sm,
+ *   0.25rem = q-mb-xs / q-mt-xs.
+ * Typography values come from Quasar's .text-h5/.text-h6/.text-subtitle1/
+ * .text-body2/.text-caption rules, so the page keeps its existing visual scale.
+ */
+.admin-import {
+  padding: 1rem; // q-pa-md
+}
+
+.admin-import__heading {
+  margin: 0 0 0.5rem; // q-mt-none q-mb-sm
+  font-size: 1.5rem; // .text-h5
+  font-weight: 400;
+  line-height: 2rem;
+  letter-spacing: normal;
+}
+
+.admin-import__intro {
+  margin: 0 0 1.5rem; // q-mb-lg
+  color: var(--color-text-muted);
+  font-size: 0.875rem; // .text-body2
+  font-weight: 400;
+  line-height: 1.25rem;
+  letter-spacing: 0.01786em;
+}
+
+.admin-import__card {
+  &--lead {
+    margin-bottom: 1.5rem; // q-mb-lg
+  }
+
+  &--follow {
+    margin-top: 1.5rem; // q-mt-lg
+  }
+}
+
+.admin-import__section-title {
+  margin: 0 0 0.5rem; // q-mt-none q-mb-sm
+  font-size: 1rem; // .text-subtitle1
+  font-weight: 400;
+  line-height: 1.75rem;
+  letter-spacing: 0.00937em;
+}
+
+.admin-import__card-title {
+  margin: 0 0 0.5rem; // q-mt-none q-mb-sm
+  font-size: 1.25rem; // .text-h6
+  font-weight: 500;
+  line-height: 2rem;
+  letter-spacing: 0.0125em;
+}
+
+.admin-import__body {
+  margin: 0 0 0.5rem; // q-mb-sm
+  font-size: 0.875rem; // .text-body2
+  font-weight: 400;
+  line-height: 1.25rem;
+  letter-spacing: 0.01786em;
+
+  &--tight {
+    margin-bottom: 0.25rem; // q-mb-xs
+  }
+}
+
+.admin-import__hint {
+  margin: 0 0 0.5rem; // q-mb-sm
+  color: var(--color-text-muted);
+  font-size: 0.75rem; // .text-caption
+  font-weight: 400;
+  line-height: 1.25rem;
+  letter-spacing: 0.03333em;
+
+  &--tight {
+    margin: 0.25rem 0 0; // q-mt-xs q-mb-none
+  }
+}
+
+/*
+ * WHY flex column + gap rather than q-gutter-md: Quasar's gutter is negative
+ * margins plus per-child margins; a flex gap expresses the same 16px rhythm
+ * without utility classes and without margin-collapse surprises.
+ */
+.admin-import__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; // q-gutter-md
+}
+
+/*
+ * WHY a 12-column grid instead of row/col-*: the form mixes full-width fields
+ * with half-width pairs. Grid reproduces the 16px gutter and the 600px
+ * breakpoint (Quasar's sm) without pulling in the flex helper family.
+ */
+.admin-import__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem; // q-col-gutter-md
+}
+
+.admin-import__field {
+  grid-column: 1 / -1; // .col-12
+
+  &--half {
+    @media (min-width: 600px) {
+      grid-column: span 6; // .col-sm-6
+    }
+  }
+}
+
+.admin-import__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; // q-gutter-sm
+}
+
+.admin-import__status {
+  margin-top: 1rem; // q-mt-md
+
+  /*
+   * WHY the Quasar semantic variables: the previous markup used bg-negative /
+   * bg-positive, which quasar.variables.scss maps to the brand danger/success
+   * surfaces. Using the same variables keeps the status colours identical
+   * while removing the class-to-style dependency.
+   */
+  &--error {
+    background: var(--q-negative);
+    color: #fff;
+  }
+
+  &--success {
+    background: var(--q-positive);
+    color: #fff;
+  }
+}
+</style>

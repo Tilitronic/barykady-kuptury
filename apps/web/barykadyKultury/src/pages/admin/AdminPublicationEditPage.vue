@@ -28,7 +28,7 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-publication-edit__banner"
       rounded
@@ -37,7 +37,7 @@
       data-testid="publication-load-error"
     >
       {{ loadErrorMessage }}
-    </UiBanner>
+    </BkBanner>
 
     <AdminSubmitShell
       v-else
@@ -52,7 +52,7 @@
       @submit="submit('save')"
     >
       <div class="admin-publication-edit__grid">
-        <UiInput
+        <BkInput
           v-model="values.slug"
           :label="t('admin.publications.fields.slug')"
           :hint="t('admin.publications.fields.slugHint')"
@@ -61,7 +61,7 @@
           data-testid="publication-slug"
         />
 
-        <UiSelect
+        <BkSelect
           v-model="values.status"
           :options="statusOptions"
           emit-value
@@ -70,7 +70,7 @@
           data-testid="publication-status"
         />
 
-        <UiSelect
+        <BkSelect
           v-model="values.language"
           :options="languageOptions"
           emit-value
@@ -79,7 +79,7 @@
           data-testid="publication-language"
         />
 
-        <UiInput
+        <BkInput
           v-model="values.publicationDate"
           type="date"
           :label="t('admin.publications.fields.publicationDate')"
@@ -89,7 +89,7 @@
         />
       </div>
 
-      <UiInput
+      <BkInput
         v-model="values.externalUrl"
         type="url"
         :label="t('admin.publications.fields.externalUrl')"
@@ -122,7 +122,7 @@
               {{ LOCALE_LABELS[locale] }}
             </p>
 
-            <UiInput
+            <BkInput
               v-model="fileLabels[locale]"
               :label="t('admin.publications.fields.label')"
               :hint="t('admin.publications.fields.labelHint')"
@@ -165,7 +165,7 @@
                 :data-testid="`publication-file-${locale}`"
                 @change="onFileChange(locale, $event)"
               />
-              <UiBtn
+              <BkButton
                 v-if="fileFor(locale)"
                 variant="flat"
                 :label="t('admin.publications.fields.removeFile')"
@@ -201,7 +201,7 @@
           tabindex="0"
           class="admin-publication-edit__panel"
         >
-          <UiInput
+          <BkInput
             v-model="activeTranslation.title"
             :label="t('admin.publications.translation.title')"
             :error="translationError()"
@@ -210,14 +210,14 @@
             "
             data-testid="publication-title"
           />
-          <UiInput
+          <BkInput
             v-model="activeTranslation.abstract"
             type="textarea"
             autogrow
             :label="t('admin.publications.translation.abstract')"
             data-testid="publication-abstract"
           />
-          <UiInput
+          <BkInput
             v-model="activeTranslation.authors"
             :label="t('admin.publications.translation.authors')"
             data-testid="publication-authors"
@@ -240,7 +240,7 @@
       </div>
 
       <div class="admin-publication-edit__actions">
-        <UiBtn
+        <BkButton
           type="submit"
           :label="
             pending === 'save'
@@ -251,7 +251,7 @@
           :disable="pending !== null"
           data-testid="publication-save"
         />
-        <UiBtn
+        <BkButton
           v-if="values.status !== 'published'"
           variant="outline"
           :label="
@@ -263,7 +263,7 @@
           data-testid="publication-publish"
           @click="submit('publish')"
         />
-        <UiBtn
+        <BkButton
           v-else
           variant="outline"
           :label="
@@ -275,7 +275,7 @@
           data-testid="publication-unpublish"
           @click="unpublish"
         />
-        <UiBtn
+        <BkButton
           v-if="!isNew"
           variant="flat"
           :label="
@@ -303,7 +303,7 @@
       </p>
     </AdminSubmitShell>
 
-    <UiConfirmDialog
+    <BkConfirmDialog
       v-model="deleteOpen"
       :title="t('admin.publications.deleteDialog.title')"
       :message="t('admin.publications.deleteDialog.message')"
@@ -324,12 +324,12 @@ import { useI18n } from "vue-i18n";
 import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs.vue";
 import AdminSubmitShell from "@/components/admin/AdminSubmitShell.vue";
 import {
-  UiBanner,
-  UiBtn,
-  UiConfirmDialog,
-  UiInput,
-  UiSelect
-} from "@/components/ui";
+  BkBanner,
+  BkButton,
+  BkConfirmDialog,
+  BkInput,
+  BkSelect
+} from "@/components/bk";
 import {
   deletePublication,
   fetchAdminPublication,

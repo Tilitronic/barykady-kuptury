@@ -15,7 +15,7 @@
     <h1 class="admin-coverage__heading">{{ t("admin.coverage.heading") }}</h1>
     <p class="admin-coverage__intro">{{ t("admin.coverage.intro") }}</p>
 
-    <UiBanner
+    <BkBanner
       v-if="loadError !== null"
       class="admin-coverage__banner"
       rounded
@@ -25,13 +25,13 @@
       <p class="admin-coverage__banner-text">
         {{ t("admin.coverage.loadFailed") }}
       </p>
-      <UiBtn
+      <BkButton
         variant="flat"
         :label="t('admin.coverage.retry')"
         data-testid="coverage-retry"
         @click="load"
       />
-    </UiBanner>
+    </BkBanner>
 
     <p v-if="loading" class="admin-coverage__state" role="status">
       {{ t("content.loading") }}
@@ -133,7 +133,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { computed, inject, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-import { UiBanner, UiBtn } from "@/components/ui";
+import { BkBanner, BkButton } from "@/components/bk";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import {
   fetchAdminCoverage,

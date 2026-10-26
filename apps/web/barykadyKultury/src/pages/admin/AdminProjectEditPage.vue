@@ -25,7 +25,7 @@
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-project-edit__banner"
       rounded
@@ -34,7 +34,7 @@
       data-testid="project-load-error"
     >
       {{ loadErrorMessage }}
-    </UiBanner>
+    </BkBanner>
 
     <AdminSubmitShell
       v-else
@@ -48,7 +48,7 @@
     >
       <!-- ── Root fields ─────────────────────────────────────────────────── -->
       <div class="admin-project-edit__grid">
-        <UiInput
+        <BkInput
           v-model="values.slug"
           :label="t('admin.projects.fields.slug')"
           :hint="t('admin.projects.fields.slugHint')"
@@ -57,7 +57,7 @@
           data-testid="project-slug"
         />
 
-        <UiSelect
+        <BkSelect
           v-model="values.status"
           :options="statusOptions"
           emit-value
@@ -66,7 +66,7 @@
           data-testid="project-status"
         />
 
-        <UiInput
+        <BkInput
           v-model="values.startDate"
           type="date"
           :label="t('admin.projects.fields.startDate')"
@@ -75,7 +75,7 @@
           data-testid="project-start-date"
         />
 
-        <UiInput
+        <BkInput
           v-model="values.endDate"
           type="date"
           :label="t('admin.projects.fields.endDate')"
@@ -86,7 +86,7 @@
       </div>
 
       <div class="admin-project-edit__featured">
-        <UiCheckbox
+        <BkCheckbox
           v-model="values.featured"
           :label="t('admin.projects.fields.featured')"
           data-testid="project-featured"
@@ -168,7 +168,7 @@
           tabindex="0"
           class="admin-project-edit__panel"
         >
-          <UiInput
+          <BkInput
             v-model="activeTranslation.title"
             :label="t('admin.projects.translation.title')"
             :error="translationError('title')"
@@ -176,7 +176,7 @@
             data-testid="project-title"
           />
 
-          <UiInput
+          <BkInput
             v-model="activeTranslation.summary"
             type="textarea"
             autogrow
@@ -184,7 +184,7 @@
             data-testid="project-summary"
           />
 
-          <UiInput
+          <BkInput
             v-model="activeTranslation.body"
             type="textarea"
             autogrow
@@ -197,7 +197,7 @@
 
       <!-- ── Actions ─────────────────────────────────────────────────────── -->
       <div class="admin-project-edit__actions">
-        <UiBtn
+        <BkButton
           type="submit"
           :label="
             pending === 'save'
@@ -209,7 +209,7 @@
           data-testid="project-save"
         />
 
-        <UiBtn
+        <BkButton
           v-if="values.status !== 'published'"
           variant="outline"
           :label="
@@ -221,7 +221,7 @@
           data-testid="project-publish"
           @click="submit('publish')"
         />
-        <UiBtn
+        <BkButton
           v-else
           variant="outline"
           :label="
@@ -234,7 +234,7 @@
           @click="unpublish"
         />
 
-        <UiBtn
+        <BkButton
           v-if="values.status !== 'archived'"
           variant="flat"
           :label="
@@ -247,7 +247,7 @@
           @click="archive"
         />
 
-        <UiBtn
+        <BkButton
           v-if="!isNew"
           variant="flat"
           :label="t('admin.projects.actions.preview')"
@@ -256,7 +256,7 @@
           @click="openPreview"
         />
 
-        <UiBtn
+        <BkButton
           v-if="!isNew"
           variant="flat"
           :label="
@@ -289,7 +289,7 @@
       </p>
     </AdminSubmitShell>
 
-    <UiConfirmDialog
+    <BkConfirmDialog
       v-model="deleteOpen"
       :title="t('admin.projects.deleteDialog.title')"
       :message="t('admin.projects.deleteDialog.message')"
@@ -310,13 +310,13 @@ import { useI18n } from "vue-i18n";
 import AdminSubmitShell from "@/components/admin/AdminSubmitShell.vue";
 import TranslationStatus from "@/components/admin/TranslationStatus.vue";
 import {
-  UiBanner,
-  UiBtn,
-  UiCheckbox,
-  UiConfirmDialog,
-  UiInput,
-  UiSelect
-} from "@/components/ui";
+  BkBanner,
+  BkButton,
+  BkCheckbox,
+  BkConfirmDialog,
+  BkInput,
+  BkSelect
+} from "@/components/bk";
 import {
   archiveProject,
   deleteProject,
@@ -541,7 +541,7 @@ function onTabKeydown(event: KeyboardEvent): void {
 /**
  * Focus a field by its `data-testid`. Quasar owns the native input id, so the
  * stable hook the app and its E2E tests share is the test id (the same one the
- * `UiInput` wrappers forward to the real control).
+ * `BkInput` wrappers forward to the real control).
  */
 function focusField(testId: string): void {
   document.querySelector<HTMLElement>(`[data-testid="${testId}"]`)?.focus();

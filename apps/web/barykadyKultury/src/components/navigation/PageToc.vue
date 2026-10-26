@@ -65,7 +65,7 @@ import {
   type PropType,
   watch
 } from "vue";
-import { UiItem, UiList } from "@/components/ui";
+import { BkItem, BkList } from "@/components/bk";
 import { useI18n } from "vue-i18n";
 
 import { applyDeepLink } from "@/shared/content/deepLink";
@@ -296,7 +296,7 @@ const TocTree = defineComponent({
       nodes.map(node =>
         h("li", { key: `${depth}-${node.item.id}` }, [
           h(
-            UiItem,
+            BkItem,
             {
               tag: "a",
               href: `#${node.item.id}`,
@@ -324,7 +324,7 @@ const TocTree = defineComponent({
     // tag="ul" keeps the REAL list semantics (Quasar's default div+role
     // would break the nested-outline contract the reader TOC relies on).
     return () =>
-      h(UiList, { tag: "ul", class: "page-toc__list", dense: true }, () =>
+      h(BkList, { tag: "ul", class: "page-toc__list", dense: true }, () =>
         renderItems(nodeProps.nodes, 0)
       );
   }

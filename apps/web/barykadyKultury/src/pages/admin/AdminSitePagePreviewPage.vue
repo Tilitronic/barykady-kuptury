@@ -22,20 +22,20 @@
       {{ t("admin.content.preview.title") }}
     </h1>
 
-    <UiBanner
+    <BkBanner
       class="admin-site-page-preview__banner"
       rounded
       role="note"
       data-testid="site-page-preview-banner"
     >
       {{ t("admin.content.preview.banner") }}
-    </UiBanner>
+    </BkBanner>
 
     <p v-if="loading" class="admin-site-page-preview__state" role="status">
       {{ t("content.loading") }}
     </p>
 
-    <UiBanner
+    <BkBanner
       v-else-if="loadError !== null"
       class="admin-site-page-preview__banner"
       rounded
@@ -44,7 +44,7 @@
       data-testid="site-page-preview-error"
     >
       {{ loadErrorMessage }}
-    </UiBanner>
+    </BkBanner>
 
     <template v-else-if="view !== null">
       <h2 class="admin-site-page-preview__page-title">{{ view.title }}</h2>
@@ -73,7 +73,7 @@ import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import SitePageBody from "@/components/content/SitePageBody.vue";
-import { UiBanner } from "@/components/ui";
+import { BkBanner } from "@/components/bk";
 import {
   fetchAdminSitePage,
   type AdminSitePage

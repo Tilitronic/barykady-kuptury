@@ -1,19 +1,4 @@
 <template>
-  <!--
-    UiBtn — the brand button (ui/ seam). Quasar QBtn underneath; the variant
-    prop selects the surface treatment, everything else (type, disabled,
-    loading, icons, events) passes straight through as attrs.
-
-    Brand defaults:
-      - noCaps: the DS type system is sentence-case; Quasar's caps transform
-        would fight it (DESIGN_SYSTEM §2).
-      - primary = unelevated SCARLET ($primary maps to SCARLET via
-        quasar.variables.scss; white on scarlet measures 6.17:1 — AA body).
-      - secondary = unelevated NERO-derived neutral: the restrained second
-        surface (DESIGN_SYSTEM §3: scarlet stays the dominant action).
-      - flat / outline: borderless or hairline actions.
-    Callers may override any default via attrs — pass-through wins.
-  -->
   <QBtn v-bind="merged">
     <template v-for="(_, name) in $slots" #[name]="scope">
       <slot :name="name" v-bind="(scope as Record<string, unknown>) ?? {}" />
@@ -25,6 +10,25 @@
 import { computed, useAttrs } from "vue";
 import { QBtn } from "quasar";
 
+/**
+ * BkButton — the brand button surface over Quasar QBtn.
+ *
+ * WHY the brand defaults live here: every action in the product must read as
+ * the same brand control, so the decision is made once instead of at each
+ * call-site.
+ *   - noCaps: the DS type system is sentence-case; Quasar's caps transform
+ *     would fight it (DESIGN_SYSTEM §2).
+ *   - primary = unelevated SCARLET ($primary maps to SCARLET via
+ *     quasar.variables.scss; white on scarlet measures 6.17:1 — AA body).
+ *   - secondary = unelevated NERO-derived neutral: the restrained second
+ *     surface (DESIGN_SYSTEM §3: scarlet stays the dominant action).
+ *   - flat / outline: borderless or hairline actions.
+ *
+ * WHY pass-through wins: callers may override any default with an explicit
+ * attr. A wrapper that silently ignores a deliberate call-site choice would
+ * make the seam surprising; type, disabled, loading, icons and events therefore
+ * land on QBtn unchanged.
+ */
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{
