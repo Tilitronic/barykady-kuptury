@@ -1,0 +1,1485 @@
+{
+  "summary": {
+    "files": 81,
+    "withNative": 20,
+    "nativeTotal": 36,
+    "withSeam": 20,
+    "withUtil": 0,
+    "utilTotal": 0,
+    "withQuasar": 35
+  },
+  "files": [
+    {
+      "file": "src/App.vue",
+      "lines": 4,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/AppShell.vue",
+      "lines": 65,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/LanguageSwitcher.vue",
+      "lines": 447,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 23
+        },
+        {
+          "tag": "button",
+          "line": 60
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\baria-expanded=": 1,
+        "\\baria-current=": 1,
+        "@keydown": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/ThemeToggle.vue",
+      "lines": 136,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "input",
+          "line": 4
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 1,
+        "\\baria-checked=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/admin/AdminLocaleTabs.vue",
+      "lines": 142,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 22
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 2,
+        "\\btabindex=": 1,
+        "@keydown": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/admin/AdminSubmitShell.vue",
+      "lines": 154,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/admin/AdminTabs.vue",
+      "lines": 124,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 18
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 2,
+        "\\btabindex=": 1,
+        "@keydown": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/admin/OrganizationSettingsForm.vue",
+      "lines": 617,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkCheckbox",
+        "BkInput"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/admin/TranslationStatus.vue",
+      "lines": 41,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkBanner.vue",
+      "lines": 25,
+      "quasar": [
+        "QBanner"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkButton.vue",
+      "lines": 55,
+      "quasar": [
+        "QBtn"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkCard.vue",
+      "lines": 23,
+      "quasar": [
+        "QCard"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkCardSection.vue",
+      "lines": 23,
+      "quasar": [
+        "QCardSection"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkCheckbox.vue",
+      "lines": 27,
+      "quasar": [
+        "QCheckbox"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkConfirmDialog.vue",
+      "lines": 209,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 1,
+        "\\baria-modal=": 1,
+        "\\btabindex=": 1,
+        "@keydown": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkExpansionItem.vue",
+      "lines": 23,
+      "quasar": [
+        "QExpansionItem"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkForm.vue",
+      "lines": 22,
+      "quasar": [
+        "QForm"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkInput.vue",
+      "lines": 42,
+      "quasar": [
+        "QInput"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkItem.vue",
+      "lines": 22,
+      "quasar": [
+        "QItem"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkItemSection.vue",
+      "lines": 22,
+      "quasar": [
+        "QItemSection"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkList.vue",
+      "lines": 23,
+      "quasar": [
+        "QList"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkSelect.vue",
+      "lines": 31,
+      "quasar": [
+        "QSelect"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkSkeleton.vue",
+      "lines": 23,
+      "quasar": [
+        "QSkeleton"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkSlider.vue",
+      "lines": 28,
+      "quasar": [
+        "QSlider"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/bk/BkTooltip.vue",
+      "lines": 22,
+      "quasar": [
+        "QTooltip"
+      ],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/brand/BrandLogo.vue",
+      "lines": 263,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/contact/ContactChannels.vue",
+      "lines": 133,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/content/ContentUpdateBanner.vue",
+      "lines": 70,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 4
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/content/LocalizedRichText.vue",
+      "lines": 154,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/content/SitePageBody.vue",
+      "lines": 97,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/documents/DocumentsSection.vue",
+      "lines": 208,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/events/EventCard.vue",
+      "lines": 245,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/home/SectionShell.vue",
+      "lines": 98,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/navigation/AppFooter.vue",
+      "lines": 254,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\baria-current=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/navigation/AppHeader.vue",
+      "lines": 533,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 96
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\baria-expanded=": 1,
+        "\\baria-current=": 1,
+        "@keydown": 2
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/navigation/MobileBottomNav.vue",
+      "lines": 244,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 60
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\baria-expanded=": 1,
+        "\\baria-current=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/navigation/PageToc.vue",
+      "lines": 478,
+      "quasar": [
+        "BkItem",
+        "BkList"
+      ],
+      "nativeControls": [
+        {
+          "tag": "details",
+          "line": 47
+        },
+        {
+          "tag": "summary",
+          "line": 48
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/navigation/SocialLinks.vue",
+      "lines": 262,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/projects/ProjectCard.vue",
+      "lines": 145,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/projects/ProjectDetailBody.vue",
+      "lines": 167,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/publications/PublicationCard.vue",
+      "lines": 177,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/publications/PublicationFiles.vue",
+      "lines": 164,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/reader/AstBody.vue",
+      "lines": 71,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": null,
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/reader/LongFormReader.vue",
+      "lines": 630,
+      "quasar": [
+        "BkButton"
+      ],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 55
+        },
+        {
+          "tag": "button",
+          "line": 95
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 1,
+        "\\baria-current=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/reader/ReaderControls.vue",
+      "lines": 469,
+      "quasar": [
+        "BkSlider"
+      ],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 40
+        },
+        {
+          "tag": "button",
+          "line": 49
+        },
+        {
+          "tag": "button",
+          "line": 87
+        },
+        {
+          "tag": "button",
+          "line": 96
+        },
+        {
+          "tag": "button",
+          "line": 134
+        },
+        {
+          "tag": "button",
+          "line": 143
+        },
+        {
+          "tag": "button",
+          "line": 164
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/reader/ReaderToc.vue",
+      "lines": 80,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 13
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\baria-expanded=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/search/SiteSearch.vue",
+      "lines": 823,
+      "quasar": [
+        "BkTooltip"
+      ],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 32
+        },
+        {
+          "tag": "input",
+          "line": 88
+        },
+        {
+          "tag": "button",
+          "line": 104
+        },
+        {
+          "tag": "button",
+          "line": 119
+        },
+        {
+          "tag": "button",
+          "line": 224
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 8,
+        "\\baria-expanded=": 1,
+        "\\baria-pressed=": 1,
+        "\\baria-modal=": 1,
+        "@keydown": 2
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/components/support/ActionLink.vue",
+      "lines": 97,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/team/PersonCard.vue",
+      "lines": 158,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/components/team/TeamSection.vue",
+      "lines": 101,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/layouts/AdminLayout.vue",
+      "lines": 477,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 192
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\baria-current=": 10,
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/layouts/PublicLayout.vue",
+      "lines": 165,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/404.vue",
+      "lines": 36,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/about-document.vue",
+      "lines": 225,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/about.vue",
+      "lines": 253,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/contact.vue",
+      "lines": 156,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/events.vue",
+      "lines": 422,
+      "quasar": [
+        "BkSkeleton"
+      ],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 55
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 4
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/index.vue",
+      "lines": 488,
+      "quasar": [
+        "BkSkeleton"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/not-found.vue",
+      "lines": 30,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/project-detail.vue",
+      "lines": 145,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/projects.vue",
+      "lines": 197,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 2
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/publication-detail.vue",
+      "lines": 479,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/publications.vue",
+      "lines": 228,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 2
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/[locale]/support.vue",
+      "lines": 165,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminCoveragePage.vue",
+      "lines": 272,
+      "quasar": [
+        "BkBanner",
+        "BkButton"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminDashboardPage.vue",
+      "lines": 244,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminDeniedPage.vue",
+      "lines": 163,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "button",
+          "line": 26
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminDocumentsPage.vue",
+      "lines": 958,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkConfirmDialog",
+        "BkInput",
+        "BkSelect"
+      ],
+      "nativeControls": [
+        {
+          "tag": "input",
+          "line": 190
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminEventsPage.vue",
+      "lines": 549,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkSelect"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminFeaturedPage.vue",
+      "lines": 453,
+      "quasar": [
+        "BkBanner",
+        "BkButton"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminImportPage.vue",
+      "lines": 830,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkCard",
+        "BkCardSection",
+        "BkCheckbox",
+        "BkForm",
+        "BkInput",
+        "BkItem",
+        "BkItemSection",
+        "BkList",
+        "BkSelect"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "scss",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminProjectEditPage.vue",
+      "lines": 895,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkCheckbox",
+        "BkConfirmDialog",
+        "BkInput",
+        "BkSelect"
+      ],
+      "nativeControls": [
+        {
+          "tag": "input",
+          "line": 104
+        },
+        {
+          "tag": "button",
+          "line": 139
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\brole=\"(tab|tablist|switch|dialog|menu|menuitem|combobox|listbox|option|radiogroup|group)\"": 2,
+        "\\btabindex=": 2,
+        "@keydown": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminProjectPreviewPage.vue",
+      "lines": 204,
+      "quasar": [
+        "BkBanner"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminProjectsPage.vue",
+      "lines": 338,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkSelect"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminPublicationEditPage.vue",
+      "lines": 940,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkConfirmDialog",
+        "BkInput",
+        "BkSelect"
+      ],
+      "nativeControls": [
+        {
+          "tag": "input",
+          "line": 160
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminPublicationsPage.vue",
+      "lines": 274,
+      "quasar": [
+        "BkBanner",
+        "BkButton"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminSettingsPage.vue",
+      "lines": 228,
+      "quasar": [],
+      "nativeControls": [],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminSignInPage.vue",
+      "lines": 364,
+      "quasar": [],
+      "nativeControls": [
+        {
+          "tag": "input",
+          "line": 30
+        },
+        {
+          "tag": "input",
+          "line": 60
+        },
+        {
+          "tag": "button",
+          "line": 84
+        }
+      ],
+      "seam": [],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminSitePagePreviewPage.vue",
+      "lines": 192,
+      "quasar": [
+        "BkBanner"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {},
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminSitePagesPage.vue",
+      "lines": 606,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkInput",
+        "BkSelect"
+      ],
+      "nativeControls": [],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    },
+    {
+      "file": "src/pages/admin/AdminTeamPage.vue",
+      "lines": 813,
+      "quasar": [
+        "BkBanner",
+        "BkButton",
+        "BkConfirmDialog",
+        "BkInput"
+      ],
+      "nativeControls": [
+        {
+          "tag": "input",
+          "line": 145
+        }
+      ],
+      "seam": [
+        "bk"
+      ],
+      "utilityClassCount": 0,
+      "style": {
+        "lang": "css",
+        "scoped": true
+      },
+      "patterns": {
+        "\\btabindex=": 1
+      },
+      "hasTest": false
+    }
+  ]
+}
