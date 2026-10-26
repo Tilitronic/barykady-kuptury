@@ -189,8 +189,9 @@ export async function expectKeyboardSweep(
         hasIndicator:
           outline ||
           style.boxShadow !== "none" ||
-          element.closest(".q-field")?.classList.contains("q-field--focused") ===
-            true
+          element
+            .closest(".q-field")
+            ?.classList.contains("q-field--focused") === true
       };
     });
 

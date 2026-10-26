@@ -581,9 +581,10 @@ describe("Quasar --q-* dark parity with brand tokens (T-033)", () => {
     it(`[dark] --${qVar} equals the certified dark --${brandToken}`, () => {
       const qHex = requireHex(dark, qVar, "dark");
       const brandHex = requireHex(dark, brandToken, "dark");
-      expect(qHex.toLowerCase(), `--${qVar} drifted from dark --${brandToken}`).toBe(
-        brandHex.toLowerCase()
-      );
+      expect(
+        qHex.toLowerCase(),
+        `--${qVar} drifted from dark --${brandToken}`
+      ).toBe(brandHex.toLowerCase());
     });
   }
 
@@ -595,7 +596,11 @@ describe("Quasar --q-* dark parity with brand tokens (T-033)", () => {
 
   it("[dark] remapped negative reads as text on every dark surface", () => {
     const negative = requireHex(dark, "q-negative", "dark");
-    for (const bg of ["color-background", "color-surface", "color-surface-raised"]) {
+    for (const bg of [
+      "color-background",
+      "color-surface",
+      "color-surface-raised"
+    ]) {
       expect(
         contrastRatio(negative, requireHex(dark, bg, "dark")),
         `--q-negative on dark --${bg}`

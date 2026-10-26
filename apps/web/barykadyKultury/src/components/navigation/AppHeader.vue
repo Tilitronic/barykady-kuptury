@@ -81,7 +81,7 @@
         <!-- One SiteSearch instance at a time: in the cluster on tablet
              and desktop, in the slim header strip on phones (below). -->
         <SiteSearch v-if="!isPhoneBand" />
-        <SocialLinks :links="organization.socialLinks" variant="icon" />
+        <SocialLinks :links="config.socialLinks" variant="icon" />
         <ThemeToggle />
         <LanguageSwitcher />
       </div>
@@ -137,9 +137,9 @@ import SiteSearch from "@/components/search/SiteSearch.vue";
 import MobileBottomNav from "@/components/navigation/MobileBottomNav.vue";
 import SocialLinks from "@/components/navigation/SocialLinks.vue";
 import ThemeToggle from "@/components/ThemeToggle.vue";
-import { organization } from "@/config/organization";
 import { mainNavItems, type NavItem } from "@/config/navigation";
 import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
+import { useOrganizationConfig } from "@/features/settings/state";
 
 /**
  * AppHeader — sticky public header: brand, locale-aware nav, search, social
@@ -163,6 +163,9 @@ const currentLocale = computed(() => {
   const { locale } = route.params as { locale?: unknown };
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
+
+/** T-048: social icons follow the settings visibility flags. */
+const config = useOrganizationConfig(currentLocale);
 
 /** Mobile drawer open/close state — never depends on hover. */
 const isMenuOpen = ref(false);

@@ -120,7 +120,11 @@ user-editable metadata form.
 
 Vocabulary (exact strings; delete = write; unknown strings are inert):
 `pages:write`, `projects:write`, `publications:write`, `documents:write`,
-`team:write`, `events:write`, `media:write`, `importer`.
+`team:write`, `events:write`, `settings:write`, `media:write`, `importer`.
+
+`settings:write` (T-048) grants the General and Contacts tabs of
+`/admin/settings` and is the only scope that may call `save_settings_v1`; the
+entity tabs keep their own scopes (`projects:write`, `team:write`, …).
 
 Set these once in a trusted shell (never commit the values):
 
@@ -141,7 +145,7 @@ therefore the first JWT already carries exactly the granted scopes.
 curl -sS -X POST "$SUPABASE_URL/auth/v1/admin/users" "${AUTH[@]}" -d '{
   "email": "editor@example.org",
   "email_confirm": true,
-  "app_metadata": { "role": "editor", "scopes": ["publications:write"] }
+  "app_metadata": { "role": "editor", "scopes": ["publications:write", "settings:write"] }
 }'
 # → response includes "id"; export USER_ID="<that id>"
 export USER_ID="<id-from-response>"
@@ -155,12 +159,13 @@ curl -sS -X POST "$SUPABASE_URL/auth/v1/admin/generate_link" "${AUTH[@]}" -d '{
 
 # 3. Verify the grant before the editor signs in.
 curl -sS "$SUPABASE_URL/auth/v1/admin/users/$USER_ID" "${AUTH[@]}" | jq '.app_metadata'
-# expected: {"role":"editor","scopes":["publications:write"], ...}
+# expected: {"role":"editor","scopes":["publications:write","settings:write"], ...}
 ```
 
-The editor's first sign-in lands with `publications:write` only: the dashboard
-shows Publications/Content import (if granted), hides Projects, and direct
-project URLs render the scope-denial page. RLS/RPC checks are the authority.
+The editor's first sign-in lands with exactly the granted scopes: the dashboard
+shows Publications, Settings (General/Contacts because of `settings:write`) and
+Content import (if granted), hides Projects, and direct project URLs render the
+scope-denial page. RLS/RPC checks are the authority.
 
 ### B. Grant or change scopes on an existing account
 
@@ -175,7 +180,9 @@ curl -sS "$SUPABASE_URL/auth/v1/admin/users/$USER_ID" "${AUTH[@]}" | jq '.app_me
 curl -sS -X PUT "$SUPABASE_URL/auth/v1/admin/users/$USER_ID" "${AUTH[@]}" -d '{
   "app_metadata": {
     "role": "editor",
-    "scopes": ["publications:write", "documents:write", "media:write"]
+    "scopes": [
+      "publications:write", "documents:write", "settings:write", "media:write"
+    ]
   }
 }'
 ```
@@ -207,6 +214,11 @@ curl -sS -X PUT "$SUPABASE_URL/auth/v1/admin/users/$USER_ID" "${AUTH[@]}" -d '{
 - A zero-scope account is a normal authenticated user: no admin area, no writes.
 - Never grant `importer` to an account that should not see private source
   originals; the private `content-sources` bucket is in that scope.
+- `settings:write` is for an administrator trusted with organization facts
+  (NIP/REGON, contact data, social links) and their public visibility. It does
+  not imply any entity scope; grant it together with the tabs the editor needs.
+  The database write path is the `save_settings_v1` RPC only — direct table
+  INSERT/UPDATE grants are revoked for client roles.
 - `media:write` is bucket-wide for `public-media` in V1 (project covers and
   imported images share it). Grant it only with the feature scope that needs it.
 - Verify after every change with `GET /auth/v1/admin/users/$USER_ID` and by

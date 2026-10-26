@@ -42,10 +42,13 @@
 </template>
 
 <script setup lang="ts">
+import { inject, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 
 import AppHeader from "@/components/navigation/AppHeader.vue";
 import AppFooter from "@/components/navigation/AppFooter.vue";
+import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
+import { loadOrganizationSettings } from "@/features/settings/state";
 
 /**
  * T-011 — PublicLayout.
@@ -58,6 +61,19 @@ import AppFooter from "@/components/navigation/AppFooter.vue";
  * WCAG 2.4.1 (bypass blocks).
  */
 const { t } = useI18n();
+
+/**
+ * T-048 — load the org settings once per public layout mount.
+ *
+ * A failed/unconfigured read leaves the static parity shape in place, so the
+ * public site never depends on this call succeeding. Toggling a fact in the
+ * admin updates the shared store immediately and the next mount re-reads the
+ * visible projection from the database.
+ */
+const supabase = inject(SUPABASE_CLIENT_KEY, null);
+onMounted(() => {
+  void loadOrganizationSettings(supabase);
+});
 
 /**
  * Explicitly move focus to the <main> landmark.

@@ -199,6 +199,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/AdminSettingsPage': RouteRecordInfo<
+      '/admin/AdminSettingsPage',
+      '/admin/AdminSettingsPage',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/admin/AdminSignInPage': RouteRecordInfo<
       '/admin/AdminSignInPage',
       '/admin/AdminSignInPage',
@@ -427,6 +434,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/admin/AdminPublicationsPage.vue': {
       routes:
         | '/admin/AdminPublicationsPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/AdminSettingsPage.vue': {
+      routes:
+        | '/admin/AdminSettingsPage'
       views:
         | never
       pathParamNames:

@@ -48,6 +48,15 @@
           {{ details.officeHours }}
         </dd>
       </template>
+
+      <template v-if="paperMailAddress">
+        <dt class="contact-channels__label">
+          {{ t("contact.fields.paperMailAddress") }}
+        </dt>
+        <dd class="contact-channels__value contact-channels__value--multiline">
+          {{ paperMailAddress }}
+        </dd>
+      </template>
     </dl>
   </address>
 </template>
@@ -69,12 +78,19 @@ import { mailtoHref, telHref } from "@/shared/links";
  * DESIGN_SYSTEM.md §6 asks for — with the field labels localized per render.
  */
 const props = defineProps<{
-  details: ContactDetails;
+  details: ContactDetails & { readonly paperMailAddress?: string };
 }>();
 
 const { t } = useI18n();
 
-const hasAnyChannel = computed(() => hasContactDetails(props.details));
+/** T-048: paper mail is a first-class contact channel, not a footer detail. */
+const paperMailAddress = computed(() =>
+  (props.details.paperMailAddress ?? "").trim()
+);
+
+const hasAnyChannel = computed(
+  () => hasContactDetails(props.details) || paperMailAddress.value.length > 0
+);
 </script>
 
 <style scoped>

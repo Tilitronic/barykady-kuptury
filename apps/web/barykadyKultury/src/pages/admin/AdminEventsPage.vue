@@ -13,7 +13,7 @@
     `calendar_event_links`. Creating or editing calendar events is an explicit
     V1 non-goal (docs/PRODUCT_REQUIREMENTS.md §6).
   -->
-  <div class="admin-events">
+  <AdminSubmitShell mode="event" :show-heading="false" class="admin-events">
     <h1 class="admin-events__heading">{{ t("admin.events.heading") }}</h1>
     <p class="admin-events__intro">{{ t("admin.events.intro") }}</p>
 
@@ -63,70 +63,74 @@
       {{ t("admin.events.empty") }}
     </p>
 
-    <div v-else class="admin-events__table-wrap">
-      <table class="admin-events__table" data-testid="events-table">
-        <caption class="sr-only">{{ t("admin.events.heading") }}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{{ t("admin.events.columns.event") }}</th>
-            <th scope="col">{{ t("admin.events.columns.when") }}</th>
-            <th scope="col">{{ t("admin.events.columns.status") }}</th>
-            <th scope="col">{{ t("admin.events.columns.project") }}</th>
-            <th scope="col">{{ t("admin.events.columns.publicLink") }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in rows"
-            :key="row.key"
-            :data-testid="`event-row-${row.googleEventId}`"
-          >
-            <td>
-              <span class="admin-events__event-title">{{ row.title }}</span>
-              <span v-if="!row.inFeed" class="admin-events__hint">
-                {{ t("admin.events.notInFeed") }}
-              </span>
-            </td>
-            <td>
-              <time v-if="row.start !== null" :datetime="row.start">
-                {{ formattedStart(row) }}
-              </time>
-              <span v-else aria-hidden="true">—</span>
-            </td>
-            <td>{{ t(statusKey(row)) }}</td>
-            <td>
-              <UiSelect
-                :model-value="row.projectId ?? ''"
-                :options="projectOptions"
-                emit-value
-                map-options
-                :disable="pendingKey === row.key || projectsFailure"
-                :aria-label="t('admin.events.projectFor', { event: row.title })"
-                :data-testid="`event-project-${row.googleEventId}`"
-                @update:model-value="onProjectChange(row, $event)"
-              />
-            </td>
-            <td>
-              <RouterLink
-                v-if="publicDecision(row).public && publicDecision(row).path"
-                :to="publicPath(row)"
-                class="admin-events__public-link focus-ring"
-                :data-testid="`event-public-link-${row.googleEventId}`"
-              >
-                {{ projectFor(row)?.title }}
-              </RouterLink>
-              <span
-                v-else
-                class="admin-events__no-link"
-                :data-testid="`event-no-public-link-${row.googleEventId}`"
-              >
-                {{ publicLinkLabel(row) }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <template v-if="!loading && rows.length > 0" #event-extra>
+      <div class="admin-events__table-wrap">
+        <table class="admin-events__table" data-testid="events-table">
+          <caption class="sr-only">{{ t("admin.events.heading") }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ t("admin.events.columns.event") }}</th>
+              <th scope="col">{{ t("admin.events.columns.when") }}</th>
+              <th scope="col">{{ t("admin.events.columns.status") }}</th>
+              <th scope="col">{{ t("admin.events.columns.project") }}</th>
+              <th scope="col">{{ t("admin.events.columns.publicLink") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in rows"
+              :key="row.key"
+              :data-testid="`event-row-${row.googleEventId}`"
+            >
+              <td>
+                <span class="admin-events__event-title">{{ row.title }}</span>
+                <span v-if="!row.inFeed" class="admin-events__hint">
+                  {{ t("admin.events.notInFeed") }}
+                </span>
+              </td>
+              <td>
+                <time v-if="row.start !== null" :datetime="row.start">
+                  {{ formattedStart(row) }}
+                </time>
+                <span v-else aria-hidden="true">—</span>
+              </td>
+              <td>{{ t(statusKey(row)) }}</td>
+              <td>
+                <UiSelect
+                  :model-value="row.projectId ?? ''"
+                  :options="projectOptions"
+                  emit-value
+                  map-options
+                  :disable="pendingKey === row.key || projectsFailure"
+                  :aria-label="
+                    t('admin.events.projectFor', { event: row.title })
+                  "
+                  :data-testid="`event-project-${row.googleEventId}`"
+                  @update:model-value="onProjectChange(row, $event)"
+                />
+              </td>
+              <td>
+                <RouterLink
+                  v-if="publicDecision(row).public && publicDecision(row).path"
+                  :to="publicPath(row)"
+                  class="admin-events__public-link focus-ring"
+                  :data-testid="`event-public-link-${row.googleEventId}`"
+                >
+                  {{ projectFor(row)?.title }}
+                </RouterLink>
+                <span
+                  v-else
+                  class="admin-events__no-link"
+                  :data-testid="`event-no-public-link-${row.googleEventId}`"
+                >
+                  {{ publicLinkLabel(row) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
 
     <p
       v-if="statusMessage !== ''"
@@ -147,7 +151,7 @@
     >
       <p class="admin-events__banner-text">{{ actionError }}</p>
     </UiBanner>
-  </div>
+  </AdminSubmitShell>
 </template>
 
 <script setup lang="ts">
@@ -156,6 +160,7 @@ import { computed, inject, onMounted, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import AdminSubmitShell from "@/components/admin/AdminSubmitShell.vue";
 import { UiBanner, UiBtn, UiSelect } from "@/components/ui";
 import { SUPABASE_CLIENT_KEY } from "@/features/content/supabaseInjection";
 import {

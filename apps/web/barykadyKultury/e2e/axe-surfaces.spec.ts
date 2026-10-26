@@ -61,22 +61,31 @@ const SURFACES = {
     ).toBeVisible();
   },
   about: async (page: Page) => {
-    await mockSupabaseRest(page, { responses: { site_pages: ABOUT_PAGE_FIXTURE } });
+    await mockSupabaseRest(page, {
+      responses: { site_pages: ABOUT_PAGE_FIXTURE }
+    });
     await page.goto("/en/about");
     await expect(
       page.getByRole("heading", { level: 1, name: "About us" })
     ).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: "Mission" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Mission" })
+    ).toBeVisible();
   },
   projectDetail: async (page: Page) => {
     await mockSupabaseRest(page, { responses: { projects: PROJECTS_FIXTURE } });
     await page.goto("/en/projects/sample-community-workshop");
     await expect(
-      page.getByRole("heading", { level: 1, name: "Sample Community Workshop (Fictional)" })
+      page.getByRole("heading", {
+        level: 1,
+        name: "Sample Community Workshop (Fictional)"
+      })
     ).toBeVisible();
   },
   publicationDetail: async (page: Page) => {
-    await mockSupabaseRest(page, { responses: { publications: PUBLICATIONS_FIXTURE } });
+    await mockSupabaseRest(page, {
+      responses: { publications: PUBLICATIONS_FIXTURE }
+    });
     await mockSupabaseStorage(page);
     await page.goto("/en/publications/sample-publication");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

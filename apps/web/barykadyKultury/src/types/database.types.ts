@@ -406,6 +406,34 @@ export type Database = {
         };
         Relationships: [];
       };
+      organization_settings: {
+        Row: {
+          key: string;
+          updated_at: string;
+          updated_by: string | null;
+          updated_by_email: string | null;
+          value: Json;
+          visible: boolean;
+        };
+        ComputedFields: never;
+        Insert: {
+          key: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          updated_by_email?: string | null;
+          value: Json;
+          visible?: boolean;
+        };
+        Update: {
+          key?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          updated_by_email?: string | null;
+          value?: Json;
+          visible?: boolean;
+        };
+        Relationships: [];
+      };
       project_translations: {
         Row: {
           body: string | null;
@@ -931,6 +959,22 @@ export type Database = {
         Args: { p_ids: string[] };
         Returns: undefined;
       };
+      is_valid_email_v1: {
+        Args: { p_value: string };
+        Returns: boolean;
+      };
+      is_valid_nip_v1: {
+        Args: { p_value: string };
+        Returns: boolean;
+      };
+      is_valid_public_url_v1: {
+        Args: { p_value: string };
+        Returns: boolean;
+      };
+      is_valid_regon_v1: {
+        Args: { p_value: string };
+        Returns: boolean;
+      };
       save_document_v1: {
         Args: {
           p_document_type: string;
@@ -947,6 +991,14 @@ export type Database = {
           p_translations: Json;
         };
         Returns: string;
+      };
+      validate_organization_setting_v1: {
+        Args: { p_key: string; p_value: Json };
+        Returns: undefined;
+      };
+      save_settings_v1: {
+        Args: { p_changes: Json };
+        Returns: undefined;
       };
       save_project_v1: {
         Args: {

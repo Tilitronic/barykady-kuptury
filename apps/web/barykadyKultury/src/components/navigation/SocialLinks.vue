@@ -87,7 +87,7 @@ import { activeSocialLinks, type SocialLink } from "@/config/organization";
 
 const props = withDefaults(
   defineProps<{
-    links: SocialLink[];
+    links: readonly SocialLink[];
     /**
      * "icon": square icon-only target named by aria-label/title.
      * "labeled": icon plus visible platform name (name == aria-label, so

@@ -112,6 +112,8 @@ describe("landmarks and navigation", () => {
       .filter(Boolean);
     expect(links).toEqual([
       "Dashboard",
+      // T-048: the tabbed surface hosts facts + every entity editor.
+      "Settings",
       "Site pages",
       "Projects",
       "Team",
@@ -123,6 +125,9 @@ describe("landmarks and navigation", () => {
       "Translation coverage",
       "Import content"
     ]);
+    expect(
+      wrapper.get("[data-testid='admin-nav-settings']").attributes("href")
+    ).toBe("/en/admin/settings");
     expect(
       wrapper.get("[data-testid='admin-nav-pages']").attributes("href")
     ).toBe("/en/admin/pages");
@@ -163,6 +168,8 @@ describe("landmarks and navigation", () => {
       .filter(Boolean);
     expect(links).toEqual([
       "Dashboard",
+      // T-048: the publications editor also has a tab in the settings surface.
+      "Settings",
       "Publications",
       // T-031 read-only report: no capability required.
       "Translation coverage"

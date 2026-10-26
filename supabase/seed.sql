@@ -585,3 +585,32 @@ Decyzję w sprawie zmiany regulaminu oraz rozwiązania stowarzyszenia podejmuje 
 
 Рішення про зміну регламенту та ліквідацію товариства приймають Загальні збори членів більшістю не менше ніж 2/3 голосів за присутності не менше половини членів, які мають право голосу. Приймаючи резолюцію про ліквідацію Товариства, Загальні збори членів визначають призначення залишкових майнових ресурсів Товариства.$rehlament_uk$, false)
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- T-048 organization settings (idempotent)
+-- ---------------------------------------------------------------------------
+-- SEED POLICY (T-048 gate fix): every organization fact below is clearly
+-- fictional — example.test names/addresses/URLs plus NIP/REGON-shaped values
+-- with deliberately invalid checksums. Production values are authored by a
+-- root administrator after deploy, never via seeds (AGENTS.md rule 6).
+-- Re-running never overwrites an admin edit (ON CONFLICT DO NOTHING).
+
+insert into public.organization_settings (key, value, visible) values
+  ('org.settings_initialized', '{"en":"1"}'::jsonb, true),
+  ('org.name', '{"en":"Example Culture Association (Fictional)"}'::jsonb, true),
+  ('org.seat', '{"en":"Example City"}'::jsonb, true),
+  ('org.nip', '{"en":"1234567890"}'::jsonb, true),
+  ('org.regon', '{"en":"123456789"}'::jsonb, true),
+  ('org.privacy_url', '{"en":"https://example.test/privacy"}'::jsonb, true),
+  ('contact.email', '{"en":"contact@example.test"}'::jsonb, true),
+  ('contact.phone', '{"en":"+00 000 000 000"}'::jsonb, true),
+  ('contact.address', '{"en":"1 Example Street, 00000 Example City","pl":"ul. Przykladowa 1, 00-000 Example City","uk":"вул. Прикладова 1, 00000 Example City"}'::jsonb, true),
+  ('contact.office_hours', '{"en":"Weekdays 00:00–00:00 (fixture)","pl":"dni robocze 00:00–00:00 (fikcja)","uk":"будні 00:00–00:00 (фікція)"}'::jsonb, true),
+  ('contact.paper_mail_address', '{"en":"PO Box 0, 00000 Example City (fixture)","pl":"Skrytka pocztowa 0, 00-000 Example City (fikcja)","uk":"Абонентська скринька 0, 00000 Example City (фікція)"}'::jsonb, true),
+  ('social.facebook', '{"en":"https://social.example.test/facebook"}'::jsonb, true),
+  ('social.instagram', '{"en":"https://social.example.test/instagram"}'::jsonb, true),
+  ('social.telegram', '{"en":"https://social.example.test/telegram"}'::jsonb, true),
+  ('social.youtube', '{"en":""}'::jsonb, true),
+  ('social.twitter', '{"en":""}'::jsonb, true),
+  ('social.linkedin', '{"en":""}'::jsonb, true)
+on conflict (key) do nothing;

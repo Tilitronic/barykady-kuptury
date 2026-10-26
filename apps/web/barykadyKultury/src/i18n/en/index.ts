@@ -312,7 +312,8 @@ const en = {
       email: "Email",
       phone: "Phone",
       address: "Address",
-      officeHours: "Office hours"
+      officeHours: "Office hours",
+      paperMailAddress: "Paper-mail address"
     }
   },
   about: {
@@ -1260,6 +1261,70 @@ const en = {
         "{published} published · {missing} missing · {needsReview} needs review",
       noPublishedContent: "No published content in this area."
     },
+    settings: {
+      title: "Settings",
+      description:
+        "Organization facts, contacts and the entity editors in one tabbed surface.",
+      intro:
+        "Edit the organization facts the public site renders. Each fact has its own visibility checkbox; a hidden fact disappears from the public site and from anonymous API payloads.",
+      tabsLabel: "Settings sections",
+      save: "Save",
+      saving: "Saving…",
+      saved: "Settings saved.",
+      retry: "Try again",
+      loadFailed: "Settings could not be loaded.",
+      saveFailed:
+        "Settings could not be saved. Check your access and try again.",
+      visible: "Visible on the public site",
+      audit: "Last changed by {who} on {when}.",
+      auditUnknown: "an unknown administrator",
+      deniedTab: "The {tab} tab is not included in your administrator access.",
+      openGranted: "Open {tab}",
+      tabs: {
+        general: "General",
+        contacts: "Contacts",
+        team: "Team",
+        documents: "Documents",
+        projects: "Projects",
+        events: "Events",
+        publications: "Publications"
+      },
+      sections: {
+        localized: "Localized details",
+        social: "Social links",
+        socialHint:
+          "Only absolute http(s) URLs are accepted. Leave a field empty to remove that channel."
+      },
+      fields: {
+        name: "Organization name",
+        seat: "Registered seat",
+        nip: "NIP",
+        regon: "REGON",
+        privacyUrl: "Privacy policy URL",
+        email: "Contact email",
+        phone: "Contact phone",
+        address: "Address",
+        officeHours: "Office hours",
+        paperMailAddress: "Paper-mail address",
+        social: {
+          facebook: "Facebook URL",
+          instagram: "Instagram URL",
+          telegram: "Telegram URL",
+          youtube: "YouTube URL",
+          twitter: "X (Twitter) URL",
+          linkedin: "LinkedIn URL"
+        }
+      },
+      errors: {
+        email: "Enter a valid email address.",
+        url: "Enter an absolute http(s) URL.",
+        nip: "Enter a valid 10-digit NIP with a correct checksum.",
+        regon: "Enter a valid 9- or 14-digit REGON with a correct checksum.",
+        invalidOtherTab:
+          "Some facts in the {tab} tab are invalid. Open it and fix the highlighted fields before saving.",
+        invalid: "Fix the highlighted fields before saving."
+      }
+    },
     scopes: {
       label: "Your access",
       pages: "Pages",
@@ -1269,6 +1334,7 @@ const en = {
       team: "Team",
       events: "Events",
       media: "Media",
+      settings: "Settings",
       importer: "Content import",
       deniedTitle: "Not available for your role",
       deniedMessage:

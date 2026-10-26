@@ -24,6 +24,15 @@
       <p class="admin-dashboard__panel-text">
         {{ t("admin.dashboardPage.placeholder") }}
       </p>
+      <p v-if="canOpenSettings" class="admin-dashboard__action">
+        <RouterLink
+          :to="`/${currentLocale}/admin/settings`"
+          class="admin-dashboard__link focus-ring"
+          data-testid="dashboard-settings-link"
+        >
+          {{ t("admin.settings.title") }}
+        </RouterLink>
+      </p>
       <p v-if="can('pages:write')" class="admin-dashboard__action">
         <RouterLink
           :to="`/${currentLocale}/admin/pages`"
@@ -129,6 +138,7 @@ import { useI18n } from "vue-i18n";
 
 import type { AdminScope } from "@/features/auth/adminClaim";
 import { useAuth } from "@/features/auth/authStore";
+import { SETTINGS_TABS } from "@/features/settings/settingsTabs";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
@@ -152,11 +162,17 @@ const SCOPE_LABEL_KEYS: Record<AdminScope, string> = {
   "documents:write": "admin.scopes.documents",
   "team:write": "admin.scopes.team",
   "events:write": "admin.scopes.events",
+  "settings:write": "admin.scopes.settings",
   "media:write": "admin.scopes.media",
   importer: "admin.scopes.importer"
 };
 
 const userEmail = computed(() => user.value?.email ?? "");
+
+/** T-048 — at least one settings tab is usable with this session's scopes. */
+const canOpenSettings = computed(() =>
+  SETTINGS_TABS.some(tab => can(tab.scope))
+);
 const currentLocale = computed<Locale>(() => {
   const { locale } = route.params as { locale?: unknown };
   return isLocale(locale) ? locale : DEFAULT_LOCALE;

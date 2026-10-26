@@ -55,6 +55,7 @@ export const ADMIN_SCOPES = [
   "documents:write",
   "team:write",
   "events:write",
+  "settings:write",
   "media:write",
   "importer"
 ] as const;

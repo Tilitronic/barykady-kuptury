@@ -39,41 +39,42 @@
       -->
       <address v-if="hasContactData" class="app-footer__contact">
         <a
-          v-if="organization.contact.email"
-          :href="mailtoHref(organization.contact.email)"
+          v-if="config.contact.email"
+          :href="mailtoHref(config.contact.email)"
           class="app-footer__contact-link focus-ring"
         >
-          {{ organization.contact.email }}
+          {{ config.contact.email }}
         </a>
-        <span v-if="organization.contact.phone">{{
-          organization.contact.phone
-        }}</span>
-        <span v-if="organization.contact.address">{{
-          organization.contact.address
-        }}</span>
+        <span v-if="config.contact.phone">{{ config.contact.phone }}</span>
+        <span v-if="config.contact.address">{{ config.contact.address }}</span>
       </address>
 
-      <!-- Social links — D-05 OPEN: SocialLinks renders nothing when empty -->
-      <SocialLinks :links="organization.socialLinks" />
+      <!-- Social links — D-05/T-048: SocialLinks renders nothing when empty -->
+      <SocialLinks :links="config.socialLinks" />
     </div>
 
     <!-- Legal line: only verified identifiers (D-13, govIds.txt) -->
     <div class="app-footer__legal">
-      <span class="app-footer__legal-name">
-        {{ organization.name }},&nbsp;{{ organization.seat }}
+      <span v-if="config.name || config.seat" class="app-footer__legal-name">
+        <template v-if="config.name && config.seat">
+          {{ config.name }},&nbsp;{{ config.seat }}
+        </template>
+        <template v-else>{{ config.name || config.seat }}</template>
       </span>
-      <template v-if="organization.showLegalIds">
+      <template v-if="config.nip || config.regon">
         <span class="app-footer__legal-sep" aria-hidden="true">·</span>
         <span class="app-footer__legal-ids">
-          NIP&nbsp;{{ organization.nip }}
-          <span aria-hidden="true">&nbsp;/&nbsp;</span>
-          REGON&nbsp;{{ organization.regon }}
+          <span v-if="config.nip">NIP&nbsp;{{ config.nip }}</span>
+          <span v-if="config.nip && config.regon" aria-hidden="true"
+            >&nbsp;/&nbsp;</span
+          >
+          <span v-if="config.regon">REGON&nbsp;{{ config.regon }}</span>
         </span>
       </template>
-      <template v-if="organization.privacyUrl">
+      <template v-if="config.privacyUrl">
         <span class="app-footer__legal-sep" aria-hidden="true">·</span>
         <a
-          :href="organization.privacyUrl"
+          :href="config.privacyUrl"
           class="app-footer__privacy-link focus-ring"
         >
           {{ t("footer.privacyPolicy") }}</a
@@ -90,9 +91,9 @@ import { useI18n } from "vue-i18n";
 
 import BrandLogo from "@/components/brand/BrandLogo.vue";
 import SocialLinks from "@/components/navigation/SocialLinks.vue";
-import { organization } from "@/config/organization";
 import { mainNavItems, type NavItem } from "@/config/navigation";
 import { DEFAULT_LOCALE, isLocale } from "@/features/i18n/locales";
+import { useOrganizationConfig } from "@/features/settings/state";
 import { mailtoHref } from "@/shared/links";
 
 /**
@@ -116,13 +117,26 @@ const currentLocale = computed(() => {
   return isLocale(locale) ? locale : DEFAULT_LOCALE;
 });
 
-/** Contact block is visible only when at least one contact field is supplied. */
-const hasContactData = computed(
-  () =>
-    organization.contact.email.length > 0 ||
-    organization.contact.phone.length > 0 ||
-    organization.contact.address.length > 0
-);
+/**
+ * T-048 — the resolved shape already applies visibility filtering, so the
+ * footer has no second copy of the rule. With no rows the resolver returns the
+ * static parity shape (identical markup when every flag is visible).
+ */
+const config = useOrganizationConfig(currentLocale);
+
+/**
+ * Only the three channels this block actually renders count. Office hours and
+ * paper mail are contact facts too, but they live on the Contact page — an
+ * empty <address> in the footer would be a rendering bug, not "visible".
+ */
+const hasContactData = computed(() => {
+  const contact = config.value.contact;
+  return (
+    contact.email.trim().length > 0 ||
+    contact.phone.trim().length > 0 ||
+    contact.address.trim().length > 0
+  );
+});
 
 function isActivePage(item: NavItem): boolean {
   const name = String(route.name ?? "");

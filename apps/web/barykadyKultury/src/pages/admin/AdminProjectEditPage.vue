@@ -21,10 +21,6 @@
       </RouterLink>
     </p>
 
-    <h1 class="admin-project-edit__heading">
-      {{ isNew ? t("admin.projects.newProject") : t("admin.projects.heading") }}
-    </h1>
-
     <p v-if="loading" class="admin-project-edit__state" role="status">
       {{ t("content.loading") }}
     </p>
@@ -40,11 +36,15 @@
       {{ loadErrorMessage }}
     </UiBanner>
 
-    <form
+    <AdminSubmitShell
       v-else
-      novalidate
+      mode="project"
+      submit-mode
       class="admin-project-edit__form"
-      @submit.prevent="submit('save')"
+      :heading="
+        isNew ? t('admin.projects.newProject') : t('admin.projects.heading')
+      "
+      @submit="submit('save')"
     >
       <!-- ── Root fields ─────────────────────────────────────────────────── -->
       <div class="admin-project-edit__grid">
@@ -96,31 +96,33 @@
         </p>
       </div>
 
-      <div class="admin-project-edit__cover">
-        <label class="admin-project-edit__label" for="project-cover">
-          {{ t("admin.projects.fields.cover") }}
-        </label>
-        <input
-          id="project-cover"
-          class="admin-project-edit__file"
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          data-testid="project-cover"
-          @change="onCoverChange"
-        />
-        <p class="admin-project-edit__hint">
-          {{ t("admin.projects.fields.coverHint") }}
-        </p>
-        <p v-if="coverName !== ''" class="admin-project-edit__hint">
-          {{ t("admin.projects.fields.coverSelected", { name: coverName }) }}
-        </p>
-        <p
-          v-else-if="values.coverPath !== null"
-          class="admin-project-edit__hint"
-        >
-          {{ t("admin.projects.fields.coverCurrent") }}
-        </p>
-      </div>
+      <template #project-extra>
+        <div class="admin-project-edit__cover">
+          <label class="admin-project-edit__label" for="project-cover">
+            {{ t("admin.projects.fields.cover") }}
+          </label>
+          <input
+            id="project-cover"
+            class="admin-project-edit__file"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            data-testid="project-cover"
+            @change="onCoverChange"
+          />
+          <p class="admin-project-edit__hint">
+            {{ t("admin.projects.fields.coverHint") }}
+          </p>
+          <p v-if="coverName !== ''" class="admin-project-edit__hint">
+            {{ t("admin.projects.fields.coverSelected", { name: coverName }) }}
+          </p>
+          <p
+            v-else-if="values.coverPath !== null"
+            class="admin-project-edit__hint"
+          >
+            {{ t("admin.projects.fields.coverCurrent") }}
+          </p>
+        </div>
+      </template>
 
       <!-- ── Per-locale tabs ─────────────────────────────────────────────── -->
       <div class="admin-project-edit__tabs">
@@ -285,7 +287,7 @@
       >
         {{ statusMessage }}
       </p>
-    </form>
+    </AdminSubmitShell>
 
     <UiConfirmDialog
       v-model="deleteOpen"
@@ -305,6 +307,7 @@ import { computed, inject, nextTick, onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
+import AdminSubmitShell from "@/components/admin/AdminSubmitShell.vue";
 import TranslationStatus from "@/components/admin/TranslationStatus.vue";
 import {
   UiBanner,

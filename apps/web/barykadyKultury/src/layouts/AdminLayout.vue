@@ -72,6 +72,21 @@
             (hiding, not disabling). Root carries every capability, so this
             renders all built destinations for a root admin.
           -->
+          <!--
+            T-048: one entry for the tabbed surface. It appears when the
+            session can use at least one tab; the page itself hides denied
+            tabs and explains a direct URL denial.
+          -->
+          <li v-if="canOpenSettings">
+            <RouterLink
+              :to="`/${currentLocale}/admin/settings`"
+              class="admin-header__nav-link focus-ring"
+              :aria-current="isSettings ? 'page' : undefined"
+              data-testid="admin-nav-settings"
+            >
+              {{ t("admin.settings.title") }}
+            </RouterLink>
+          </li>
           <li v-if="can('pages:write')">
             <RouterLink
               :to="`/${currentLocale}/admin/pages`"
@@ -203,6 +218,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import ThemeToggle from "@/components/ThemeToggle.vue";
 import { ADMIN_DASHBOARD_NAME } from "@/features/auth/adminGuard";
 import { useAuth } from "@/features/auth/authStore";
+import { SETTINGS_TABS } from "@/features/settings/settingsTabs";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
 
 /**
@@ -225,6 +241,15 @@ const currentLocale = computed<Locale>(() => {
 
 const isDashboard = computed(
   () => String(route.name ?? "") === ADMIN_DASHBOARD_NAME
+);
+
+/** T-048 — the tabbed surface is reachable with any one of its tab scopes. */
+const canOpenSettings = computed(() =>
+  SETTINGS_TABS.some(tab => can(tab.scope))
+);
+
+const isSettings = computed(
+  () => String(route.name ?? "") === "admin-settings"
 );
 
 /** True for the T-028 site page editor/preview routes (nav highlight). */

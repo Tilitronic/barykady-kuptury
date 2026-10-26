@@ -21,7 +21,7 @@ import { ADMIN_SCOPES } from "../adminClaim";
  * the guardrail tautological.
  */
 
-/** Canonical 8-scope vocabulary, sorted (see docs/architecture.md §6.1). */
+/** Canonical 9-scope vocabulary, sorted (see docs/architecture.md §6.1). */
 const CANONICAL_VOCABULARY = [
   "documents:write",
   "events:write",
@@ -30,6 +30,7 @@ const CANONICAL_VOCABULARY = [
   "pages:write",
   "projects:write",
   "publications:write",
+  "settings:write",
   "team:write"
 ].sort();
 
@@ -97,7 +98,7 @@ function documentedScopes(): string[] {
 }
 
 describe("scope registry drift guardrail (D-42)", () => {
-  it("keeps the 8-scope vocabulary identical across SQL, client, route meta and §6.1", () => {
+  it("keeps the 9-scope vocabulary identical across SQL, client, route meta and §6.1", () => {
     const scopesInRoutes = routeScopes();
 
     expect({

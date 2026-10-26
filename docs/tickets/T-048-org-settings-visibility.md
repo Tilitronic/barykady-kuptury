@@ -1,7 +1,7 @@
 # T-048 — Organization settings, visibility flags & tabbed admin
 
-**Session:** — · **Lane:** feature/admin · **Owner:** unassigned · **Status:** todo
-**Reviewers:** @reviewer + @architector (settings boundary + scope vocabulary)
+**Session:** 16 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done (proviso: pgTAP `organization_settings_test.sql` authored, execution blocked on Docker — must run before deploy)
+**Reviewers:** @reviewer (rev-1 FIX + re-gate SHIP) + @architector (approve; definer-switch approve)
 **Depends on:** T-046 · **Blocks:** T-035 (visibility affects release content)
 
 ## Origin
@@ -65,17 +65,105 @@ per-locale visibility (visible is global until proven needed), WYSIWYG.
 
 ## Acceptance criteria
 
-- [ ] Every listed fact editable + visible-toggle; toggle flips public
+- [x] Every listed fact editable + visible-toggle; toggle flips public
       rendering same-session (E2E).
-- [ ] Hidden facts absent from public markup AND anon API payloads.
+- [x] Hidden facts absent from public markup AND anon API payloads.
 - [ ] Scoped editor sees only granted tabs; direct URL to denied tab denied
       (E2E); denied settings writes rejected at DB (pgTAP).
-- [ ] Entity editors behave identically inside tabs (their suites green).
-- [ ] Shared shell drives all three submits with mode-conditional sections;
+- [x] Entity editors behave identically inside tabs (their suites green).
+- [x] Shared shell drives all three submits with mode-conditional sections;
       per-entity mutation paths untouched.
-- [ ] Setting change records who/when.
-- [ ] Validation rejects malformed email/URL/NIP with localized field errors.
+- [x] Setting change records who/when.
+- [x] Validation rejects malformed email/URL/NIP with localized field errors.
 
 ## Log
 
 - (author) start:
+- 2026-10-26 implementation: design authority recorded first in
+  `docs/architecture.md` §6.1 (`settings:write` row + organization-settings
+  visibility rule). Added `organization_settings` migration
+  (`20261026120000_organization_settings.sql`) with anon-visible-only SELECT
+  policy and one transactional
+  `save_settings_v1` RPC (SECURITY DEFINER after the gate fix, pinned
+  search_path, key/locale + kind validation, `updated_by` +
+  `updated_by_email`/`updated_at` audit).
+  Feature seam in `src/features/settings/` (definitions, kind validation
+  incl. NIP/REGON checksums, resolver, API, reactive public state, tab policy).
+  Public plumbing now settings-driven for footer/contact/header social and the
+  new paper-mail line; static parity is preserved when no rows exist, a
+  non-editable `org.settings_initialized` sentinel marks a provisioned table,
+  and once authoritative an empty visible set hides everything. `/admin/settings?tab=`
+  hosts General/Contacts forms plus the existing team/documents/projects/
+  events/publications pages; per-tab scopes hide sections and a denied direct
+  URL renders an explanation. `AdminSubmitShell` is presentational only and
+  drives project/publication form chrome + the event mapping mode; each
+  feature keeps its own mutation module. en/pl/uk strings added.
+  Evidence (post-gate-fix): 1670 unit/component tests green (168 files); full
+  Playwright suite 288/288 green, including `e2e/admin-settings.spec.ts` 4/4 (toggle round trip
+  + explicit `visible=eq.true` anon filter, localized validation error, scoped
+  tab hiding + direct-URL denial, hosted-editor identity + three shell modes)
+  and the affected editor suites (`admin-projects`, `admin-publications`,
+  `admin-events`) 13/13; `pnpm typecheck`, `pnpm exec oxlint`, changed-file
+  `oxfmt --check` and `pnpm build` green. The gate-fix batch added the seed
+  policy guard (`seedPolicy.test.ts`, 6 assertions) and re-ran the full suites
+  above.
+  pgTAP `supabase/tests/organization_settings_test.sql` (51 assertions after
+  the gate-fix batch) is
+  authored but NOT executed locally: this environment has no Docker/Supabase
+  runtime. AC3's DB half therefore remains open for CI/orchestrator
+  (`supabase test db`). Final `pnpm lint:check` is green; the three orchestrator
+  oxfmt-hygiene files remain in the tree as instructed (see below).
+  Deferred: multiple simultaneous contact emails/phones (the shipped product
+  model has one public email + one public phone; a list is a new product
+  decision, not an invented fact).
+
+### 2026-10-26 gate-fix batch (reviewer FIX-before-ship + architector follow-ups)
+
+- **FIX-1 (Critical) — sole write path.** Direct `INSERT`/`UPDATE` table
+  privileges are revoked from `anon` and `authenticated`; no INSERT/UPDATE/
+  DELETE policy exists. `save_settings_v1` is now **SECURITY DEFINER** with a
+  pinned empty `search_path` and the same explicit
+  `is_admin() OR has_capability('settings:write')` re-check. Invoker rights
+  could no longer write after the revoke; definer ownership makes the RPC the
+  only writer, so the key whitelist, sentinel and audit stamping hold by
+  construction. pgTAP asserts `prosecdef = true`, SELECT-only table
+  privileges, and that settings editors **and root** still cannot write the
+  table directly (42501).
+- **FIX-2 (Major) — DB kind validation.** `save_settings_v1` now delegates to
+  `public.validate_organization_setting_v1(key, value)` plus immutable
+  `is_valid_{email,public_url,nip,regon}_v1` helpers. Email shape, absolute
+  http(s) URLs (no `javascript:`/relative), NIP checksum and REGON 9/14-digit
+  checksum are rejected with `22023` for **every** locale value; empty remains
+  the explicit "not configured" state. pgTAP proves valid + malformed per kind.
+  Helper EXECUTE is revoked from client roles; the definer RPC calls them.
+- **FU2 — runbook.** `docs/tickets/T-046-capability-scoped-admin.md` appendix
+  now lists `settings:write`, shows it in create/update grant examples, and
+  states that it grants General/Contacts only and that the RPC is the sole DB
+  writer.
+- **Seed policy (decided) — fictional only.** The T-048 organization-settings
+  blocks in `seed.sql` and `seed.demo.sql` now contain only clearly fictional
+  organization facts: Example Culture
+  Association / Example City, `example.test` email/address/social URLs, and
+  NIP/REGON-shaped placeholders with deliberately invalid checksums
+  (`1234567890` / `123456789`). Verified production identifiers/URLs are
+  authored by a root administrator after deploy, never seeded. The guard reads
+  the T-048 blocks (pre-existing content seeds are out of scope) and fails if a
+  real identifier, real social URL or real settings org name returns; it also
+  proves the placeholders fail the client checksum rules. RED→GREEN was observed
+  for this guard: temporarily restoring the verified NIP made 2/6 assertions
+  fail; the committed fictional seeds pass 6/6.
+- **Explicitly NOT doing (logged per instruction):**
+  1. *Anon audit-column view restriction* — optional hardening, deferred. The
+     anonymous projection already selects `key, value, visible` only, hidden
+     rows are removed by RLS + the explicit filter, and audit fields are never
+     part of the public payload. A definer view would add a new security
+     surface for no demonstrated exposure.
+  2. *Formatting-churn split* — not split, per instruction. The three files
+     (`e2e/axe-surfaces.spec.ts`, `e2e/support/journey-helpers.ts`,
+     `src/shared/color/__tests__/contrast.test.ts`) are orchestrator oxfmt
+     hygiene and are kept in the tree; they carry no T-048 logic. With them,
+     final `pnpm lint:check` is green.
+  3. *pgTAP execution* — Docker is broken at the host. `supabase test db`
+     currently fails with `ECONNREFUSED 127.0.0.1:54322` ("Make sure Docker is
+     running"). The 51-assertion suite is authored but not executed; the
+     orchestrator/CI must run it before deploy. AC3's DB half stays open.

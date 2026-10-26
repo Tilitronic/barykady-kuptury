@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAttrs } from "vue";
+import { computed, useAttrs } from "vue";
 import { QInput } from "quasar";
 
 defineOptions({ inheritAttrs: false });
@@ -23,5 +23,11 @@ defineOptions({ inheritAttrs: false });
 defineProps<{ modelValue?: string | number | FileList | null }>();
 
 const attrs = useAttrs();
-const merged = { outlined: true, ...(attrs as Record<string, unknown>) };
+// Computed, not a one-time spread: props such as `error`/`error-message`
+// change after mount (form validation), and a frozen snapshot would keep the
+// initial values forever (T-048 validation defect).
+const merged = computed(() => ({
+  outlined: true,
+  ...(attrs as Record<string, unknown>)
+}));
 </script>

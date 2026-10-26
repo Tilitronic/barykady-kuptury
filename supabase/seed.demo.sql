@@ -1267,3 +1267,31 @@ set body_ast = $${
 }$$::jsonb,
     body_ast_version = 1
 where id = '00000000-0000-4000-8000-000000000413';
+
+-- ---------------------------------------------------------------------------
+-- T-048 organization settings (demo fixture; idempotent)
+-- ---------------------------------------------------------------------------
+-- SEED POLICY (T-048 gate fix): every organization fact below is clearly
+-- fictional (example.test, invalid-checksum identifier placeholders).
+-- Production values are authored through the admin after deploy, never seeded.
+-- Demo reset re-seeds from scratch with the same fictional fixtures.
+
+insert into public.organization_settings (key, value, visible) values
+  ('org.settings_initialized', '{"en":"1"}'::jsonb, true),
+  ('org.name', '{"en":"Example Culture Association (Fictional)"}'::jsonb, true),
+  ('org.seat', '{"en":"Example City"}'::jsonb, true),
+  ('org.nip', '{"en":"1234567890"}'::jsonb, true),
+  ('org.regon', '{"en":"123456789"}'::jsonb, true),
+  ('org.privacy_url', '{"en":"https://example.test/privacy"}'::jsonb, true),
+  ('contact.email', '{"en":"contact@example.test"}'::jsonb, true),
+  ('contact.phone', '{"en":"+00 000 000 000"}'::jsonb, true),
+  ('contact.address', '{"en":"1 Example Street, 00000 Example City","pl":"ul. Przykladowa 1, 00-000 Example City","uk":"вул. Прикладова 1, 00000 Example City"}'::jsonb, true),
+  ('contact.office_hours', '{"en":"Weekdays 00:00–00:00 (fixture)","pl":"dni robocze 00:00–00:00 (fikcja)","uk":"будні 00:00–00:00 (фікція)"}'::jsonb, true),
+  ('contact.paper_mail_address', '{"en":"PO Box 0, 00000 Example City (fixture)","pl":"Skrytka pocztowa 0, 00-000 Example City (fikcja)","uk":"Абонентська скринька 0, 00000 Example City (фікція)"}'::jsonb, true),
+  ('social.facebook', '{"en":"https://social.example.test/facebook"}'::jsonb, true),
+  ('social.instagram', '{"en":"https://social.example.test/instagram"}'::jsonb, true),
+  ('social.telegram', '{"en":"https://social.example.test/telegram"}'::jsonb, true),
+  ('social.youtube', '{"en":""}'::jsonb, true),
+  ('social.twitter', '{"en":""}'::jsonb, true),
+  ('social.linkedin', '{"en":""}'::jsonb, true)
+on conflict (key) do nothing;

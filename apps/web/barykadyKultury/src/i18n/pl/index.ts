@@ -265,7 +265,8 @@ const pl: MessageSchema = {
       email: "E-mail",
       phone: "Telefon",
       address: "Adres",
-      officeHours: "Godziny pracy"
+      officeHours: "Godziny pracy",
+      paperMailAddress: "Adres korespondencyjny"
     }
   },
   about: {
@@ -1147,6 +1148,72 @@ const pl: MessageSchema = {
         "{published} opublikowanych · {missing} brakujących · {needsReview} do przeglądu",
       noPublishedContent: "Brak opublikowanych treści w tym obszarze."
     },
+    settings: {
+      title: "Ustawienia",
+      description:
+        "Dane organizacji, kontakty i edytory treści w jednym widoku z zakładkami.",
+      intro:
+        "Edytuj dane organizacji wyświetlane na stronie publicznej. Każde pole ma własne oznaczenie widoczności; ukryte pole znika ze strony publicznej i z anonimowych odpowiedzi API.",
+      tabsLabel: "Sekcje ustawień",
+      save: "Zapisz",
+      saving: "Zapisywanie…",
+      saved: "Ustawienia zostały zapisane.",
+      retry: "Spróbuj ponownie",
+      loadFailed: "Nie udało się wczytać ustawień.",
+      saveFailed:
+        "Nie udało się zapisać ustawień. Sprawdź uprawnienia i spróbuj ponownie.",
+      visible: "Widoczne na stronie publicznej",
+      audit: "Ostatnia zmiana: {who}, {when}.",
+      auditUnknown: "nieznany administrator",
+      deniedTab:
+        "Zakładka {tab} nie jest objęta Twoim dostępem administratora.",
+      openGranted: "Otwórz {tab}",
+      tabs: {
+        general: "Ogólne",
+        contacts: "Kontakty",
+        team: "Zespół",
+        documents: "Dokumenty",
+        projects: "Projekty",
+        events: "Wydarzenia",
+        publications: "Publikacje"
+      },
+      sections: {
+        localized: "Dane w wersjach językowych",
+        social: "Linki społecznościowe",
+        socialHint:
+          "Akceptowane są wyłącznie bezwzględne adresy http(s). Puste pole usuwa kanał."
+      },
+      fields: {
+        name: "Nazwa organizacji",
+        seat: "Siedziba",
+        nip: "NIP",
+        regon: "REGON",
+        privacyUrl: "Adres polityki prywatności",
+        email: "E-mail kontaktowy",
+        phone: "Telefon kontaktowy",
+        address: "Adres",
+        officeHours: "Godziny urzędowania",
+        paperMailAddress: "Adres korespondencyjny",
+        social: {
+          facebook: "Adres Facebooka",
+          instagram: "Adres Instagrama",
+          telegram: "Adres Telegrama",
+          youtube: "Adres YouTube",
+          twitter: "Adres X (Twitter)",
+          linkedin: "Adres LinkedIn"
+        }
+      },
+      errors: {
+        email: "Podaj poprawny adres e-mail.",
+        url: "Podaj bezwzględny adres http(s).",
+        nip: "Podaj poprawny 10-cyfrowy NIP z prawidłową sumą kontrolną.",
+        regon:
+          "Podaj poprawny 9- lub 14-cyfrowy REGON z prawidłową sumą kontrolną.",
+        invalidOtherTab:
+          "Niektóre dane w zakładce {tab} są niepoprawne. Otwórz ją i popraw zaznaczone pola przed zapisaniem.",
+        invalid: "Popraw zaznaczone pola przed zapisaniem."
+      }
+    },
     scopes: {
       label: "Twoje uprawnienia",
       pages: "Strony",
@@ -1156,6 +1223,7 @@ const pl: MessageSchema = {
       team: "Zespół",
       events: "Wydarzenia",
       media: "Pliki multimedialne",
+      settings: "Ustawienia",
       importer: "Import treści",
       deniedTitle: "Niedostępne dla Twojej roli",
       deniedMessage:

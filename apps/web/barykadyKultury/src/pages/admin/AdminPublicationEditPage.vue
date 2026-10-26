@@ -24,14 +24,6 @@
       </RouterLink>
     </p>
 
-    <h1 class="admin-publication-edit__heading">
-      {{
-        isNew
-          ? t("admin.publications.newPublication")
-          : t("admin.publications.heading")
-      }}
-    </h1>
-
     <p v-if="loading" class="admin-publication-edit__state" role="status">
       {{ t("content.loading") }}
     </p>
@@ -47,11 +39,17 @@
       {{ loadErrorMessage }}
     </UiBanner>
 
-    <form
+    <AdminSubmitShell
       v-else
-      novalidate
+      mode="publication"
+      submit-mode
       class="admin-publication-edit__form"
-      @submit.prevent="submit('save')"
+      :heading="
+        isNew
+          ? t('admin.publications.newPublication')
+          : t('admin.publications.heading')
+      "
+      @submit="submit('save')"
     >
       <div class="admin-publication-edit__grid">
         <UiInput
@@ -105,74 +103,79 @@
         data-testid="publication-external-url"
       />
 
-      <fieldset class="admin-publication-edit__files">
-        <legend class="admin-publication-edit__section-title">
-          {{ t("admin.publications.fields.files") }}
-        </legend>
-        <p class="admin-publication-edit__hint">
-          {{ t("admin.publications.fields.filesHint") }}
-        </p>
-
-        <div
-          v-for="locale in SUPPORTED_LOCALES"
-          :key="locale"
-          class="admin-publication-edit__file-row"
-          :data-testid="`publication-file-row-${locale}`"
-        >
-          <p class="admin-publication-edit__file-language">
-            {{ LOCALE_LABELS[locale] }}
+      <template #publication-extra>
+        <fieldset class="admin-publication-edit__files">
+          <legend class="admin-publication-edit__section-title">
+            {{ t("admin.publications.fields.files") }}
+          </legend>
+          <p class="admin-publication-edit__hint">
+            {{ t("admin.publications.fields.filesHint") }}
           </p>
 
-          <UiInput
-            v-model="fileLabels[locale]"
-            :label="t('admin.publications.fields.label')"
-            :hint="t('admin.publications.fields.labelHint')"
-            :data-testid="`publication-file-label-${locale}`"
-          />
+          <div
+            v-for="locale in SUPPORTED_LOCALES"
+            :key="locale"
+            class="admin-publication-edit__file-row"
+            :data-testid="`publication-file-row-${locale}`"
+          >
+            <p class="admin-publication-edit__file-language">
+              {{ LOCALE_LABELS[locale] }}
+            </p>
 
-          <p v-if="selectedFiles[locale]" class="admin-publication-edit__hint">
-            {{
-              t("admin.publications.fields.fileSelected", {
-                name: selectedFiles[locale]?.name ?? ""
-              })
-            }}
-          </p>
-          <p v-else-if="fileFor(locale)" class="admin-publication-edit__hint">
-            {{
-              t("admin.publications.fields.currentFile", {
-                name: basename(fileFor(locale)!.storagePath)
-              })
-            }}
-          </p>
-          <p v-else class="admin-publication-edit__hint">
-            {{ t("admin.publications.fields.noFile") }}
-          </p>
+            <UiInput
+              v-model="fileLabels[locale]"
+              :label="t('admin.publications.fields.label')"
+              :hint="t('admin.publications.fields.labelHint')"
+              :data-testid="`publication-file-label-${locale}`"
+            />
 
-          <div class="admin-publication-edit__file-actions">
-            <label
-              class="admin-publication-edit__label"
-              :for="`publication-file-${locale}`"
+            <p
+              v-if="selectedFiles[locale]"
+              class="admin-publication-edit__hint"
             >
-              {{ t("admin.publications.fields.chooseFile") }}
-            </label>
-            <input
-              :id="`publication-file-${locale}`"
-              class="admin-publication-edit__file"
-              type="file"
-              accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              :data-testid="`publication-file-${locale}`"
-              @change="onFileChange(locale, $event)"
-            />
-            <UiBtn
-              v-if="fileFor(locale)"
-              variant="flat"
-              :label="t('admin.publications.fields.removeFile')"
-              :data-testid="`publication-file-remove-${locale}`"
-              @click="removeFile(locale)"
-            />
+              {{
+                t("admin.publications.fields.fileSelected", {
+                  name: selectedFiles[locale]?.name ?? ""
+                })
+              }}
+            </p>
+            <p v-else-if="fileFor(locale)" class="admin-publication-edit__hint">
+              {{
+                t("admin.publications.fields.currentFile", {
+                  name: basename(fileFor(locale)!.storagePath)
+                })
+              }}
+            </p>
+            <p v-else class="admin-publication-edit__hint">
+              {{ t("admin.publications.fields.noFile") }}
+            </p>
+
+            <div class="admin-publication-edit__file-actions">
+              <label
+                class="admin-publication-edit__label"
+                :for="`publication-file-${locale}`"
+              >
+                {{ t("admin.publications.fields.chooseFile") }}
+              </label>
+              <input
+                :id="`publication-file-${locale}`"
+                class="admin-publication-edit__file"
+                type="file"
+                accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                :data-testid="`publication-file-${locale}`"
+                @change="onFileChange(locale, $event)"
+              />
+              <UiBtn
+                v-if="fileFor(locale)"
+                variant="flat"
+                :label="t('admin.publications.fields.removeFile')"
+                :data-testid="`publication-file-remove-${locale}`"
+                @click="removeFile(locale)"
+              />
+            </div>
           </div>
-        </div>
-      </fieldset>
+        </fieldset>
+      </template>
 
       <div class="admin-publication-edit__tabs">
         <h2 class="admin-publication-edit__section-title">
@@ -298,7 +301,7 @@
       >
         {{ statusMessage }}
       </p>
-    </form>
+    </AdminSubmitShell>
 
     <UiConfirmDialog
       v-model="deleteOpen"
@@ -319,6 +322,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 
 import AdminLocaleTabs from "@/components/admin/AdminLocaleTabs.vue";
+import AdminSubmitShell from "@/components/admin/AdminSubmitShell.vue";
 import {
   UiBanner,
   UiBtn,

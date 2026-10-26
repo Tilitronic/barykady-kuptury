@@ -89,6 +89,14 @@ describe("admin route table (T-026)", () => {
     );
     // The dashboard is the shared landing surface: admin area only, no scope.
     expect(router.resolve("/en/admin").meta.requiresCapability).toBeUndefined();
+
+    // T-048: the tabbed surface is admin-area only at the route level; the
+    // page resolves per-tab scopes (settings:write + the entity scopes).
+    expect(router.resolve("/en/admin/settings").name).toBe("admin-settings");
+    expect(router.resolve("/en/admin/settings").meta.requiresAdmin).toBe(true);
+    expect(
+      router.resolve("/en/admin/settings").meta.requiresCapability
+    ).toBeUndefined();
   });
 
   it("marks the dashboard as requiring the admin claim", () => {

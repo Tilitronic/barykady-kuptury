@@ -47,7 +47,7 @@
       <h2 id="contact-follow-us" class="contact-page__social-title">
         {{ t("contact.followUs") }}
       </h2>
-      <SocialLinks :links="organization.socialLinks" variant="labeled" />
+      <SocialLinks :links="config.socialLinks" variant="labeled" />
     </section>
   </div>
 </template>
@@ -59,10 +59,11 @@ import { useI18n } from "vue-i18n";
 
 import ContactChannels from "@/components/contact/ContactChannels.vue";
 import SocialLinks from "@/components/navigation/SocialLinks.vue";
-import { hasActiveSocialLinks, organization } from "@/config/organization";
-import { hasContactDetails } from "@/features/contact/contactDetails";
+import { hasActiveSocialLinks } from "@/config/organization";
 import { readContactFixture } from "@/features/contact/contactFixture";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/features/i18n/locales";
+import { hasResolvedContact } from "@/features/settings/resolve";
+import { useOrganizationConfig } from "@/features/settings/state";
 
 /**
  * Contact page (T-021).
@@ -86,13 +87,20 @@ const currentLocale = computed<Locale>(() => {
  * clearly fictional fixture through the guarded seam; production builds get
  * `null` and therefore the real empty state (AGENTS.md rule 6).
  */
-const details = readContactFixture() ?? organization.contact;
-const hasChannels = hasContactDetails(details);
+/**
+ * T-048 — settings-driven contact facts. The E2E fixture seam still wins when
+ * the build explicitly enables it (contact-contract journeys); otherwise the
+ * resolved settings shape applies visibility and the static parity fallback.
+ */
+const fixture = readContactFixture();
+const config = useOrganizationConfig(currentLocale);
+const details = computed(() => fixture ?? config.value.contact);
+const hasChannels = computed(() => hasResolvedContact(details.value));
 
 /** Guard on the shared D-05 predicate (same rule SocialLinks applies) so
  * the "Follow us" heading never strands above an empty list. */
 const hasSocialLinks = computed(() =>
-  hasActiveSocialLinks(organization.socialLinks)
+  hasActiveSocialLinks(config.value.socialLinks)
 );
 </script>
 

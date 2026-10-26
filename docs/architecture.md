@@ -195,6 +195,32 @@ the one action-scope, matching the ana002 recommended-flow diagram):
 | `events:write` | `calendar_event_links` | — |
 | `media:write` | image assets and covers/portraits | `public-media` |
 | `importer` | import/sync status: `content_sync_jobs`, `content_sync_runs` | `content-sources` (private originals) |
+| `settings:write` | `organization_settings` (org facts, contacts, social links) | — |
+
+**Organization-settings visibility rule (T-048).** `organization_settings`
+stores one row per organization fact (`key`, per-locale `value` JSONB where the
+fact is textual, a global `visible` flag, `updated_by` + `updated_at`). The
+`visible` flag is global, not per-locale, until a product requirement proves
+otherwise. Anonymous reads may select **only** rows whose `visible` is true;
+all admin and `settings:write` reads see every row. Consequently a hidden fact
+is indistinguishable from "not configured" at the public boundary: the client
+filters with `visible = true` as well as relying on RLS, and public components
+render nothing when a fact is hidden or empty. Hidden rows never reach an
+anonymous payload. Values are validated by kind (email, absolute http(s) URL,
+NIP/REGON checksum, plain text); credential or secret keys are not permitted in
+this store — the Google vault (§6.2) remains the only place for credentials.
+Rows are written through one transactional `save_settings_v1` RPC that is the
+**sole** write path: client roles have SELECT only on the table and no write
+policy exists. The function is SECURITY DEFINER with a pinned search_path,
+re-checks `is_admin() OR has_capability('settings:write')` inside, and validates
+key names, locale shapes and email/URL/NIP/REGON kinds at the database boundary.
+The T-046 grant runbook applies unchanged: a settings editor receives
+`app_metadata.scopes` containing `settings:write` through the Supabase Admin
+API (never through the app).
+A non-editable `org.settings_initialized` marker is provisioned by the seed and
+by every save; its presence lets the client distinguish "never provisioned"
+(render the static parity values) from "every fact is hidden" (render nothing)
+without exposing hidden keys or values.
 
 The shared `public-media` bucket mixes features; per-feature folder prefixes
 are the honest follow-up before `media:write` can mean "only my feature's

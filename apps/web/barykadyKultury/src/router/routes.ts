@@ -295,6 +295,24 @@ export const routes: RouteRecordRaw[] = [
           }
         }
       },
+      // ── T-048 tabbed administration ──────────────────────────────────────
+      // One surface for organization facts + every entity editor. The route
+      // itself has NO single capability: each tab is gated in the page by its
+      // own scope (settings:write for General/Contacts, the entity scope for
+      // the rest), so a scoped editor can enter and see only granted tabs.
+      // Hiding remains UX only — RLS/RPC enforce (docs/architecture.md §6.1).
+      {
+        path: "settings",
+        name: "admin-settings",
+        component: () => import("@/pages/admin/AdminSettingsPage.vue"),
+        meta: {
+          requiresAdmin: true,
+          pageMeta: {
+            titleKey: "admin.settings.title",
+            descriptionKey: "admin.settings.description"
+          }
+        }
+      },
       {
         path: "import",
         name: "admin-import",
