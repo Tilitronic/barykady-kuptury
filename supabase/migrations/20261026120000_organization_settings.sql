@@ -315,12 +315,16 @@ comment on function public.validate_organization_setting_v1(text, jsonb) is
   'T-048 FIX-2: key-aware kind validation for one settings value; raises 22023 '
   'for malformed email/URL/NIP/REGON and invalid locale shapes.';
 
-revoke all on function public.is_valid_email_v1(text) from public;
-revoke all on function public.is_valid_public_url_v1(text) from public;
-revoke all on function public.is_valid_nip_v1(text) from public;
-revoke all on function public.is_valid_regon_v1(text) from public;
+-- Helpers are pure validators with no table access, but deny client roles
+-- explicitly: Supabase default ACL grants EXECUTE to anon/authenticated/
+-- service_role regardless of the `public` revoke. Only the definer-owned
+-- save_settings_v1 may invoke them at runtime.
+revoke all on function public.is_valid_email_v1(text) from public, anon, authenticated, service_role;
+revoke all on function public.is_valid_public_url_v1(text) from public, anon, authenticated, service_role;
+revoke all on function public.is_valid_nip_v1(text) from public, anon, authenticated, service_role;
+revoke all on function public.is_valid_regon_v1(text) from public, anon, authenticated, service_role;
 revoke all on function public.validate_organization_setting_v1(text, jsonb)
-  from public;
+  from public, anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- save_settings_v1 — one transactional change set
@@ -444,7 +448,15 @@ comment on function public.save_settings_v1(jsonb) is
   'en/pl/uk string values and key-aware email/URL/NIP/REGON kinds, stamps '
   'updated_by + updated_at, and provisions the sentinel marker.';
 
+-- Supabase default function ACL grants EXECUTE explicitly to anon,
+-- authenticated AND service_role: revoking `public` alone does not remove
+-- those. Revoke each explicitly (same trap as T-045), then grant back only
+-- the caller role. service_role stays denied: this is a caller-rights admin
+-- operation, not a server integration.
 revoke all on function public.save_settings_v1(jsonb) from public;
+revoke all on function public.save_settings_v1(jsonb) from anon;
+revoke all on function public.save_settings_v1(jsonb) from authenticated;
+revoke all on function public.save_settings_v1(jsonb) from service_role;
 grant execute on function public.save_settings_v1(jsonb) to authenticated;
 
 commit;

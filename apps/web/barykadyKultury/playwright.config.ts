@@ -60,7 +60,10 @@ export default defineConfig({
       // T-032 J7: enable the contact fixture seam only in the Playwright build.
       // Tests seed clearly fictional channels through localStorage; the
       // shipped configuration stays empty (D-04, AGENTS.md rule 6).
-      VITE_E2E_CONTACT_FIXTURE: "1"
+      VITE_E2E_CONTACT_FIXTURE: "1",
+      // T-034: deterministic canonical origin for sitemap/canonical assertions.
+      // Production supplies the real public origin through the same variable.
+      VITE_SITE_URL: APP_ORIGIN
     }
   }
 });

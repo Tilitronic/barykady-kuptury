@@ -98,6 +98,16 @@
       sizes="180x180"
       href="icons/apple-icon-180x180.png?v=4"
     />
+
+    <!--
+      T-034 web app manifest. Brand colours are the verified D-13 tokens
+      (SCARLET #C60001 / GRAY93 #EDEDED); icons are the existing brand-asset
+      rasterisations (scripts/generate-favicons.mjs), so the manifest adds no
+      new image source. `display: browser` is deliberate: V1 has no service
+      worker or offline requirement, so claiming `standalone` would overpromise.
+      `start_url` stays `/` because the root route applies the locale preference.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
   </head>
   <body>
     <!-- quasar:entry-point -->

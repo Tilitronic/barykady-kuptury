@@ -1,7 +1,12 @@
 # T-048 — Organization settings, visibility flags & tabbed admin
 
-**Session:** 16 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done (proviso: pgTAP `organization_settings_test.sql` authored, execution blocked on Docker — must run before deploy)
+**Session:** 16 · **Lane:** feature/admin · **Owner:** @coder · **Status:** done
 **Reviewers:** @reviewer (rev-1 FIX + re-gate SHIP) + @architector (approve; definer-switch approve)
+**pgTAP proviso CLEARED 2026-10-26:** Docker restarted, migration applied via
+`db reset`, `organization_settings_test.sql` 51/51 PASS after two orchestrator
+fixes (explicit per-role EXECUTE revokes incl. service_role — same default-ACL
+trap as T-045; test fixtures made seed-independent + fictional). Full pgTAP:
+19 files / 827 PASS.
 **Depends on:** T-046 · **Blocks:** T-035 (visibility affects release content)
 
 ## Origin

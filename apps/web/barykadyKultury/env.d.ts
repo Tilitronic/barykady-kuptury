@@ -20,6 +20,13 @@ interface ImportMetaEnv {
    */
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
+  /**
+   * T-034: absolute public origin used for canonical / `og:url` links and for
+   * sitemap generation (`scripts/generate-seo-files.mjs`). Browser-safe: it is
+   * the public URL of the site, never a credential. Production sets it in
+   * Netlify; unset builds fall back to the live document origin.
+   */
+  readonly VITE_SITE_URL?: string;
 }
 
 /**

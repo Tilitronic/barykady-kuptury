@@ -163,10 +163,16 @@ select ok(
 -- Fixtures (inserted as superuser; RLS bypassed)
 -- ---------------------------------------------------------------------------
 
+-- This suite owns the table for its run: seed.sql provisions the same keys,
+-- so start from empty to keep row-count assertions deterministic. No other
+-- suite reads organization_settings. Fixture identifiers are deliberately
+-- fictional (invalid checksums) per the T-048 seed policy.
+delete from public.organization_settings;
+
 insert into public.organization_settings (key, value, visible) values
   ('contact.email', '{"en":"kontakt@example.test"}'::jsonb, true),
-  ('org.nip', '{"en":"7831961912"}'::jsonb, false),
-  ('org.regon', '{"en":"545503070"}'::jsonb, true),
+  ('org.nip', '{"en":"1234567890"}'::jsonb, false),
+  ('org.regon', '{"en":"123456789"}'::jsonb, true),
   ('social.facebook', '{"en":"https://example.test/fb"}'::jsonb, true);
 
 -- ---------------------------------------------------------------------------
@@ -360,7 +366,7 @@ set local role authenticated;
 select lives_ok(
   $sql$
     select public.save_settings_v1(
-      '[{"key":"org.regon","value":{"en":"545503070"},"visible":false}]'::jsonb
+      '[{"key":"org.regon","value":{"en":"123456785"},"visible":false}]'::jsonb
     )
   $sql$,
   'a root administrator may save settings'
@@ -453,7 +459,7 @@ select throws_ok(
   $sql$
     select public.save_settings_v1(
       '[
-        {"key":"org.regon","value":{"en":"545503070"},"visible":true},
+        {"key":"org.regon","value":{"en":"123456785"},"visible":true},
         {"key":"contact.email","value":{"en":"kontakt@example.test"},"visible":"yes"}
       ]'::jsonb
     )
@@ -544,7 +550,7 @@ select throws_ok(
 select lives_ok(
   $sql$
     select public.save_settings_v1(
-      '[{"key":"org.nip","value":{"en":"7831961912"},"visible":true}]'::jsonb
+      '[{"key":"org.nip","value":{"en":"1111111111"},"visible":true}]'::jsonb
     )
   $sql$,
   'a NIP with a valid checksum is accepted at the DB boundary'
@@ -575,7 +581,7 @@ select throws_ok(
 select lives_ok(
   $sql$
     select public.save_settings_v1(
-      '[{"key":"org.regon","value":{"en":"545503070"},"visible":true}]'::jsonb
+      '[{"key":"org.regon","value":{"en":"123456785"},"visible":true}]'::jsonb
     )
   $sql$,
   'a 9-digit REGON with a valid checksum is accepted at the DB boundary'

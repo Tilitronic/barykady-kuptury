@@ -17,6 +17,14 @@ declare module "vue-router" {
      */
     pageMeta?: LocalePageMeta;
     /**
+     * T-034 — this route must not be indexed and must not advertise a canonical
+     * or alternate-language graph. Declared on the admin parent (inherited by
+     * every child through vue-router's merged `meta`, so a new admin screen
+     * cannot forget it) and on the two 404 records (a soft 404 must not be
+     * indexed). Public content routes must never set it.
+     */
+    noindex?: boolean;
+    /**
      * T-026 — the route renders admin-only content and requires the canonical
      * admin claim (`app_metadata.role === "admin"`, D-17). Read exclusively by
      * `createAdminGuard`; it is a UX gate, never authorization
@@ -237,6 +245,7 @@ export const routes: RouteRecordRaw[] = [
         name: "locale-not-found",
         component: () => import("@/pages/[locale]/not-found.vue"),
         meta: {
+          noindex: true,
           pageMeta: {
             titleKey: "notFound.title",
             descriptionKey: "notFound.description"
@@ -255,6 +264,10 @@ export const routes: RouteRecordRaw[] = [
   {
     path: `/${localeSegment}/admin`,
     component: () => import("@/layouts/AdminLayout.vue"),
+    // T-034: the whole admin subtree is private. `noindex` on the parent is
+    // inherited by every child route (vue-router merges matched `meta`), and
+    // the SEO helper also suppresses canonical/hreflang for noindex routes.
+    meta: { noindex: true },
     children: [
       // Sign-in: reachable for anonymous and non-admins (switch-account
       // path); admins are bounced to the dashboard by the guard.
@@ -542,6 +555,7 @@ export const routes: RouteRecordRaw[] = [
     name: "not-found",
     component: () => import("@/pages/404.vue"),
     meta: {
+      noindex: true,
       pageMeta: {
         titleKey: "notFound.title",
         descriptionKey: "notFound.description"

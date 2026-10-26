@@ -57,7 +57,12 @@ export default defineRouter((/* { store, ssrContext } */) => {
       setLocale: locale => {
         i18n.global.locale.value = locale;
       },
-      translate: key => i18n.global.t(key)
+      translate: key => i18n.global.t(key),
+      // T-034: absolute canonical origin. `VITE_SITE_URL` is browser-safe by
+      // definition (the canonical URL is public); production sets it in
+      // Netlify (docs/environment.md). Unset → the guard falls back to the
+      // live document origin, so previews and local dev stay correct.
+      siteUrl: import.meta.env.VITE_SITE_URL ?? null
     })
   );
 

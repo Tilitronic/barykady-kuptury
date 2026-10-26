@@ -38,7 +38,12 @@ const MIME_TYPES = {
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
   ".woff": "font/woff",
-  ".woff2": "font/woff2"
+  ".woff2": "font/woff2",
+  // T-034: generated SEO artifacts must not fall back to octet-stream; some
+  // validators and crawlers reject a sitemap served with the wrong type.
+  ".txt": "text/plain; charset=utf-8",
+  ".xml": "application/xml; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8"
 };
 
 /** Reads `--name value` / `--name=value` from argv, falling back when absent. */

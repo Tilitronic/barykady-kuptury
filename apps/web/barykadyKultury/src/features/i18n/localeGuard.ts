@@ -1,5 +1,7 @@
 import type { NavigationGuard, RouteLocationNormalized } from "vue-router";
 
+import { applySeoHead, buildSeoHead } from "@/features/seo/seoHead";
+
 import { applyDocumentLocale } from "./documentLocale";
 import { isLocale, type Locale } from "./locales";
 import type { LocaleStore } from "./localeStorage";
@@ -18,6 +20,26 @@ export interface LocaleGuardDependencies {
   setLocale: (locale: Locale) => void;
   /** Translates a catalogue key for the active locale. */
   translate: (key: MessageKey) => string;
+  /**
+   * T-034: absolute site origin for canonical/`og:url` links. Production passes
+   * `VITE_SITE_URL` (docs/environment.md); when absent the document origin is
+   * used, which keeps previews correct without inventing a production domain.
+   */
+  siteUrl?: string | null;
+}
+
+/**
+ * Canonical origin for the current document. An explicitly configured origin
+ * wins (it is stable across preview deploys); otherwise the live origin is the
+ * only truthful value available.
+ */
+function resolveSiteUrl(
+  configured: string | null | undefined,
+  doc: Document | null
+): string | null {
+  const trimmed = configured?.trim() ?? "";
+  if (trimmed !== "") return trimmed;
+  return doc?.location?.origin ?? null;
 }
 
 /**
@@ -65,10 +87,23 @@ export function createLocaleGuard(
     // declares its own catalogue keys in `meta.pageMeta`, so adding a route
     // without metadata is caught by the route-table regression gate instead of
     // silently shipping the 404 title (T-011 follow-up defect).
-    applyPageMeta(
+    const pageMeta = to.meta.pageMeta ?? NOT_FOUND_META;
+    applyPageMeta(dependencies.doc, pageMeta, dependencies.translate);
+
+    // T-034: title/description are written above; the canonical/hreflang/OG
+    // graph is derived from the same route facts so the two can never disagree.
+    // `to.path` excludes query/hash — the reader's `?lang=` (D-27) must not
+    // create a second canonical URL.
+    applySeoHead(
       dependencies.doc,
-      to.meta.pageMeta ?? NOT_FOUND_META,
-      dependencies.translate
+      buildSeoHead({
+        pageMeta,
+        locale,
+        path: to.path,
+        noindex: to.meta.noindex === true,
+        siteUrl: resolveSiteUrl(dependencies.siteUrl, dependencies.doc),
+        translate: dependencies.translate
+      })
     );
 
     return true;
