@@ -96,7 +96,9 @@ jobs:
             exit 0
           fi
           # Supabase CLI convention: RLS/pgTAP assertions live in supabase/tests.
-          npx --yes supabase@2 test db
+          # Pinned to the app-local devDependency version (see package.json)
+          # so CI and scripts/ci-local.sh run the identical CLI.
+          npx --yes supabase@2.121.0 test db
 
       - name: Setup — resolve Playwright version for the browser cache key
         id: playwright-version

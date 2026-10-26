@@ -43,7 +43,12 @@ ngo-platform/
 │           └── types/               # Generated Supabase database types
 ├── netlify/
 │   └── functions/
-│       └── calendar-events.ts       # Read-only Google Calendar adapter
+│       ├── calendar-events.ts     # Read-only Google Calendar adapter
+│       ├── content-check.ts       # On-view revalidation check (import slice)
+│       ├── content-original.ts    # Signed original-file downloads
+│       ├── content-sync-scheduled.ts  # Nightly sync schedule claim
+│       ├── google-doc-sync-background.ts  # Background Drive sync worker
+│       └── google-oauth.ts        # Per-admin OAuth + Picker session (D-41)
 ├── supabase/
 │   ├── migrations/                 # Versioned schema and RLS changes
 │   ├── tests/                      # SQL/RLS tests
@@ -269,13 +274,14 @@ Donation actions should link to verified NGO-provided destinations. The website 
 
 - Netlify serves the built Quasar SPA and the read-only Calendar function.
 - Netlify build base is the repository root; the Quasar app build/publish paths are explicit (`apps/web/barykadyKultury/...`) and the functions directory is `netlify/functions`.
-- The publish directory should match the actual Quasar build output (typically `apps/web/dist/spa` for SPA mode).
+- The publish directory is exactly `apps/web/barykadyKultury/dist/spa` (D-23, D-10: SPA for V1).
 - Configure history fallback for client-side routes.
 - Configure distinct environment variables for local development, previews, and production.
 - Only browser-safe Supabase URL/publishable key belong in public frontend configuration.
 - Server-only variables include calendar API credentials/configuration and, if the optional message form is enabled, email-provider credentials.
 - CI must not require production credentials. Mock external providers and use isolated local/test services.
-- Add database migrations and a documented backup/export process; a free-tier hosted database is not itself a complete backup strategy.
+- Add database migrations and a documented backup/export process; a free-tier hosted database is not itself a complete backup strategy. Concretely: take a logical export with `supabase db dump --db-url "$SUPABASE_DB_URL" -f <date>-schema.sql` plus a `--data-only` dump (or `pg_dump`), export Storage objects through the Supabase CLI/API, and keep the exports outside the provider account. Record the restore procedure and a retention/restore-drill cadence; Supabase point-in-time recovery is an add-on, not a substitute for off-account exports.
+- Netlify rollback: deploys are immutable, so rolling back code means republishing the last known-good deploy (Netlify UI: Deploys → select deploy → Publish deploy; or the `restoreSiteDeploy` API). A code rollback does **not** roll back Supabase — migrations are forward-only — so restore data from the export/PITR if a release included a destructive migration. Record the deployed commit SHA and matching migration head in the release notes. The operational checklist lives in `docs/RELEASE_HANDOFF.md`.
 - Local demo topology (T-037, `docs/DEMO_ENVIRONMENT.md`): the demo backend is the **real local Supabase stack** (Docker + project-pinned CLI), not a clone of PostgREST/Auth/Storage. `supabase/seed.demo.sql`, generated assets and the `admin@demo.local` / `viewer@demo.local` users are explicit-only, local-only and never part of the production build or the default `db reset` seed. Bun is allowed **only** for local demo tooling (the `scripts/demo/*` orchestration and `mock/calendar/server.ts`); it is not an app runtime, package manager or production server. The Quasar dev server proxies `/.netlify/functions/calendar-events` to the Bun mock in development only; production keeps the Netlify function + Google Calendar adapter wiring unchanged. Secrets: the service-role key is read in memory from `supabase status`, never written to `.env.local` (only the browser-safe publishable key is), and the demo scripts refuse a non-loopback API URL.
 
 ## 10. Deliberately deferred

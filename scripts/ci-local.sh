@@ -115,22 +115,45 @@ gate_unit() {
 
 # ── Gate 6 (optional) ─────────────────────────────────────────────────────────
 # TESTING §5.6: "Local database migration/RLS tests, where configured."
-# Configured means both a local Supabase project config and the CLI are present;
-# neither exists yet (their wiring lands with T-012/T-013), so this skips today.
+# Configured means both a local Supabase project config and a CLI are present.
+# The CLI is an app-local devDependency (D-22), so a global binary is not
+# required; resolving only `command -v supabase` made this gate skip silently
+# even though T-012/T-013 shipped config + pgTAP tests (T-035 finding).
+# PARITY CONTRACT with .github/workflows/ci.yml Gate 6: same CLI major and
+# same `test db` semantics — CI pins supabase@2.121.0 to match this
+# devDependency. Bump both together; inputs PASS/FAIL/SKIP mean the same.
+supabase_cli() {
+  if command -v supabase >/dev/null 2>&1; then
+    command -v supabase
+    return 0
+  fi
+  local local_cli="$APP_DIR/node_modules/.bin/supabase"
+  if [ -x "$local_cli" ]; then
+    printf '%s\n' "$local_cli"
+    return 0
+  fi
+  return 1
+}
+
 supabase_configured() {
-  [ -f "supabase/config.toml" ] && command -v supabase >/dev/null 2>&1
+  [ -f "supabase/config.toml" ] && supabase_cli >/dev/null 2>&1
 }
 
 gate_db_rls() {
   if ! supabase_configured; then
     printf 'SKIP: DB/RLS tests are not configured in this repository.\n'
-    printf '      Required: supabase/config.toml and the supabase CLI on PATH.\n'
-    printf '      The CI skeleton for this gate is .github/workflows/ci.yml (Gate 6).\n'
+    printf '      Required: supabase/config.toml and a supabase CLI (global or\n'
+    printf '      the app-local devDependency installed by Gate 1).\n'
+    printf '      The CI equivalent for this gate is .github/workflows/ci.yml (Gate 6).\n'
     skip_gate
     return 0
   fi
   # Supabase CLI convention: RLS/pgTAP assertions live in supabase/tests.
-  supabase test db
+  # `supabase test db` needs the local stack (Docker); a stopped stack is a
+  # real failure, not a skip, because the tests are configured.
+  local cli
+  cli="$(supabase_cli)"
+  "$cli" test db
 }
 
 # ── Gate 7 ────────────────────────────────────────────────────────────────────

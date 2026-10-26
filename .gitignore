@@ -7,7 +7,11 @@ dist/
 quasar.config.*.temporary.compiled*
 
 # Test output
-coverage/
+# Anchored: a bare `coverage/` also ignored the T-031 source directory
+# `apps/web/barykadyKultury/src/features/admin/coverage/`, which made a clean
+# checkout unbuildable (T-035 gate finding). Keep these paths explicit.
+/coverage/
+/apps/web/barykadyKultury/coverage/
 test-results/
 playwright-report/
 .netlify/
