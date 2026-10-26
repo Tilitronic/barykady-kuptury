@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { expect, type Page } from "@playwright/test";
 
 import { APP_ORIGIN } from "./support/origin";
@@ -23,16 +25,19 @@ import { test } from "./support/network-guard";
 
 const LOCALES = ["en", "pl", "uk"] as const;
 
-/** Indexable, statically-known public routes (locale-less form). */
-const PUBLIC_PATHS = [
-  "",
-  "/about",
-  "/contact",
-  "/events",
-  "/projects",
-  "/publications",
-  "/support"
-] as const;
+/**
+ * Indexable, statically-known public routes (locale-less form).
+ *
+ * Derived from the shared source the sitemap generator reads, so this matrix
+ * cannot drift from `sitemap.xml`. `publicPaths.test.ts` keeps that file in sync
+ * with the router's real static public routes.
+ */
+const PUBLIC_PATHS: readonly string[] = JSON.parse(
+  readFileSync(
+    new URL("../src/features/seo/public-paths.json", import.meta.url),
+    "utf8"
+  )
+) as string[];
 
 function canonicalFor(path: string): string {
   return `${APP_ORIGIN}${path}`;

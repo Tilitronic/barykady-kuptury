@@ -27,9 +27,10 @@
   to = "/index.html"
   status = 200
 
-# T-044: response-level security headers. The CSP mirrors index.html's meta
-# policy (default/script/style/connect/img/font/object/base/form/worker),
-# plus frame-ancestors. The Supabase wildcard is provisional until T-034 pins
+# T-044/T-034: response-level security headers. The CSP carries the same
+# directive set as index.html's production meta policy, plus an explicit
+# font-src ('self', semantically equal to the meta's default-src inheritance)
+# and frame-ancestors (a meta tag cannot enforce frame-ancestors). The Supabase wildcard is provisional until T-034 pins
 # the hosted project origin (D-08); update both the meta and this header
 # together. T-041: worker-src must also match the dev meta because the import
 # converter runs in a same-origin Vite module worker.
@@ -53,3 +54,25 @@
   for = "/fonts/*"
   [headers.values]
     Cache-Control = "public, max-age=2592000"
+
+# T-034: SEO artifacts are regenerated on every deploy from the published route
+# list and VITE_SITE_URL (scripts/generate-seo-files.mjs). A one-hour cache
+# keeps crawlers fresh without re-reading the file on every hit.
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "application/xml; charset=utf-8"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "text/plain; charset=utf-8"
+
+# T-034: the manifest is a static brand-asset file; declare its registered type
+# so browsers and validators do not receive Netlify's generic fallback.
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"

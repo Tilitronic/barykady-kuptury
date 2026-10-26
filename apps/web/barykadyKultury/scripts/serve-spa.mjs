@@ -14,6 +14,12 @@
  * a missing file that *do* have an extension return a real 404 so typos and
  * broken asset references are not masked.
  *
+ * T-034 gate fix: `/.netlify/functions/*` is evaluated BEFORE the static/SPA
+ * handling and executes the real function binding through
+ * `local-function-runtime.mjs`. This mirrors Netlify's functions-before-redirects
+ * precedence, so a function path can never be answered by `index.html` and E2E
+ * reachability evidence is truthful.
+ *
  * Usage: node scripts/serve-spa.mjs [--port 4173] [--host 127.0.0.1] [--root dist/spa]
  */
 
@@ -22,6 +28,8 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { handleFunctionRequest } from "./local-function-runtime.mjs";
 
 const APP_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
@@ -107,12 +115,6 @@ function send(res, status, filePath) {
 }
 
 const server = createServer(async (req, res) => {
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    res.writeHead(405, { Allow: "GET, HEAD" });
-    res.end();
-    return;
-  }
-
   const requestUrl = new URL(
     req.url ?? "/",
     `http://${req.headers.host ?? host}`
@@ -122,6 +124,18 @@ const server = createServer(async (req, res) => {
     pathname = decodeURIComponent(requestUrl.pathname);
   } catch {
     res.writeHead(400);
+    res.end();
+    return;
+  }
+
+  // Netlify precedence (T-034): functions first, then files, then SPA fallback.
+  // A function path always terminates here, including unknown names (404 JSON).
+  if (await handleFunctionRequest(req, res, pathname)) {
+    return;
+  }
+
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    res.writeHead(405, { Allow: "GET, HEAD" });
     res.end();
     return;
   }

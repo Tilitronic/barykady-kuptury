@@ -40,7 +40,7 @@ Updated by the orchestrator at every state change. `done` requires an independen
 | T-032 | Full E2E journey matrix | 7 | done | @reviewer (rev-1) | — | — |
 | T-033 | Accessibility audit & fixes | 7 | done | @reviewer (rev-1) | — | — |
 | T-048 | Organization settings, visibility flags & tabbed admin | 16 | done | @reviewer (re-gate SHIP) + @architector (definer approve) | — | — |
-| T-034 | SEO, metadata, deploy configuration (favicon delivered early; manifest/OG remain) | 7 | todo | — | — | — |
+| T-034 | SEO, metadata, deploy configuration (favicon delivered early; manifest/OG remain) | 7 | done | @reviewer (rev-1) + @architector | — | — |
 | T-035 | Release readiness & handoff | 7 | todo | — | — | — |
 | T-036 | Support: "what your support does" content slot (deferred from T-022) | — | todo | — | — | — |
 | T-037 | Local demo environment & mock services (demo Supabase data, Bun calendar mock, `pnpm demo`) | 8 | done | @architector (arc-1) + @reviewer (rev-1) | 5b86d33 | 2026-10-19 |

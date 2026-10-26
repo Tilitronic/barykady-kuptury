@@ -43,6 +43,22 @@ function section(toml, header) {
   return next === -1 ? rest : rest.slice(0, next);
 }
 
+/**
+ * Returns the `[headers.values]` body of the `[[headers]]` block for `path`.
+ *
+ * T-034 gate fix: presence-only checks let a wrong cache lifetime or content
+ * type ship. The deploy contract for the SEO artifacts is exact, so the check
+ * reads the block and compares the literal values.
+ */
+function headerValues(toml, path) {
+  const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `\\[\\[headers\\]\\]\\n\\s*for\\s*=\\s*"${escaped}"\\n\\s*\\[headers\\.values\\]\\n([\\s\\S]*?)(?=\\n\\[|$)`
+  );
+  const match = pattern.exec(toml);
+  return match === null ? null : match[1];
+}
+
 const toml = await readFile(NETLIFY_TOML, "utf8").catch(() => null);
 
 if (toml === null) {
@@ -142,11 +158,31 @@ check(
   "missing /fonts/* cache header"
 );
 
+const sitemapHeaders = headerValues(toml, "/sitemap.xml");
+const robotsHeaders = headerValues(toml, "/robots.txt");
+
 check(
-  "robots.txt and sitemap.xml have a short cache policy",
-  /for\s*=\s*"\/sitemap\.xml"/.test(toml) &&
-    /for\s*=\s*"\/robots\.txt"/.test(toml),
-  "missing SEO artifact cache headers"
+  "sitemap.xml Cache-Control is exactly public, max-age=3600",
+  sitemapHeaders?.includes('Cache-Control = "public, max-age=3600"') === true,
+  sitemapHeaders ?? "missing [[headers]] block for /sitemap.xml"
+);
+check(
+  "sitemap.xml Content-Type is exactly application/xml; charset=utf-8",
+  sitemapHeaders?.includes(
+    'Content-Type = "application/xml; charset=utf-8"'
+  ) === true,
+  sitemapHeaders ?? "missing [[headers]] block for /sitemap.xml"
+);
+check(
+  "robots.txt Cache-Control is exactly public, max-age=3600",
+  robotsHeaders?.includes('Cache-Control = "public, max-age=3600"') === true,
+  robotsHeaders ?? "missing [[headers]] block for /robots.txt"
+);
+check(
+  "robots.txt Content-Type is exactly text/plain; charset=utf-8",
+  robotsHeaders?.includes('Content-Type = "text/plain; charset=utf-8"') ===
+    true,
+  robotsHeaders ?? "missing [[headers]] block for /robots.txt"
 );
 
 check(

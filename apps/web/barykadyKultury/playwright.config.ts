@@ -63,7 +63,13 @@ export default defineConfig({
       VITE_E2E_CONTACT_FIXTURE: "1",
       // T-034: deterministic canonical origin for sitemap/canonical assertions.
       // Production supplies the real public origin through the same variable.
-      VITE_SITE_URL: APP_ORIGIN
+      VITE_SITE_URL: APP_ORIGIN,
+      // T-034 gate fix: the local function runtime executes the real calendar
+      // binding. Empty credentials force its deterministic fail-closed branch
+      // (500 calendar_unavailable) instead of a live Google call, even when the
+      // developer's shell exports real values.
+      GOOGLE_CALENDAR_ID: "",
+      GOOGLE_CALENDAR_API_KEY: ""
     }
   }
 });
