@@ -25,6 +25,24 @@ import { join } from "node:path";
  */
 export const CSS_PATH = join(process.cwd(), "src/css/tokens.css");
 
+// ─── Comment stripping ────────────────────────────────────────────────────────
+
+/**
+ * Remove `/* … *\/` comment blocks from CSS text.
+ *
+ * WHY this exists (T-033 audit finding H-1): the selector walk below uses
+ * `indexOf(selectorSearch)`, which also matches selector TEXT quoted inside
+ * the file's documentation comments (tokens.css explains the D-20 dark
+ * selector contract with a literal `[data-theme="dark"]`).  A comment hit made
+ * the walker collect the NEXT real block — the `:root` block — as a "dark"
+ * candidate, so every `[dark]` contrast row silently measured LIGHT values
+ * against LIGHT backgrounds and still passed.  Stripping comments first makes
+ * the extractor match real rules only.
+ */
+export function stripCssComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
 // ─── Block extraction ─────────────────────────────────────────────────────────
 
 /**
@@ -38,6 +56,7 @@ export function extractBlock(
   css: string,
   selectorSearch: string
 ): string | null {
+  css = stripCssComments(css);
   const idx = css.indexOf(selectorSearch);
   if (idx === -1) return null;
 
@@ -68,6 +87,7 @@ export function extractAllBlocks(
   css: string,
   selectorSearch: string
 ): string[] {
+  css = stripCssComments(css);
   const results: string[] = [];
   let searchFrom = 0;
 

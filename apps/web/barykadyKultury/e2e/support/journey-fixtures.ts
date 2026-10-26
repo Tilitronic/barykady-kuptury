@@ -69,6 +69,51 @@ export const HOME_PAGE_FIXTURE = [
   }
 ];
 
+/**
+ * T-033 — About landing fixture for the axe/structure surface matrix.
+ * Mirrors the excerpts already used by `about.spec.ts` (which deliberately
+ * follows the canonical seed shape in `supabase/seed.sql`): four `## `
+ * sections so PageToc and the section contract render, plus pl/uk rows with
+ * null bodies to exercise the fallback note in the long-locale reflow runs.
+ */
+export const ABOUT_PAGE_FIXTURE = [
+  {
+    id: "00000000-0000-4000-8000-000000000101",
+    page_key: "about",
+    status: "published",
+    updated_at: "2026-01-05T12:00:00Z",
+    site_page_translations: [
+      {
+        locale: "en",
+        title: "About us",
+        body:
+          "## Mission\n\nTo expand Ukrainian culture beyond borders and give " +
+          "it the space it deserves.\n\n## History\n\nThe association was " +
+          "founded by Daria Yakovleva in Poznań.\n\n## Values\n\n- Identity\n" +
+          "- Education\n- Support\n- Community\n\n## Aims\n\nThe aims of the " +
+          "Association are: cultural diplomacy and the promotion of " +
+          "Ukrainian culture in Poland and worldwide.",
+        meta_description: "About the Barykady Kultury association.",
+        needs_review: false
+      },
+      {
+        locale: "pl",
+        title: "O nas",
+        body: null,
+        meta_description: null,
+        needs_review: true
+      },
+      {
+        locale: "uk",
+        title: "Про нас",
+        body: null,
+        meta_description: null,
+        needs_review: true
+      }
+    ]
+  }
+];
+
 const PUBLISHED_PROJECT_BASE = {
   cover_path: null,
   start_date: null,

@@ -253,6 +253,126 @@ const CONTRAST_PAIRS: readonly ContrastPair[] = [
     bg: "color-form-bg",
     minRatio: 3.0,
     themes: ["light", "dark"]
+  },
+
+  // ── T-033: re-verification of every *rendered* pair ──────────────────────
+  // These rows came out of the T-033 audit: status texts render inside cards
+  // (--color-surface / --color-surface-raised) and banners, dialog and field
+  // surfaces carry their own text/muted/focus users, and a form boundary must
+  // clear 3:1 against the *page* next to the field too — not only against the
+  // input fill. The light form-border was measured at 2.64:1 on GRAY93 and
+  // fixed by one documented −0.035 border step (#949292 → #8A8787, SC 1.4.11).
+  {
+    role: "form-border (UI boundary) on background (SC 1.4.11)",
+    fg: "color-form-border",
+    bg: "color-background",
+    minRatio: 3.0,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "form-border (UI boundary) on surface (SC 1.4.11)",
+    fg: "color-form-border",
+    bg: "color-surface",
+    minRatio: 3.0,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "body text on form-bg",
+    fg: "color-text",
+    bg: "color-form-bg",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "muted helper text on form-bg",
+    fg: "color-text-muted",
+    bg: "color-form-bg",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "focus ring on form-bg",
+    fg: "color-focus",
+    bg: "color-form-bg",
+    minRatio: 3.0,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "body text in dialog",
+    fg: "color-text",
+    bg: "color-dialog-bg",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "muted text in dialog",
+    fg: "color-text-muted",
+    bg: "color-dialog-bg",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "link text in dialog",
+    fg: "color-link",
+    bg: "color-dialog-bg",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "focus ring in dialog",
+    fg: "color-focus",
+    bg: "color-dialog-bg",
+    minRatio: 3.0,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "success text on surface",
+    fg: "color-success",
+    bg: "color-surface",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "warning text on surface",
+    fg: "color-warning",
+    bg: "color-surface",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "danger text on surface",
+    fg: "color-danger",
+    bg: "color-surface",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "success text on surface-raised",
+    fg: "color-success",
+    bg: "color-surface-raised",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "warning text on surface-raised",
+    fg: "color-warning",
+    bg: "color-surface-raised",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "danger text on surface-raised (error banner on card)",
+    fg: "color-danger",
+    bg: "color-surface-raised",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
+  },
+  {
+    role: "active nav link (link token) on surface (header band)",
+    fg: "color-link",
+    bg: "color-surface",
+    minRatio: 4.5,
+    themes: ["light", "dark"]
   }
 ];
 
@@ -395,6 +515,35 @@ describe("CSS-driven contrast gate — all hex values parsed from tokens.css", (
 // 4. Forbidden pair — brand constraint, hard-coded
 // ════════════════════════════════════════════════════════════════════════════
 
+describe("Disabled-state documentation — WCAG SC 1.4.3 Note 1 exemption (T-033)", () => {
+  // Disabled controls are explicitly exempt from contrast minimums, and
+  // tokens.css deliberately ships a "clearly inactive" low-contrast value.
+  // This guard documents the exemption MECHANICALLY: the disabled text must
+  // stay visible enough to read the label as disabled (≥ 1.5:1 against its
+  // own surface) but remain below the 3:1 UI boundary threshold, and it must
+  // stay dimmer than enabled text so state is never ambiguous.
+  for (const theme of ["light", "dark"] as const) {
+    const hexes = theme === "light" ? light : dark;
+    it(`[${theme}] disabled text is deliberately de-emphasised but legible`, () => {
+      const disabled = requireHex(hexes, "color-disabled-text", theme);
+      const bg = requireHex(hexes, "color-disabled-bg", theme);
+      const text = requireHex(hexes, "color-text", theme);
+      const ratioDisabled = contrastRatio(disabled, bg);
+      const ratioEnabled = contrastRatio(text, bg);
+
+      expect(
+        ratioDisabled,
+        `${disabled} on ${bg}: disabled text drifted below visibility floor`
+      ).toBeGreaterThanOrEqual(1.5);
+      expect(
+        ratioDisabled,
+        `${disabled} on ${bg}: disabled text now looks enabled — state cue lost`
+      ).toBeLessThan(3);
+      expect(ratioEnabled).toBeGreaterThan(ratioDisabled);
+    });
+  }
+});
+
 describe("Forbidden pair — SCARLET on NERO must NOT be used as body text", () => {
   it("SCARLET on NERO is below 4.5:1 — forbidden for normal text", () => {
     const ratio = contrastRatio(SCARLET, NERO);
@@ -404,7 +553,59 @@ describe("Forbidden pair — SCARLET on NERO must NOT be used as body text", () 
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// 5. Brand focus ring on white form background — brand constraint, hard-coded
+// 5. Quasar internals — dark-mode `--q-*` parity (T-033, D-20)
+//
+// Quasar renders its component internals (button label colours, floating
+// field labels, error icons, body--dark page background) from CSS custom
+// properties `--q-primary … --q-dark-page` that are frozen at build time
+// from quasar.variables.scss — `Dark.set()` only toggles the body class.
+// Without dark overrides the brand's light-only values render onto NERO
+// surfaces (T-033 axe finding: SCARLET outline-button label 2.50:1, danger
+// field label 1.85:1). tokens.css therefore re-publishes the certified
+// DARK token values under the Quasar names. This gate pins the mapping so
+// the two palettes can never drift apart.
+// ════════════════════════════════════════════════════════════════════════════
+
+const QUASAR_DARK_PARITY: readonly [qVar: string, brandToken: string][] = [
+  ["q-primary", "color-accent"],
+  ["q-accent", "color-accent"],
+  ["q-positive", "color-success"],
+  ["q-negative", "color-danger"],
+  ["q-warning", "color-warning"],
+  ["q-dark", "color-background"],
+  ["q-dark-page", "color-background"]
+];
+
+describe("Quasar --q-* dark parity with brand tokens (T-033)", () => {
+  for (const [qVar, brandToken] of QUASAR_DARK_PARITY) {
+    it(`[dark] --${qVar} equals the certified dark --${brandToken}`, () => {
+      const qHex = requireHex(dark, qVar, "dark");
+      const brandHex = requireHex(dark, brandToken, "dark");
+      expect(qHex.toLowerCase(), `--${qVar} drifted from dark --${brandToken}`).toBe(
+        brandHex.toLowerCase()
+      );
+    });
+  }
+
+  it("[dark] remapped primary keeps NERO label contrast on the accent surface", () => {
+    const accent = requireHex(dark, "q-primary", "dark");
+    const accentText = requireHex(dark, "color-accent-text", "dark");
+    expect(contrastRatio(accent, accentText)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("[dark] remapped negative reads as text on every dark surface", () => {
+    const negative = requireHex(dark, "q-negative", "dark");
+    for (const bg of ["color-background", "color-surface", "color-surface-raised"]) {
+      expect(
+        contrastRatio(negative, requireHex(dark, bg, "dark")),
+        `--q-negative on dark --${bg}`
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// 6. Brand focus ring on white form background — brand constraint, hard-coded
 //    #FFFFFF is the form-bg token value but also an absolute anchor;
 //    hard-coded so it validates the brand SCARLET focus ring on any white surface.
 // ════════════════════════════════════════════════════════════════════════════

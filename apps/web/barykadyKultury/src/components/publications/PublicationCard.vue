@@ -161,7 +161,9 @@ const availability = computed(() => {
 }
 
 .publication-card__availability {
-  color: var(--color-accent);
+  /* T-033: emphasis TEXT = link token (AA on all dark surfaces); accent is a
+     surface value. Light rendering is unchanged (both are SCARLET). */
+  color: var(--color-link);
   font-weight: 600;
 }
 

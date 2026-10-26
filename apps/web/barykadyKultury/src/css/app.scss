@@ -59,3 +59,62 @@ html:has(.about-page, .long-form-reader) {
 .q-field--error .q-field__messages {
   color: var(--color-danger);
 }
+
+/*
+ * T-033 — Quasar field boundaries are design-token boundaries (DESIGN_SYSTEM
+ * §5: light AND dark values for every token, "including form controls").
+ * Quasar's outlined control hard-codes rgba(0,0,0,0.24) (≈ 1.53:1 next to
+ * GRAY93 — far below the SC 1.4.11 3:1 UI-boundary minimum) and Quasar has no
+ * CSS-variable hook for it, so the seam is a global override: every outlined
+ * field paints its resting border with --color-form-border, which clears 3:1
+ * against BOTH sides of the edge in both themes (tokens.css §measured).
+ * Hover/focus keep Quasar's own strengthening behaviour.
+ */
+.q-field--outlined .q-field__control:before {
+  border-color: var(--color-form-border);
+}
+
+/*
+ * T-033 dark-mode label inversion for filled brand buttons. The dark palette
+ * remaps --q-primary to the lightened accent (#FA4C3C, 4.53:1 with NERO text)
+ * — but QBtn picks its label class at runtime from the COMPILED colour and
+ * ships `text-white` on `bg-primary`/`bg-accent`. White on #FA4C3C measures
+ * 3.41:1 (fails AA); NERO on #FA4C3C is the certified D-18 pair. The override
+ * is scoped to the button root so no other `text-white` consumer (overlay
+ * copy on pure SCARLET surfaces) is touched.
+ */
+body.body--dark .q-btn.bg-primary.text-white,
+body.body--dark .q-btn.bg-accent.text-white {
+  color: var(--color-accent-text) !important;
+}
+
+/*
+ * T-033 — outline/flat "primary" buttons are TEXT, not surfaces, so in dark
+ * they must use the link token (≥ 4.5:1 on every dark surface) rather than
+ * the accent surface value (4.25:1 on --color-surface would fail AA for
+ * normal text). Border follows currentColor in Quasar's outline variant.
+ * Light mode is untouched — there --color-link and --color-accent are both
+ * SCARLET (D-13).
+ */
+body.body--dark .q-btn.text-primary.q-btn--outline,
+body.body--dark .q-btn.text-primary.q-btn--flat {
+  color: var(--color-link) !important;
+}
+
+/*
+ * T-033 (audit finding A-1) — Quasar buttons paint NO keyboard focus.
+ * QBtn stamps the root button with the utility class `no-outline`, whose reset
+ * `.no-outline{outline:0!important}` outranks both the site's `.focus-ring`
+ * utility and the global `:focus-visible` rule (they have no `!important`), so
+ * Save / Publish / Delete and every other admin action showed zero visible
+ * focus — a WCAG 2.4.7 / DESIGN_SYSTEM §6 failure axe cannot detect. The
+ * class cannot be forwarded off the component's internal <button>, so the
+ * seam is the same global override used for the field boundaries above:
+ * restore the brand focus token with matching `!important` and a
+ * class+pseudo specificity (0,2,0) that beats `.no-outline` (0,1,0), so the
+ * ring wins while `:focus-visible` is set and pointer users see no change.
+ */
+.q-btn:focus-visible {
+  outline: 3px solid var(--color-focus) !important;
+  outline-offset: 2px;
+}

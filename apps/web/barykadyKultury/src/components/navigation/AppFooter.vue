@@ -189,8 +189,10 @@ function isActivePage(item: NavItem): boolean {
   color: var(--color-link);
 }
 
+/* T-033: active label uses the link token (accent surface value fails AA as
+   normal text in dark, 4.24:1); identical SCARLET in light mode. */
 .app-footer__nav-link[aria-current="page"] {
-  color: var(--color-accent);
+  color: var(--color-link);
   font-weight: 600;
 }
 

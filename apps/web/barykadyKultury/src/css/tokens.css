@@ -21,7 +21,12 @@
  * Border tokens use a coarser scale of ≈ 0.035/step (greater visual separation
  * needed against backgrounds than surface-to-surface transitions):
  *   Light: GRAY93 (L=0.946) → border −2 steps (L≈0.876 = #D6D6D6)
- *                           → form-border −3 steps (L≈0.841 = #CBCBCB)
+ *   form-border (both themes) rides its own toward-NERO track because it must
+ *   clear 3:1 against BOTH the field fill and the page beside it (SC 1.4.11):
+ *     Light L=0.627 = #8A8787  (T-033; rev-3 shipped L=0.662 = #949292, which
+ *       passed vs form-bg 3.10:1 but measured only 2.64:1 vs GRAY93 — one
+ *       documented −0.035 border step closes the outer-adjacency gap)
+ *     Dark  L=0.554 = #747272  (rev-3; vs form-bg 3.03:1, vs NERO 3.23:1)
  *   Dark:  NERO   (L=0.263) → border +7 steps (L≈0.403 = #4A4848)
  *
  * NEAR-ACHROMATIC WARM NEUTRALS (OKLCH)
@@ -29,12 +34,13 @@
  * These surface/border tokens share the warm NERO hue (H≈17°, C≈0.003):
  *   #2B2929  dark surface          L=0.283, C=0.003, H=17°
  *   #353333  dark surface-raised   L=0.323, C=0.003, H=17°
- *   #4A4848  dark border/form-border L=0.404, C=0.003, H=17°
+ *   #4A4848  dark border           L=0.404, C=0.003, H=17°
  *   #6C6A6A  light text-muted      L=0.526, C=0.003, H=17°
+ *   #747272  dark form-border      L=0.554, C=0.003, H=17°
+ *   #8A8787  light form-border     L=0.627, C=0.003, H=17°
  * Pure achromatic (C≈0, H undefined — treated as neutral):
  *   #9E9E9E  dark text-muted       L=0.699, C=0.000
  *   #D6D6D6  light border          L=0.876, C=0.000
- *   #CBCBCB  light form-border     L=0.842, C=0.000
  *
  * DARK ACCENT vs DARK LINK (rev-2, Finding 4)
  * -------------------------------------------
@@ -96,7 +102,7 @@
  * --color-disabled-text      | #9E9E9E     |  2.29:1‡ | #575555     |  2.05:1‡
  * --color-disabled-bg        | #F4F4F4     | —        | #2B2929     | —
  * --color-form-bg            | #FFFFFF     | 15.44:1  | #2B2929     | 12.35:1
- * --color-form-border        | #949292     | see §    | #747272     | see §
+  * --color-form-border        | #8A8787     | see §    | #747272     | see §
  * --color-dialog-bg          | #FAFAFA     | 14.79:1  | #353333     | 10.72:1
  * --color-border             | #D6D6D6     | decor.   | #4A4848     | decor.
  * --color-overlay            | rgba(38,36, | scrim    | rgba(0,0,0, | scrim
@@ -110,8 +116,10 @@
  *    surface-raised: 3.68:1 ≥ 3:1 ✓.
  *  † Measured on --color-surface-danger, not primary background.
  *  ‡ Disabled controls are WCAG SC 1.4.3 Note 1 exempt.
- *  § --color-form-border is a UI component boundary (SC 1.4.11 ≥ 3:1 target).
- *    Light: #949292 on #FFFFFF = 3.10:1 ✓ AA.  Dark: #747272 on #2B2929 = 3.03:1 ✓ AA.
+  *  § --color-form-border is a UI component boundary (SC 1.4.11 ≥ 3:1 target).
+  *    Light (T-033): #8A8787 on #FFFFFF = 3.56:1 ✓, on GRAY93 page = 3.04:1 ✓,
+  *    on surface #F4F4F4 = 3.24:1 ✓.  Dark: #747272 on #2B2929 = 3.03:1 ✓, on
+  *    NERO = 3.23:1 ✓.
  *    --color-border is a decorative separator only — no SC 1.4.11 requirement.
  *    Shadows: decorative elevation — no WCAG requirement.
  */
@@ -241,16 +249,19 @@
   --color-form-bg: #ffffff;
 
   /**
-   * Input border. OKLCH step toward NERO from GRAY93, warm near-achromatic
-   * (L=0.662, C=0.003, H=17°) → #949292.
-   * Non-text UI component boundary (SC 1.4.11 ≥ 3:1 target).
-   * Measured: #949292 on #FFFFFF (form-bg) = 3.10:1 ✓ AA.
-   * Design note: the previous value #CBCBCB = 1.62:1 was below target; raised
-   * to this warm mid-gray. The form-fill alone (#FFFFFF on #EDEDED = 1.15:1)
-   * cannot identify the field boundary — the border must carry the contrast.
-   * The warm H=17° hue keeps it in the NERO palette family.
+   * Input border. OKLCH warm near-achromatic (H=17°, C=0.003) at L=0.627 →
+   * #8A8787. Non-text UI component boundary (SC 1.4.11 ≥ 3:1 target).
+   * Measured (WCAG formula, DESIGN_SYSTEM.md §1): on form-bg #FFFFFF = 3.56:1,
+   * on the page background GRAY93 = 3.04:1, on surface #F4F4F4 = 3.24:1 — the
+   * border must clear 3:1 against BOTH sides of the field edge; T-033 found
+   * the previous #949292 measured only 2.64:1 against the page beside the
+   * field, and fixed it by one documented −0.035 border step (L 0.662 → 0.627,
+   * the same step scale as every border token).
+   * Design note: the form-fill alone (#FFFFFF on #EDEDED = 1.15:1) cannot
+   * identify the field boundary — the border must carry the contrast. The warm
+   * H=17° hue keeps it in the NERO palette family.
    */
-  --color-form-border: #949292;
+  --color-form-border: #8a8787;
 
   /* --- Dialog / dropdown surfaces ---------------------------------------- */
 
@@ -541,10 +552,38 @@
   --shadow-lg:
     0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.28);
 
+  /* --- Quasar component-internals palette --------------------------------- */
+
+  /**
+   * Quasar 2.35 freezes its `--q-*` palette at compile time (from
+   * quasar.variables.scss) and `Dark.set()` only toggles the `body--dark`
+   * class, so in dark mode Quasar internals (filled/outline button colours,
+   * floating field labels, error icons, body--dark background) still carried
+   * the LIGHT brand values. T-033 axe caught the consequence: SCARLET
+   * outline-button label 2.50:1 and the danger floating label 1.85:1 on NERO.
+   * The dark block re-publishes the certified dark token values under the
+   * Quasar names; the mapping is pinned mechanically by the parity gate in
+   * `src/shared/color/__tests__/contrast.test.ts` (§5) — drift fails CI.
+   * Values are deliberately identical to the theme's own tokens:
+   *   --q-primary/--q-accent = --color-accent      (#FA4C3C, D-18 certified)
+   *   --q-positive/--q-negative/--q-warning = the dark status tokens
+   *   --q-dark/--q-dark-page = --color-background (NERO)
+   *   --q-secondary stays #4A4848 (theme-invariant; white label on it 8.90:1)
+   * `--q-info` stays the compile-time #1A56DB: there is no --color-info brand
+   * token (DESIGN_SYSTEM §5) and site-authored components must not rely on it.
+   */
+  --q-primary: #fa4c3c;
+  --q-secondary: #4a4848;
+  --q-accent: #fa4c3c;
+  --q-positive: #4ade80;
+  --q-negative: #fc8181;
+  --q-warning: #fbbf24;
+  --q-dark: #262424;
+  --q-dark-page: #262424;
+
   /* Motion duration unchanged — controlled by reduced-motion block below. */
   --motion-duration: 200ms;
 }
-
 /* =========================================================================
    3. SYSTEM DARK MODE PREFERENCE
    Applied when no explicit data-theme is set, respects OS preference.
@@ -580,6 +619,16 @@
       0 4px 6px -1px rgba(0, 0, 0, 0.36), 0 2px 4px -2px rgba(0, 0, 0, 0.28);
     --shadow-lg:
       0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.28);
+    /* Quasar internals — MUST stay identical to the [data-theme="dark"]
+       block (parity gates: parseTokensCss.test + contrast.test §5). */
+    --q-primary: #fa4c3c;
+    --q-secondary: #4a4848;
+    --q-accent: #fa4c3c;
+    --q-positive: #4ade80;
+    --q-negative: #fc8181;
+    --q-warning: #fbbf24;
+    --q-dark: #262424;
+    --q-dark-page: #262424;
     --motion-duration: 200ms;
   }
 }
@@ -594,8 +643,19 @@
    The .dark selector has been removed and must not be re-added.
    ========================================================================= */
 @media (prefers-reduced-motion: reduce) {
+  /*
+   * The selector set MUST mirror every place `--motion-duration` is assigned a
+   * non-zero value, or specificity outranks intent. §3 assigns the dark value
+   * through `:root:not([data-theme="light"])` (0,2,0); listing only `:root` and
+   * `[data-theme="dark"]` here (both 0,1,0) left OS-dark users stuck at 200ms
+   * under prefers-reduced-motion — a real WCAG 2.3.3 gap (T-033 finding M-1),
+   * not a test artifact. Adding the same 0,2,0 selector (this block is later in
+   * the file, so equal specificity wins on source order) collapses motion on
+   * the system-dark path as well.
+   */
   :root,
-  [data-theme="dark"] {
+  [data-theme="dark"],
+  :root:not([data-theme="light"]) {
     --motion-duration: 0ms;
   }
 

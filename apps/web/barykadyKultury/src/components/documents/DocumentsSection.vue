@@ -198,7 +198,10 @@ function formattedDate(value: string): string {
 }
 
 .documents-list__type {
-  color: var(--color-accent);
+  /* T-033: emphasis TEXT uses the link token (≥4.5:1 on every surface in both
+     themes); the accent value fails AA as normal text on dark surfaces. Light
+     mode is identical — both tokens are SCARLET there (D-13). */
+  color: var(--color-link);
   font-weight: 600;
 }
 </style>

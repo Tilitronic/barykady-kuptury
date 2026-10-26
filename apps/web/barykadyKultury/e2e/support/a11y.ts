@@ -77,10 +77,89 @@ export async function expectNoBlockingViolations(
         .map(
           violation =>
             `- ${violation.id} (${violation.impact}): ${violation.help} — ` +
-            `${violation.nodes.length} node(s)`
+            `${violation.nodes.length} node(s)\n` +
+            violation.nodes
+              .map(
+                node =>
+                  `    ${node.target.join(" ")} — ${node.failureSummary ?? ""} ` +
+                  `(${node.html.slice(0, 120)})`
+              )
+              .join("\n")
         )
         .join("\n")
   ).toHaveLength(0);
 
   return results;
+}
+
+/**
+ * T-033 — structural landmark/heading proof (docs/DESIGN_SYSTEM.md §6).
+ *
+ * axe checks relationships inside nodes it knows; it does not enforce the
+ * project's own layout contract ("one clear main landmark", exactly one h1 per
+ * page, no skipped heading levels when descending). Those are cheap to prove
+ * directly and they catch regressions a future refactor could introduce
+ * (e.g. a card jumping from h2 to h4).
+ */
+export async function expectLandmarksAndHeadings(page: Page): Promise<void> {
+  const report = await page.evaluate(() => {
+    const visible = (element: Element) =>
+      !element.closest('[aria-hidden="true"]') &&
+      !element.closest("[hidden]") &&
+      (element as HTMLElement).offsetParent !== null;
+
+    const headings = Array.from(
+      document.querySelectorAll("h1, h2, h3, h4, h5, h6")
+    )
+      .filter(visible)
+      .map(element => ({
+        level: Number(element.tagName.slice(1)),
+        text: (element.textContent ?? "").trim().slice(0, 60)
+      }));
+
+    return {
+      mains: document.querySelectorAll("main").length,
+      banners: document.querySelectorAll(
+        '[role="banner"], body > header, header'
+      ).length,
+      contentinfos: document.querySelectorAll('[role="contentinfo"], footer')
+        .length,
+      headings
+    };
+  });
+
+  expect(report.mains, "page must expose exactly one main landmark").toBe(1);
+  expect(
+    report.banners,
+    "page must expose a banner landmark"
+  ).toBeGreaterThanOrEqual(1);
+  // DESIGN_SYSTEM.md §6 "semantic landmarks": every public surface ships the
+  // AppFooter contentinfo in PublicLayout. Asserted `>= 1` (mirrors the banner
+  // check) rather than `=== 1`, because a detail page may nest a section-level
+  // <footer> that is not the page contentinfo — the contract is "a contentinfo
+  // landmark exists", not "exactly one <footer> tag in the DOM".
+  expect(
+    report.contentinfos,
+    "page must expose a contentinfo (footer) landmark"
+  ).toBeGreaterThanOrEqual(1);
+
+  const h1s = report.headings.filter(heading => heading.level === 1);
+  expect(
+    h1s.length,
+    `expected exactly one h1, found ${h1s.length}: ` +
+      JSON.stringify(report.headings)
+  ).toBe(1);
+
+  // WCAG headings best practice (DESIGN_SYSTEM.md §6 "visible heading
+  // hierarchy"): descending is free, but skipping a level upward
+  // (h2 → h4) strands the outline structure.
+  let lastLevel = 0;
+  const skips: string[] = [];
+  for (const heading of report.headings) {
+    if (lastLevel > 0 && heading.level > lastLevel + 1) {
+      skips.push(`h${lastLevel} → h${heading.level} ("${heading.text}")`);
+    }
+    lastLevel = heading.level;
+  }
+  expect(skips, `heading levels skip: ${skips.join(", ")}`).toEqual([]);
 }

@@ -254,7 +254,9 @@ onMounted(load);
   padding: 0.5rem 1rem;
   border: 1px solid var(--color-accent);
   border-radius: 0.375rem;
-  color: var(--color-accent);
+  /* T-033: chip TEXT = link token (AA in both themes); the border is a
+     non-text outline and stays the accent surface value (≥3:1 everywhere). */
+  color: var(--color-link);
   font-weight: 600;
   text-decoration: none;
 }

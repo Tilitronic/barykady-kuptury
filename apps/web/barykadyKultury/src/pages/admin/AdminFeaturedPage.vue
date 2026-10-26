@@ -348,7 +348,8 @@ onMounted(load);
 }
 
 .admin-featured__back-link {
-  color: var(--color-accent);
+  /* T-033: link TEXT takes the link token (AA on all dark surfaces). */
+  color: var(--color-link);
 }
 
 .admin-featured__heading {

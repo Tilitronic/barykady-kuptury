@@ -362,9 +362,13 @@ function isActivePage(item: NavItem): boolean {
   color: var(--color-link);
 }
 
-/* Active / current page — the brand-stroke scarlet underline (== the logotype "B" stem) inside the header height */
+/* Active / current page — the brand-stroke scarlet underline (== the logotype "B" stem) inside the header height.
+   T-033: the label TEXT is the link token, never the accent surface value — dark
+   #FA4C3C text on the header band measured 4.24:1 (< AA for normal text); the
+   underline stays scarlet-accent because a stroke is non-text UI (≥3:1, met).
+   Light mode is visually identical: --color-link == --color-accent == SCARLET. */
 .app-header__nav-link[aria-current="page"] {
-  color: var(--color-accent);
+  color: var(--color-link);
   border-bottom-color: var(--color-accent);
   font-weight: 600;
 }

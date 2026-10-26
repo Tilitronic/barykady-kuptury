@@ -145,3 +145,79 @@ export async function tabUntilRole(
   }
   return -1;
 }
+
+/**
+ * T-033 — full keyboard sweep.
+ *
+ * "Every interactive element reachable and operable by keyboard; focus always
+ * visible" (ticket acceptance) is a property of the WHOLE tab order, not of
+ * the handful of stops the targeted journeys pick out. This walks Tab stops
+ * from the document start until focus wraps back to an already-visited
+ * element (cycle) or the bound is hit, and fails when any stop lacks a
+ * visible `:focus-visible` indicator, using the same definition as
+ * `expectVisibleFocus` (WCAG 2.4.7). Returns the visited stop labels so the
+ * caller can also assert a coverage floor.
+ */
+export async function expectKeyboardSweep(
+  page: Page,
+  options: { label: string; minStops?: number; maxStops?: number }
+): Promise<string[]> {
+  const { label, minStops = 8, maxStops = 120 } = options;
+  await focusBody(page);
+
+  const stops: string[] = [];
+  const invisible: string[] = [];
+  let wrapped = false;
+
+  for (let press = 0; press < maxStops; press += 1) {
+    await page.keyboard.press("Tab");
+    const state = await page.evaluate(() => {
+      const element = document.activeElement as HTMLElement | null;
+      if (!element || element === document.body) return null;
+      const style = getComputedStyle(element);
+      const outline =
+        style.outlineStyle !== "none" &&
+        (Number.parseFloat(style.outlineWidth) || 0) > 0;
+      return {
+        key:
+          element.id ||
+          element.getAttribute("href") ||
+          `${element.tagName.toLowerCase()}:${(element.textContent ?? "")
+            .trim()
+            .slice(0, 40)}`,
+        focusVisible: element.matches(":focus-visible"),
+        hasIndicator:
+          outline ||
+          style.boxShadow !== "none" ||
+          element.closest(".q-field")?.classList.contains("q-field--focused") ===
+            true
+      };
+    });
+
+    if (!state) {
+      wrapped = true; // focus left the document (browser chrome) — full tour
+      break;
+    }
+    if (stops.includes(state.key)) {
+      wrapped = true; // cycled back to a visited stop
+      break;
+    }
+    stops.push(state.key);
+    if (!state.focusVisible || !state.hasIndicator) {
+      invisible.push(
+        `${state.key} (focusVisible=${state.focusVisible}, indicator=${state.hasIndicator})`
+      );
+    }
+  }
+
+  expect(
+    invisible,
+    `${label}: ${invisible.length} tab stop(s) without visible focus:\n${invisible.join("\n")}`
+  ).toEqual([]);
+  expect(
+    stops.length,
+    `${label}: sweep covered ${stops.length} stops (floor ${minStops}); wrapped=${wrapped}`
+  ).toBeGreaterThanOrEqual(minStops);
+
+  return stops;
+}

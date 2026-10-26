@@ -50,6 +50,12 @@ export interface MockCalendarEventsOptions {
   generatedAt?: string;
   /** Override the HTTP status to exercise error states. */
   status?: number;
+  /**
+   * T-033: hold the response this long so loading-state assertions (skeleton
+   * shimmer under prefers-reduced-motion) observe a real in-flight render
+   * without timing races.
+   */
+  delayMs?: number;
 }
 
 /**
@@ -64,12 +70,16 @@ export async function mockCalendarEvents(
     events = CALENDAR_EVENTS_FIXTURE,
     calendarId = CALENDAR_EVENTS_CALENDAR_ID,
     generatedAt = CALENDAR_EVENTS_GENERATED_AT,
-    status = 200
+    status = 200,
+    delayMs = 0
   } = options;
 
   const body: CalendarEventsResponse = { calendarId, events, generatedAt };
 
   await page.route(CALENDAR_EVENTS_GLOB, async (route: Route) => {
+    if (delayMs > 0) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
     await route.fulfill({
       status,
       contentType: "application/json",
